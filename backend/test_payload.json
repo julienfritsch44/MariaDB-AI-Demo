@@ -1,0 +1,3 @@
+{
+    "query_fingerprint": "explain select * from t1 where pk1=1;"
+}

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: finops-mariadb-poc
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: poc_password_2024
+      MARIADB_DATABASE: poc_db
+      MARIADB_USER: poc_user
+      MARIADB_PASSWORD: poc_password_2024
+    ports:
+      - "3307:3306"  # Port 3307 pour éviter conflit avec MariaDB local existant
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./init:/docker-entrypoint-initdb.d
+    command: >
+      --slow-query-log=ON
+      --slow-query-log-file=/var/log/mysql/slow.log
+      --long-query-time=1
+      --log-queries-not-using-indexes=ON
+      --log-output=TABLE,FILE
+
+volumes:
+  mariadb_data:
