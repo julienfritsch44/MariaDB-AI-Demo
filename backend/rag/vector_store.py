@@ -86,6 +86,8 @@ class VectorStore:
         
         results = cursor.fetchall()
         conn.close()
+        return results
+
     def get_document_count(self) -> int:
         """Get the total number of documents in the vector store"""
         conn = self.get_connection(database="finops_auditor")
@@ -93,4 +95,20 @@ class VectorStore:
         cursor.execute("SELECT COUNT(*) FROM doc_embeddings")
         count = cursor.fetchone()[0]
         conn.close()
+        print(f"[VectorStore] Total document count: {count}")
         return count
+
+    def get_document_counts_by_type(self) -> dict:
+        """Get document counts grouped by source_type"""
+        conn = self.get_connection(database="finops_auditor")
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT source_type, COUNT(*) as count 
+            FROM doc_embeddings 
+            GROUP BY source_type
+        """)
+        results = cursor.fetchall()
+        conn.close()
+        counts = {row['source_type']: row['count'] for row in results}
+        print(f"[VectorStore] Document counts by type: {counts}")
+        return counts

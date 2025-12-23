@@ -12,7 +12,7 @@ from typing import List, Dict
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from rag.vector_store import VectorStore
-from rag.gemini_service import GeminiService
+from rag.embedding_service import EmbeddingService
 from dotenv import load_dotenv
 
 # Load env variables
@@ -74,7 +74,7 @@ def main():
         print(f"Failed to connect/init DB: {e}")
         return
 
-    gemini = GeminiService()
+    embedding_service = EmbeddingService()
     
     # 2. Process Jira Data
     jira_path = os.path.join(os.path.dirname(__file__), "..", "jira_sample.json")
@@ -84,7 +84,7 @@ def main():
     print(f"Embedding and storing {len(documents)} documents...")
     for doc in documents:
         print(f"Processing {doc['source_id']}...")
-        embedding = gemini.get_embedding(doc['content'])
+        embedding = embedding_service.get_embedding(doc['content'])
         
         if embedding:
             try:
