@@ -15,7 +15,7 @@ class SuggestionService:
     
     def __init__(self):
         self.api_key = os.getenv("SKYSQL_API_KEY")
-        self.api_url = "https://api.skysql.com/copilot/v1/chat"
+        self.api_url = "https://api.skysql.com/copilot/v1/chat/"
         
         if not self.api_key:
             print("[SuggestionService] WARNING: SKYSQL_API_KEY not set. AI suggestions will be limited.")
@@ -72,7 +72,7 @@ Return ONLY valid JSON, no markdown."""
                 "Content-Type": "application/json",
                 "X-API-Key": self.api_key
             },
-            json={"prompt": prompt},
+            json={"prompt": prompt, "agent_id": "89256c79-bdfe-435a-8729-4d1e9a9ebca2"},
             timeout=30
         )
         

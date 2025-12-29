@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 
 import { AnimatedNumber } from "@/components/ui/animated-number"
+import { trackedFetch } from "@/lib/usePerformance"
 
 const API_BASE = "http://localhost:8000"
 
@@ -44,7 +45,7 @@ export function ShopDemo() {
         addLog(`Calling ${endpoint}...`)
 
         try {
-            const response = await fetch(`${API_BASE}${endpoint}`, { method: "POST" })
+            const response = await trackedFetch(`${API_BASE}${endpoint}`, { method: "POST" })
             const data = await response.json()
 
             addLog(`Response: ${JSON.stringify(data)}`)
@@ -135,7 +136,7 @@ export function ShopDemo() {
                                 onClick={async () => {
                                     addLog("Testing database connection...")
                                     try {
-                                        const res = await fetch(`${API_BASE}/simulation/test`, { method: "POST" })
+                                        const res = await trackedFetch(`${API_BASE}/simulation/test`, { method: "POST" })
                                         const data = await res.json()
                                         addLog(`Test result: ${JSON.stringify(data)}`)
                                         if (data.ready) {

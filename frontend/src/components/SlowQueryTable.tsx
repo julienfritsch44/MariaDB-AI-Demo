@@ -72,6 +72,11 @@ export function SlowQueryTable({ queries, onAnalyze, activeQueryId }: SlowQueryT
                                     <span className="flex items-center gap-1">
                                         <Activity className="w-3 h-3" /> {(query.rows_examined / 1000).toFixed(1)}k rows
                                     </span>
+                                    {query.estimated_cost_usd !== undefined && (
+                                        <span className="flex items-center gap-1 text-emerald-500/80 font-mono">
+                                            $ {query.estimated_cost_usd.toFixed(3)}
+                                        </span>
+                                    )}
                                 </div>
                                 <ArrowRight className={cn(
                                     "w-3 h-3 transition-transform opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 text-zinc-400",

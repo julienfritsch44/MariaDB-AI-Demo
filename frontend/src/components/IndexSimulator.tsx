@@ -20,6 +20,16 @@ import { SectionHeader } from "@/components/ui/section-header"
 import { CopyButton } from "@/components/ui/copy-button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { CodeContainer } from "@/components/ui/code-container"
+import { ReasoningLoader } from "@/components/ui/reasoning-loader"
+import { trackedFetch } from "@/lib/usePerformance"
+
+const INDEX_SIMULATION_STEPS = [
+    "Parsing index definition...",
+    "Creating virtual index clone...",
+    "Searching knowledge base...",
+    "Running EXPLAIN analysis...",
+    "Calculating improvement..."
+]
 
 const API_BASE = "http://localhost:8000"
 
@@ -41,7 +51,7 @@ export function IndexSimulatorInput({ onSimulate, isLoading, setIsLoading }: Ind
         setError(null)
 
         try {
-            const res = await fetch(`${API_BASE}/simulate-index`, {
+            const res = await trackedFetch(`${API_BASE}/simulate-index`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -258,12 +268,8 @@ export function IndexSimulatorResultPanel({
     // Loading state
     if (isLoading) {
         return (
-            <div className="h-full flex flex-col items-center justify-center text-zinc-500 border-l border-zinc-800 bg-zinc-950">
-                <div className="p-3 rounded-full bg-zinc-900 border border-zinc-800 mb-4">
-                    <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
-                </div>
-                <p className="text-sm font-medium text-zinc-300">Simulating Index Impact...</p>
-                <p className="text-xs text-zinc-500 mt-1">Running EXPLAIN and AI analysis</p>
+            <div className="h-full flex items-center justify-center border-l border-zinc-800 bg-zinc-950">
+                <ReasoningLoader steps={INDEX_SIMULATION_STEPS} colorVariant="emerald" />
             </div>
         )
     }

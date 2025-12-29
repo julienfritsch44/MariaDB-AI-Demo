@@ -18,6 +18,7 @@ import {
     Database
 } from "lucide-react"
 import { SqlCode } from "@/components/ui/sql-code"
+import { trackedFetch } from "@/lib/usePerformance"
 
 import { useEffect } from "react"
 
@@ -40,7 +41,7 @@ export function QueryPredictorInput({ onPredict, isLoading, setIsLoading }: Quer
         setError(null)
 
         try {
-            const res = await fetch(`${API_BASE}/predict`, {
+            const res = await trackedFetch(`${API_BASE}/predict`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sql: sql.trim() })
@@ -172,61 +173,15 @@ interface PredictorResultPanelProps {
     onChatClear?: () => void
 }
 
-function RagScanningAnimation() {
-    const [scanText, setScanText] = useState("MDEV-10342")
-    const [progress, setProgress] = useState(0)
+import { ReasoningLoader } from "@/components/ui/reasoning-loader"
 
-    useEffect(() => {
-        // Animate fake ticket IDs
-        const tickets = [
-            "MDEV-12932", "KB-4092", "CON-2931", "MDEV-9921", "MDEV-3012",
-            "MDEV-11200", "KB-3301", "MDEV-4402", "MDEV-8821", "CON-1021"
-        ]
-
-        const interval = setInterval(() => {
-            const randomTicket = tickets[Math.floor(Math.random() * tickets.length)]
-            setScanText(randomTicket)
-        }, 100)
-
-        // Animate progress bar
-        const progressInterval = setInterval(() => {
-            setProgress(p => Math.min(p + 2, 100))
-        }, 50)
-
-        return () => {
-            clearInterval(interval)
-            clearInterval(progressInterval)
-        }
-    }, [])
-
-    return (
-        <div className="h-full flex flex-col items-center justify-center text-zinc-500 p-8 border-l border-zinc-800 bg-zinc-950">
-            <div className="relative mb-6">
-                <div className="relative p-4 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-                    <Database className="w-8 h-8 text-zinc-400 animate-pulse" />
-                </div>
-            </div>
-
-            <h3 className="text-sm font-medium text-zinc-300 mb-2">
-                Searching Knowledge Base...
-            </h3>
-
-            <div className="flex items-center gap-2 mb-6 font-mono text-xs text-zinc-500">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Checking:</span>
-                <span className="text-zinc-300 w-24">{scanText}</span>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="w-48 h-1 bg-zinc-900 rounded-full overflow-hidden">
-                <div
-                    className="h-full bg-zinc-500 transition-all duration-75"
-                    style={{ width: `${progress}%` }}
-                />
-            </div>
-        </div>
-    )
-}
+const RISK_ANALYSIS_STEPS = [
+    "Parsing SQL syntax...",
+    "Analyzing query structure...",
+    "Searching knowledge base...",
+    "Identifying risk patterns...",
+    "Generating assessment..."
+]
 
 import { SectionHeader } from "@/components/ui/section-header"
 import { CopyButton } from "@/components/ui/copy-button"
@@ -248,7 +203,11 @@ export function PredictorResultPanel({
 
     // Loading state
     if (isLoading) {
-        return <RagScanningAnimation />
+        return (
+            <div className="h-full flex items-center justify-center border-l border-zinc-800 bg-zinc-950">
+                <ReasoningLoader steps={RISK_ANALYSIS_STEPS} colorVariant="amber" />
+            </div>
+        )
     }
 
     // Empty state
@@ -334,29 +293,36 @@ export function PredictorResultPanel({
 
                     {/* Similar Issues */}
                     {result.similar_issues.length > 0 && (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             <SectionHeader icon={ExternalLink} title="Knowledge Base Matches" />
-                            <div className="space-y-2">
+                            <div className="flex flex-col gap-1">
                                 {result.similar_issues.slice(0, 5).map((issue: SimilarIssue) => (
-                                    <a
+                                    <div
                                         key={issue.id}
-                                        href={`https://jira.mariadb.org/browse/${issue.id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block p-3 bg-zinc-900/30 rounded-md border border-zinc-800 hover:border-zinc-600 transition-colors group"
+                                        className="flex items-center justify-between p-2 rounded-md hover:bg-zinc-900/50 group transition-colors border border-transparent hover:border-zinc-800"
                                     >
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className="font-mono text-xs text-emerald-500 group-hover:text-emerald-400">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <a
+                                                href={`https://jira.mariadb.org/browse/${issue.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="shrink-0 text-xs font-mono text-amber-500 hover:text-amber-400 flex items-center gap-1"
+                                            >
                                                 {issue.id}
-                                            </span>
-                                            <span className="text-[10px] text-zinc-600 border border-zinc-800 px-1.5 py-0.5 rounded-full">
-                                                {issue.similarity.toFixed(0)}% match
+                                                <ExternalLink className="w-2.5 h-2.5 opacity-50" />
+                                            </a>
+
+                                            <span className="text-xs text-zinc-400 truncate">
+                                                {issue.summary}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
-                                            {issue.summary}
-                                        </p>
-                                    </a>
+
+                                        <div className="shrink-0 ml-4">
+                                            <span className="text-[10px] font-mono text-zinc-600 group-hover:text-zinc-500">
+                                                {issue.similarity.toFixed(0)}%
+                                            </span>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         </div>

@@ -10,6 +10,7 @@ export interface SlowQuery {
     start_time?: string;
     user_host?: string;
     db?: string;
+    estimated_cost_usd?: number;
 }
 
 export interface QueryAnalysis {
@@ -36,6 +37,7 @@ export interface Suggestion {
     cost_current: number | null;
     cost_with_fix: number | null;
     cost_reduction_percent: number | null;
+    analysis_time_ms: number | null;
 }
 
 export interface Message {
@@ -50,6 +52,7 @@ export interface SimilarIssue {
     title: string
     similarity: number
     summary: string
+    analysis?: string
 }
 
 export interface PredictResponse {
@@ -78,4 +81,37 @@ export interface IndexSimulationResponse {
     recommendation: "HIGHLY RECOMMENDED" | "RECOMMENDED" | "MARGINAL" | "NOT RECOMMENDED"
     create_index_sql: string
     ai_analysis: string
+}
+
+// Self-Healing SQL Types (Phase 4 - Query Rewriter)
+export interface SimilarJiraTicket {
+    id: string
+    title: string
+    similarity: number
+    analysis?: string
+}
+
+export interface RewriteResponse {
+    original_sql: string
+    rewritten_sql: string
+    improvements: string[]
+    estimated_speedup: string
+    confidence: number
+    explanation: string
+    similar_jira_tickets: SimilarJiraTicket[]
+    anti_patterns_detected: string[]
+    simulation?: IndexSimulationResponse
+    suggested_ddl?: string | null
+}
+
+export interface DiagnosticCheck {
+    service: string;
+    status: "online" | "offline" | "error" | "config_missing" | "empty" | "timeout_or_error";
+    latency_ms?: number;
+    message?: string;
+    error?: string;
+    hint?: string;
+    info?: any;
+    document_count?: number;
+    http_status?: number;
 }

@@ -10,10 +10,8 @@ class VectorStore:
         self.params = connection_params
         
     def get_connection(self, database: str = None):
-        params = self.params.copy()
-        if database:
-            params["database"] = database
-        return mariadb.connect(**params)
+        from database import get_db_connection
+        return get_db_connection(database=database)
         
     def init_schema(self):
         """Create vector table if not exists"""
@@ -67,6 +65,8 @@ class VectorStore:
         
     def search_similar(self, query_embedding: List[float], limit: int = 3, threshold: float = 0.5) -> List[Dict[str, Any]]:
         """Search for similar content using Cosine Similarity"""
+        import time
+        start_t = time.time()
         conn = self.get_connection(database="finops_auditor")
         cursor = conn.cursor(dictionary=True)
         
@@ -86,6 +86,8 @@ class VectorStore:
         
         results = cursor.fetchall()
         conn.close()
+        elapsed = (time.time() - start_t) * 1000
+        print(f"[PERF] Vector search (MariaDB) took {elapsed:.2f}ms for {len(results)} results")
         return results
 
     def get_document_count(self) -> int:

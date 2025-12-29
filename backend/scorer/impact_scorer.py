@@ -47,6 +47,25 @@ class ImpactScorer:
         
         return int(round(final_score))
 
+    def calculate_cost(self, rows_examined: int) -> float:
+        """
+        Estimate the financial cost of a query based on IOPS/CPU consumption.
+        Formula: (Rows / 1M) * $0.05 + base cost per execution.
+        """
+        base_cost = 0.01
+        io_unit_cost = 0.05 # $0.05 per million rows examined
+        estimated_cost = (rows_examined / 1_000_000) * io_unit_cost + base_cost
+        return round(estimated_cost, 4)
+
+    def get_financial_impact(self, rows_examined: int) -> dict:
+        """Return a formatted object for the UI"""
+        cost = self.calculate_cost(rows_examined)
+        return {
+            "estimated_cost_usd": cost,
+            "monthly_forecast_usd": round(cost * 3600 * 24 * 30 / 100, 2), # Assuming freq
+            "efficiency_roi": "High" if rows_examined > 100_000 else "Low"
+        }
+
     def get_impact_level(self, score: int) -> str:
         """Return qualitative impact level"""
         if score >= 80:

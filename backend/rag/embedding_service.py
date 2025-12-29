@@ -44,6 +44,8 @@ class EmbeddingService:
         Returns:
             List of floats (384 dimensions)
         """
+        import time
+        start_t = time.time()
         if not text or not text.strip():
             return []
         
@@ -54,6 +56,8 @@ class EmbeddingService:
                 normalize_embeddings=True,
                 show_progress_bar=False
             )
+            elapsed = (time.time() - start_t) * 1000
+            print(f"[PERF] Embedding generation took {elapsed:.2f}ms")
             return embedding.tolist()
         except Exception as e:
             print(f"[EmbeddingService] Error generating embedding: {e}")

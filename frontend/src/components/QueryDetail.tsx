@@ -19,7 +19,8 @@ import {
     Send,
     User,
     Sparkles,
-    Trash2
+    Trash2,
+    Database
 } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner"
@@ -34,6 +35,8 @@ import { CopyButton } from "@/components/ui/copy-button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { CodeContainer } from "@/components/ui/code-container"
 import { CopilotChat, CopilotInput } from "@/components/ui/copilot"
+import { ComparisonPanel } from "@/components/ui/comparison-panel"
+import { trackedFetch } from "@/lib/usePerformance"
 
 interface QueryDetailProps {
     suggestion: Suggestion | null
@@ -76,11 +79,47 @@ export function QueryDetail({
         risks: false,
         confidence: false,
         sources: false,
-        costAnalysis: false
+        costAnalysis: false,
+        comparison: false
     })
 
     const toggleSection = (section: keyof typeof sectionsOpen) => {
         setSectionsOpen(prev => ({ ...prev, [section]: !prev[section] }))
+    }
+
+    const [isApplyingFix, setIsApplyingFix] = useState(false)
+
+    const handleApplyFix = async () => {
+        if (!suggestion?.sql_fix) return
+
+        setIsApplyingFix(true)
+        try {
+            const res = await trackedFetch("http://localhost:8000/execute-fix", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    sql: suggestion.sql_fix,
+                    database: query?.db || "shop_demo"
+                })
+            })
+            const data = await res.json()
+            if (data.success) {
+                toast.success("Optimization applied successfully!", {
+                    description: "The database has been updated with the suggested fix.",
+                    duration: 5000
+                })
+            } else {
+                toast.error("Execution failed", {
+                    description: data.error || "Unknown error occurred"
+                })
+            }
+        } catch (error) {
+            toast.error("Connection failed", {
+                description: "Ensure backend is running."
+            })
+        } finally {
+            setIsApplyingFix(false)
+        }
     }
 
 
@@ -162,6 +201,11 @@ export function QueryDetail({
                                         <Badge variant="outline" className="text-[10px] bg-zinc-950/50 border-zinc-800 text-zinc-400">
                                             Time: {(query.query_time * 1000).toFixed(2)}ms
                                         </Badge>
+                                        {suggestion.analysis_time_ms && (
+                                            <Badge variant="outline" className="text-[10px] bg-emerald-500/5 border-emerald-500/20 text-emerald-500/80 flex items-center gap-1">
+                                                <Zap className="w-2.5 h-2.5" /> AI: {suggestion.analysis_time_ms}ms
+                                            </Badge>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -261,6 +305,45 @@ export function QueryDetail({
                         )}
                     </AnimatePresence>
 
+                    {/* Why FinOps? Comparison Section */}
+                    <div className="border border-zinc-800 rounded-md overflow-hidden bg-gradient-to-r from-emerald-500/5 to-zinc-900/20">
+                        <button
+                            onClick={() => toggleSection('comparison')}
+                            className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900/50 transition-colors"
+                        >
+                            <span className="text-sm font-semibold flex items-center gap-2 text-emerald-400">
+                                <Sparkles className="w-4 h-4" /> Why FinOps Auditor?
+                            </span>
+                            {sectionsOpen.comparison ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                        </button>
+                        <AnimatePresence>
+                            {sectionsOpen.comparison && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="p-4 pt-0 border-t border-zinc-800">
+                                        <div className="pt-3">
+                                            <ComparisonPanel
+                                                copilotResponse="This query performs a full table scan because there is no index on the filtered column. Consider adding an index to improve performance."
+                                                finopsResponse={{
+                                                    suggestion: suggestion.sql_fix || "CREATE INDEX for faster lookups",
+                                                    jiraTicket: Object.keys(suggestion.source_justifications).length > 0 ? {
+                                                        id: Object.keys(suggestion.source_justifications)[0]?.split(':')[1] || "MDEV-30820",
+                                                        title: Object.values(suggestion.source_justifications)[0]?.slice(0, 60) + "..." || "Optimizer issue",
+                                                        similarity: suggestion.confidence
+                                                    } : undefined
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
                     {/* 2. Side-by-Side Comparison */}
                     {suggestion.sql_fix && (
                         <div className="space-y-3">
@@ -272,6 +355,16 @@ export function QueryDetail({
                                         label="Copy New SQL"
                                         className="h-6 gap-2 text-[10px]"
                                     />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 gap-2 text-[10px] bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all"
+                                        onClick={handleApplyFix}
+                                        disabled={isApplyingFix}
+                                    >
+                                        <Database className={cn("w-3 h-3", isApplyingFix && "animate-spin")} />
+                                        {isApplyingFix ? "Applying..." : "Apply Optimization"}
+                                    </Button>
                                 </div>
                             </div>
 
@@ -294,85 +387,91 @@ export function QueryDetail({
                     {/* 3. Progressive Disclosure Sections (Grid Layout) */}
                     <div className="grid grid-cols-2 gap-4">
                         {/* Diagnosis */}
-                        <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
-                            <button
-                                onClick={() => toggleSection('explanation')}
-                                className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
-                            >
-                                <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
-                                    <Search className="w-4 h-4" /> Diagnosis
-                                </span>
-                                {sectionsOpen.explanation ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
-                            </button>
-                            <AnimatePresence>
-                                {sectionsOpen.explanation && (
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="overflow-hidden"
-                                    >
-                                        <div className="p-4 pt-0 text-sm text-zinc-300 leading-relaxed border-t border-zinc-800">
-                                            <div className="pt-3">{suggestion.query_explanation}</div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                        {suggestion.query_explanation && (
+                            <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
+                                <button
+                                    onClick={() => toggleSection('explanation')}
+                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
+                                >
+                                    <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
+                                        <Search className="w-4 h-4" /> Diagnosis
+                                    </span>
+                                    {sectionsOpen.explanation ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                                </button>
+                                <AnimatePresence>
+                                    {sectionsOpen.explanation && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="p-4 pt-0 text-sm text-zinc-300 leading-relaxed border-t border-zinc-800">
+                                                <div className="pt-3">{suggestion.query_explanation}</div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        )}
 
                         {/* Performance Assessment */}
-                        <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
-                            <button
-                                onClick={() => toggleSection('assessment')}
-                                className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
-                            >
-                                <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
-                                    <Scale className="w-4 h-4" /> Performance Assessment
-                                </span>
-                                {sectionsOpen.assessment ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
-                            </button>
-                            <AnimatePresence>
-                                {sectionsOpen.assessment && (
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="overflow-hidden"
-                                    >
-                                        <div className="p-4 pt-0 text-sm text-zinc-300 leading-relaxed border-t border-zinc-800">
-                                            <div className="pt-3">{suggestion.performance_assessment}</div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                        {suggestion.performance_assessment && (
+                            <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
+                                <button
+                                    onClick={() => toggleSection('assessment')}
+                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
+                                >
+                                    <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
+                                        <Scale className="w-4 h-4" /> Performance Assessment
+                                    </span>
+                                    {sectionsOpen.assessment ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                                </button>
+                                <AnimatePresence>
+                                    {sectionsOpen.assessment && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="p-4 pt-0 text-sm text-zinc-300 leading-relaxed border-t border-zinc-800">
+                                                <div className="pt-3">{suggestion.performance_assessment}</div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        )}
 
                         {/* Detailed Insights */}
-                        <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
-                            <button
-                                onClick={() => toggleSection('insights')}
-                                className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
-                            >
-                                <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
-                                    <Lightbulb className="w-4 h-4" /> Detailed Insights
-                                </span>
-                                {sectionsOpen.insights ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
-                            </button>
-                            <AnimatePresence>
-                                {sectionsOpen.insights && (
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="overflow-hidden"
-                                    >
-                                        <div className="p-4 pt-0 text-sm text-zinc-300 leading-relaxed border-t border-zinc-800">
-                                            <div className="pt-3">{suggestion.actionable_insights}</div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                        {suggestion.actionable_insights && (
+                            <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
+                                <button
+                                    onClick={() => toggleSection('insights')}
+                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
+                                >
+                                    <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
+                                        <Lightbulb className="w-4 h-4" /> Detailed Insights
+                                    </span>
+                                    {sectionsOpen.insights ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                                </button>
+                                <AnimatePresence>
+                                    {sectionsOpen.insights && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="p-4 pt-0 text-sm text-zinc-300 leading-relaxed border-t border-zinc-800">
+                                                <div className="pt-3">{suggestion.actionable_insights}</div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        )}
 
                         {/* Risk Assessment (Normalized Style) */}
                         <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
@@ -433,37 +532,35 @@ export function QueryDetail({
                                             exit={{ height: 0, opacity: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="p-4 pt-0 grid grid-cols-1 gap-2 border-t border-zinc-800">
-                                                <div className="pt-3 space-y-2">
-                                                    {Object.entries(suggestion.source_justifications).map(([source, justification], idx) => (
-                                                        <div key={idx} className="flex flex-col border border-zinc-800 rounded-md hover:bg-zinc-900/50 transition-colors">
+                                            <div className="p-4 pt-0 border-t border-zinc-800">
+                                                <div className="pt-3 flex flex-col gap-1">
+                                                    {Object.entries(suggestion.source_justifications).map(([source, justification], idx) => {
+                                                        const isJira = source.toLowerCase().startsWith("jira:");
+                                                        const jiraKey = source.split(":")[1];
+                                                        const docUrl = source.substring("documentation:".length);
+                                                        const url = isJira
+                                                            ? `https://jira.mariadb.org/browse/${jiraKey}`
+                                                            : (docUrl.startsWith("http") ? docUrl : `https://mariadb.com/kb/en/${docUrl}`);
+
+                                                        return (
                                                             <div
-                                                                className="block p-3 bg-zinc-900/30 rounded-md border border-zinc-800 hover:border-zinc-600 transition-colors group cursor-pointer"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    const isJira = source.toLowerCase().startsWith("jira:");
-                                                                    const jiraKey = source.split(":")[1];
-                                                                    const docUrl = source.substring("documentation:".length);
-                                                                    const url = isJira
-                                                                        ? `https://jira.mariadb.org/browse/${jiraKey}`
-                                                                        : (docUrl.startsWith("http") ? docUrl : `https://mariadb.com/kb/en/${docUrl}`);
-                                                                    window.open(url, '_blank');
-                                                                }}
+                                                                key={idx}
+                                                                className="flex items-center justify-between p-2 rounded-md hover:bg-zinc-900/50 group transition-colors border border-transparent hover:border-zinc-800 cursor-pointer"
+                                                                onClick={() => window.open(url, '_blank')}
                                                             >
-                                                                <div className="flex items-center justify-between mb-1">
-                                                                    <span className="font-mono text-xs text-emerald-500 group-hover:text-emerald-400 font-bold uppercase tracking-wider">
-                                                                        {source.toLowerCase().startsWith("jira") ? source.split(":")[1] : "MariaDB Docs"}
+                                                                <div className="flex items-center gap-3 min-w-0">
+                                                                    <span className="shrink-0 text-xs font-mono text-emerald-500 group-hover:text-emerald-400 flex items-center gap-1">
+                                                                        {isJira ? jiraKey : "MariaDB Docs"}
+                                                                        <ExternalLink className="w-2.5 h-2.5 opacity-50" />
                                                                     </span>
-                                                                    <span className="text-[10px] text-zinc-600 border border-zinc-800 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                                                                        <ExternalLink className="w-2 h-2" /> Open
+
+                                                                    <span className="text-xs text-zinc-400 truncate">
+                                                                        {justification}
                                                                     </span>
                                                                 </div>
-                                                                <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
-                                                                    {justification}
-                                                                </p>
                                                             </div>
-                                                        </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         </motion.div>
