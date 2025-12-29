@@ -11,6 +11,7 @@ from parser.query_parser import SlowQueryParser
 from config import SKYAI_AGENT_ID
 
 from services.index import IndexSimulationService
+from services.cache import query_rewrite_cache
 
 class QueryRewriterService:
     def __init__(self, embedding_service, vector_store, rag_enabled: bool, index_service: Optional[IndexSimulationService] = None):
@@ -116,7 +117,7 @@ Réponds UNIQUEMENT avec le JSON."""
                         "X-API-Key": skysql_api_key
                     },
                     json={"prompt": prompt, "agent_id": SKYAI_AGENT_ID},
-                    timeout=25.0  # Reduced from 30s
+                    timeout=15.0  # Reduced from 25s for faster response
                 )
                 
             api_elapsed = (time.time() - api_start) * 1000
@@ -189,6 +190,13 @@ Réponds UNIQUEMENT avec le JSON."""
                 similar_jira_tickets=[],
                 anti_patterns_detected=[]
             )
+        
+        # Check cache first for identical queries
+        cache_key = f"rewrite:{sql}"
+        cached_result = query_rewrite_cache.get(cache_key)
+        if cached_result:
+            print(f"[CACHE HIT] Returning cached rewrite result")
+            return cached_result
         
         sql_upper = sql.upper()
         
@@ -354,7 +362,7 @@ Réponds UNIQUEMENT avec le JSON."""
         total_time = (time.time() - start_total) * 1000
         print(f"[PERF] Total rewrite_query took {total_time:.2f}ms")
 
-        return RewriteResponse(
+        response = RewriteResponse(
             original_sql=sql,
             rewritten_sql=rewritten_sql,
             improvements=improvements,
@@ -366,6 +374,11 @@ Réponds UNIQUEMENT avec le JSON."""
             suggested_ddl=final_suggested_ddl,
             simulation=simulation_data
         )
+        
+        # Cache the result for future identical queries
+        query_rewrite_cache.set(cache_key, response)
+        
+        return response
 
     async def execute_fix(self, request) -> dict:
         """

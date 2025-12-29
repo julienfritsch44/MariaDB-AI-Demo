@@ -9,6 +9,7 @@ from typing import List, Dict
 from database import get_db_connection
 import deps
 from schemas.analysis import SlowQuery, QueryAnalysis, Suggestion
+from services.cache import document_count_cache
 
 router = APIRouter()
 
@@ -110,7 +111,7 @@ async def analyze_slow_queries(limit: int = 10):
             services_resp = requests.get(
                 "https://api.skysql.com/provisioning/v1/services",
                 headers=headers,
-                timeout=10
+                timeout=5  # Reduced from 10s
             )
             
             service_id = None
@@ -138,7 +139,7 @@ async def analyze_slow_queries(limit: int = 10):
                         "serverContext": [service_id],
                         "limit": limit
                     },
-                    timeout=30
+                    timeout=15  # Reduced from 30s
                 )
                 
                 if logs_resp.status_code == 200:
@@ -166,6 +167,11 @@ async def analyze_slow_queries(limit: int = 10):
                             'db': entry.get('db', entry.get('database', 'shop_demo')),
                             'sql_text': sql_text
                         })
+                    
+                    # Early exit if we found data
+                    if rows:
+                        print(f"[/analyze] Found {len(rows)} entries from SkySQL API")
+                        break
                 else:
                     print(f"[/analyze] SkySQL API error: {logs_resp.status_code} {logs_resp.text[:200]}")
             else:
@@ -231,11 +237,16 @@ async def analyze_slow_queries(limit: int = 10):
         query = parse_slow_log_row(row, i + 1)
         queries.append(query)
     
-    # Get KB count
+    # Get KB count with caching
     kb_count = 0
     try:
         if deps.vector_store:
-            kb_count = deps.vector_store.get_document_count()
+            cached_count = document_count_cache.get("kb_count")
+            if cached_count is not None:
+                kb_count = cached_count
+            else:
+                kb_count = deps.vector_store.get_document_count()
+                document_count_cache.set("kb_count", kb_count)
     except:
         kb_count = 0
 

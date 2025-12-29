@@ -97,6 +97,8 @@ class VectorStore:
         cursor.execute("SELECT COUNT(*) FROM doc_embeddings")
         count = cursor.fetchone()[0]
         conn.close()
+        # Ensure count is always an integer (MariaDB may return string in some configs)
+        count = int(count) if count is not None else 0
         print(f"[VectorStore] Total document count: {count}")
         return count
 
@@ -111,6 +113,7 @@ class VectorStore:
         """)
         results = cursor.fetchall()
         conn.close()
-        counts = {row['source_type']: row['count'] for row in results}
+        # Ensure counts are integers
+        counts = {row['source_type']: int(row['count']) if row['count'] is not None else 0 for row in results}
         print(f"[VectorStore] Document counts by type: {counts}")
         return counts

@@ -100,13 +100,27 @@ class DiagnosticService:
                 }
 
             loop = asyncio.get_running_loop()
-            count = await loop.run_in_executor(None, self.vector_store.get_document_count)
+            # Add timeout to prevent hanging
+            count = await asyncio.wait_for(
+                loop.run_in_executor(None, self.vector_store.get_document_count),
+                timeout=5.0
+            )
+            
+            # Ensure count is an integer for comparison
+            count = int(count) if count is not None else 0
             
             return {
                 "service": "Jira Knowledge Base",
                 "status": "online" if count > 0 else "empty",
                 "latency_ms": round((time.time() - start) * 1000, 2),
                 "document_count": count
+            }
+        except asyncio.TimeoutError:
+            logger.error(f"Jira check timed out after 5 seconds")
+            return {
+                "service": "Jira Knowledge Base",
+                "status": "error",
+                "error": "Timeout: Vector store check took too long (>5s)"
             }
         except Exception as e:
             error_msg = str(e)
