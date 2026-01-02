@@ -7,13 +7,19 @@ import { QueryDetail } from "@/components/QueryDetail"
 import { QueryPredictorInput, PredictorResultPanel } from "@/components/QueryPredictor"
 import { IndexSimulatorInput, IndexSimulatorResultPanel } from "@/components/IndexSimulator"
 import { QueryRewriterInput, RewriterResultPanel } from "@/components/QueryRewriter"
+import { SmartSandbox } from "@/components/SmartSandbox"
+import { UnifiedQueryAnalyzerClean } from "@/components/UnifiedQueryAnalyzerClean"
 import { ShopDemo } from "@/components/ShopDemo"
-import { Activity, List, ShoppingCart, Wand2, ArrowRight, HeartPulse, Zap, ShieldAlert, Brain } from "lucide-react"
+import PlanStabilityDashboard from "@/app/dashboard/plan-stability/page"
+import BranchingDashboard from "@/app/dashboard/branching/page"
+import { Activity, List, ShoppingCart, Wand2, ArrowRight, HeartPulse, Zap, ShieldAlert, Brain, Shield, Workflow, GitBranch, TrendingUp } from "lucide-react"
 import { DiagnosticStatus } from "@/components/DiagnosticStatus"
 import { MCPProof } from "@/components/MCPProof"
 import { PerformanceMonitor } from "@/components/ui/PerformanceMonitor"
 import { trackedFetch } from "@/lib/usePerformance"
 import { Splash } from "@/components/Splash"
+import { UnifiedCopilot } from "@/components/UnifiedCopilot"
+import ExecutiveDashboard from "@/components/ExecutiveDashboard"
 
 export default function Dashboard() {
   const [isStarted, setIsStarted] = useState(false)
@@ -22,7 +28,9 @@ export default function Dashboard() {
   const [selectedSuggestion, setSelectedSuggestion] = useState<Suggestion | null>(null)
   const [selectedQuery, setSelectedQuery] = useState<SlowQuery | null>(null)
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false)
-  const [activeTab, setActiveTab] = useState<"shop" | "predictor" | "simulator" | "rewriter" | "queries" | "diagnostic">("shop")
+  const [activeTab, setActiveTab] = useState<"shop" | "predictor" | "simulator" | "rewriter" | "sandbox" | "unified" | "queries" | "diagnostic" | "mcp" | "planstability" | "branching" | "executive">("queries")
+  const [unifiedHistory, setUnifiedHistory] = useState<any[]>([])
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<any | null>(null)
 
   // Predictor state (lifted from QueryPredictor component)
   const [predictorResult, setPredictorResult] = useState<PredictResponse | null>(null)
@@ -37,6 +45,7 @@ export default function Dashboard() {
   const [isRewriting, setIsRewriting] = useState(false)
 
   // -- Chat State --
+
   const [chatMessages, setChatMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -189,20 +198,23 @@ Confidence: ${rewriterResult.confidence}
   return (
     <>
       <PerformanceMonitor />
-      <main className="h-screen bg-zinc-950 text-zinc-100 overflow-hidden flex font-sans selection:bg-emerald-500/30">
-        {/* 1. LEFT NARROW NAV (VS Code Style) */}
-        <nav className="w-16 border-r border-zinc-800 bg-zinc-950 flex flex-col items-center py-4 gap-4 shrink-0 z-50">
+      <main className="h-screen bg-background text-foreground overflow-hidden flex font-sans selection:bg-primary/20">
+        {/* 1. LEFT NARROW NAV (SkySQL Style) */}
+        <nav className="w-16 border-r border-border bg-card flex flex-col items-center py-4 gap-4 shrink-0 z-50 shadow-sm">
           <div className="p-2 mb-4">
-            <Zap className="w-6 h-6 text-emerald-400 fill-emerald-400" />
+            <Zap className="w-6 h-6 text-primary fill-primary" />
           </div>
 
           {[
-            { id: "shop", label: "Shop Demo", icon: ShoppingCart },
+            { id: "executive", label: "Executive Summary", icon: TrendingUp },
             { id: "queries", label: "Slow Queries", icon: List },
+            { id: "unified", label: "Unified Analyzer", icon: Workflow },
             { id: "predictor", label: "Risk Predictor", icon: ShieldAlert },
-            { id: "simulator", label: "Index Simulator", icon: Zap },
             { id: "rewriter", label: "Self-Healing", icon: Wand2 },
-            { id: "mcp", label: "MCP Proof", icon: Brain }
+            { id: "sandbox", label: "Smart Sandbox", icon: Shield },
+            { id: "planstability", label: "Plan Stability", icon: Activity },
+            { id: "branching", label: "DB Branching", icon: GitBranch },
+            { id: "mcp", label: "AI Copilot", icon: Brain }
           ].map((tab) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
@@ -214,17 +226,17 @@ Confidence: ${rewriterResult.confidence}
                   if (activeTab !== tab.id) handleChatClear()
                 }}
                 title={tab.label}
-                className={`relative p-3 rounded-xl transition-all group ${isActive
-                  ? "bg-emerald-500/10 text-emerald-400"
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+                className={`relative p-3 rounded-lg transition-all group ${isActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
               >
                 <Icon className="w-6 h-6" />
                 {isActive && (
-                  <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-emerald-500 rounded-r-full" />
+                  <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full" />
                 )}
-                {/* Tooltip (optional, showing on hover) */}
-                <div className="absolute left-full ml-3 px-2 py-1 bg-zinc-800 text-zinc-100 text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-opacity lowercase italic tracking-wider">
+                {/* Tooltip */}
+                <div className="absolute left-full ml-3 px-2 py-1 bg-card border border-border text-foreground text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-opacity shadow-md">
                   {tab.label}
                 </div>
               </button>
@@ -239,39 +251,45 @@ Confidence: ${rewriterResult.confidence}
                 handleChatClear()
               }}
               title="System Health"
-              className={`relative p-3 rounded-xl transition-all group ${activeTab === "diagnostic"
-                ? "bg-emerald-500/10 text-emerald-400"
-                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+              className={`relative p-3 rounded-lg transition-all group ${activeTab === "diagnostic"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
             >
               <HeartPulse className="w-6 h-6" />
               {activeTab === "diagnostic" && (
-                <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-emerald-500 rounded-r-full" />
+                <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full" />
               )}
-              <div className="absolute left-full ml-3 px-2 py-1 bg-zinc-800 text-zinc-100 text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-opacity lowercase italic tracking-wider">
+              <div className="absolute left-full ml-3 px-2 py-1 bg-card border border-border text-foreground text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-opacity shadow-md">
                 System Health
               </div>
             </button>
 
-            <div className="w-8 h-8 rounded-full border border-zinc-800 flex items-center justify-center bg-zinc-900 group cursor-help" title="MCP API Active">
-              <Activity className="w-4 h-4 text-emerald-500 animate-pulse" />
+            <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-card group cursor-help shadow-sm" title="MCP API Active">
+              <Activity className="w-4 h-4 text-primary animate-pulse" />
             </div>
           </div>
         </nav>
 
-        {/* 2. SIDEBAR CONTENT (400px fixed) */}
-        <div className="w-[380px] border-r border-zinc-800 flex flex-col bg-zinc-925 shrink-0 overflow-hidden">
-          {/* Header of Sidebar */}
-          <div className="h-12 border-b border-zinc-800 flex items-center px-4 justify-between bg-zinc-950/50">
-            <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-              {activeTab === "shop" ? "DEMO APP" :
-                activeTab === "queries" ? "QUERY LOGS" :
-                  activeTab === "predictor" ? "RISK ANALYSIS" :
-                    activeTab === "simulator" ? "INDEX LAB" :
-                      activeTab === "diagnostic" ? "DIAGNOSTICS" : "SELF-HEALING"}
-            </span>
-            <span className="text-[10px] font-mono text-zinc-600">v11.4.2</span>
-          </div>
+        {/* 2. SIDEBAR CONTENT (400px fixed) - Hidden for executive tab */}
+        {activeTab !== "executive" && (
+          <div className="w-[380px] border-r border-border flex flex-col bg-muted shrink-0 overflow-hidden">
+            {/* Header of Sidebar */}
+            <div className="h-12 border-b border-border flex items-center px-4 justify-between bg-card/50">
+              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                {activeTab === "shop" ? "DEMO APP" :
+                  activeTab === "queries" ? "QUERY LOGS" :
+                    activeTab === "unified" ? "UNIFIED ANALYZER" :
+                    activeTab === "predictor" ? "RISK ANALYSIS" :
+                      activeTab === "simulator" ? "INDEX LAB" :
+                        activeTab === "sandbox" ? "SMART SANDBOX" :
+                        activeTab === "planstability" ? "PLAN STABILITY" :
+                        activeTab === "branching" ? "DB BRANCHING" :
+                        activeTab === "diagnostic" ? "DIAGNOSTICS" : 
+                        activeTab === "mcp" ? "AI COPILOT" : "SELF-HEALING"}
+              </span>
+              <span className="text-[10px] font-mono text-muted-foreground/60">v11.4.2</span>
+            </div>
 
           <div className="flex-1 overflow-y-auto scrollbar-thin">
             {activeTab === "shop" ? (
@@ -310,6 +328,67 @@ Confidence: ${rewriterResult.confidence}
                   setIsLoading={setIsRewriting}
                 />
               </div>
+            ) : activeTab === "sandbox" ? (
+              <div className="p-4 space-y-4">
+                <div className="text-xs text-muted-foreground">
+                  Test queries safely without persisting changes
+                </div>
+              </div>
+            ) : activeTab === "unified" ? (
+              <div className="p-4 space-y-4">
+                <div className="text-xs font-semibold text-muted-foreground mb-3">Analysis History</div>
+                {unifiedHistory.length === 0 ? (
+                  <div className="text-xs text-muted-foreground/60 text-center py-8">
+                    No queries analyzed yet
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {unifiedHistory.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setSelectedHistoryItem(item)}
+                        className="w-full p-3 rounded-md bg-muted/50 hover:bg-muted border border-border/40 hover:border-primary/50 transition-all text-left group"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-xs font-bold ${
+                            item.risk_level === 'HIGH' ? 'text-red-400' :
+                            item.risk_level === 'MEDIUM' ? 'text-amber-400' :
+                            'text-emerald-400'
+                          }`}>
+                            {item.risk_level} ({item.risk_score})
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(item.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <div className="text-xs font-mono text-foreground/80 truncate group-hover:text-primary transition-colors">
+                          {item.sql}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {unifiedHistory.length > 0 && (
+                  <button
+                    onClick={() => setUnifiedHistory([])}
+                    className="w-full mt-4 p-2 text-xs text-muted-foreground hover:text-foreground border border-border/40 rounded-md hover:bg-muted/50 transition-colors"
+                  >
+                    Clear History
+                  </button>
+                )}
+              </div>
+            ) : activeTab === "planstability" ? (
+              <div className="p-4 space-y-4">
+                <div className="text-xs text-muted-foreground">
+                  Manage query plan baselines to prevent performance regressions
+                </div>
+              </div>
+            ) : activeTab === "branching" ? (
+              <div className="p-4 space-y-4">
+                <div className="text-xs text-muted-foreground">
+                  Create and manage database branches for safe testing
+                </div>
+              </div>
             ) : activeTab === "diagnostic" ? (
               <div className="p-4 space-y-4">
                 <DiagnosticStatus />
@@ -323,9 +402,9 @@ Confidence: ${rewriterResult.confidence}
                 />
               </div>
             ) : (
-              <div className="flex items-center justify-center py-20 text-zinc-600">
+              <div className="flex items-center justify-center py-20 text-muted-foreground">
                 <div className="flex flex-col items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-zinc-600 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   <span className="text-xs">Connecting...</span>
                 </div>
               </div>
@@ -333,56 +412,66 @@ Confidence: ${rewriterResult.confidence}
           </div>
 
           {/* Sidebar Footer Metrics */}
-          <div className="p-4 border-t border-zinc-800 bg-zinc-950/50 space-y-3">
+          <div className="p-4 border-t border-border bg-card/50 space-y-3">
             <div className="flex items-center justify-between text-[10px] uppercase tracking-tighter">
-              <span className="text-zinc-500">Global Score</span>
-              <span className="text-emerald-400 font-bold">{analysis?.global_score ?? 0}</span>
+              <span className="text-muted-foreground">Global Score</span>
+              <span className="text-primary font-bold">{analysis?.global_score ?? 0}</span>
             </div>
-            <div className="w-full h-1 bg-zinc-900 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500" style={{ width: `${analysis?.global_score ?? 0}%` }} />
+            <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary" style={{ width: `${analysis?.global_score ?? 0}%` }} />
             </div>
-            <div className="flex items-center justify-between text-[10px] text-zinc-500">
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground">
               <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span>SkySQL Active</span>
               </div>
               <span>{analysis?.total_queries ?? 0} Samples</span>
             </div>
 
             {/* NEURAL CORE COUNTER */}
-            <div className="pt-2 mt-2 border-t border-zinc-800/50">
+            <div className="pt-2 mt-2 border-t border-border/50">
               <div className="flex items-center justify-between group">
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-md bg-purple-500/10 flex items-center justify-center">
-                    <Brain className="w-3 h-3 text-purple-400 animate-pulse" />
+                  <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
+                    <Brain className="w-3 h-3 text-primary animate-pulse" />
                   </div>
-                  <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-tight">Neural Core</span>
+                  <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Neural Core</span>
                 </div>
-                <span className="text-[10px] font-mono text-purple-400 font-bold">
+                <span className="text-[10px] font-mono text-primary font-bold">
                   {analysis?.kb_count ? analysis.kb_count.toLocaleString() : "1,350"} Incidents
                 </span>
               </div>
-              <p className="text-[8px] text-zinc-600 mt-1 leading-tight italic">
+              <p className="text-[8px] text-muted-foreground/60 mt-1 leading-tight italic">
                 Proactive RAG grounded in MariaDB Jira history.
               </p>
             </div>
           </div>
         </div>
+        )}
 
         {/* 3. MAIN PANEL */}
-        <div className="flex-1 bg-zinc-950 relative overflow-hidden flex flex-col">
+        <div className="flex-1 bg-card relative overflow-hidden flex flex-col">
           {/* Tab-like indicator / breadcrumb for context */}
-          <div className="h-12 border-b border-zinc-800 bg-zinc-950/20 flex items-center px-6">
-            <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 uppercase tracking-widest">
-              <span>Auditor</span>
+          <div className="h-12 border-b border-border bg-muted/30 flex items-center px-6">
+            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-widest">
+              <span>MariaDB Local Pilot</span>
               <ArrowRight className="w-3 h-3" />
-              <span className="text-zinc-100">{activeTab}</span>
+              <span className="text-foreground">{activeTab}</span>
             </div>
           </div>
 
           <div className="flex-1 overflow-hidden relative flex flex-col">
             {activeTab === "shop" ? (
               <ShopDemo />
+            ) : activeTab === "mcp" ? (
+              <UnifiedCopilot
+                chatMessages={chatMessages}
+                chatInput={chatInput}
+                setChatInput={setChatInput}
+                isChatLoading={isChatLoading}
+                onChatSend={handleChatSend}
+                onChatClear={handleChatClear}
+              />
             ) : activeTab === "predictor" ? (
               <PredictorResultPanel
                 result={predictorResult}
@@ -416,22 +505,47 @@ Confidence: ${rewriterResult.confidence}
                 onChatSend={handleChatSend}
                 onChatClear={handleChatClear}
               />
+            ) : activeTab === "sandbox" ? (
+              <div className="flex-1 overflow-y-auto p-6">
+                <SmartSandbox />
+              </div>
+            ) : activeTab === "unified" ? (
+              <UnifiedQueryAnalyzerClean 
+                analysisHistory={unifiedHistory}
+                setAnalysisHistory={setUnifiedHistory}
+                selectedHistoryItem={selectedHistoryItem}
+                onLoadFromHistory={(item) => {
+                  setSelectedHistoryItem(item)
+                }}
+              />
+            ) : activeTab === "planstability" ? (
+              <div className="flex-1 overflow-y-auto">
+                <PlanStabilityDashboard />
+              </div>
+            ) : activeTab === "branching" ? (
+              <div className="flex-1 overflow-y-auto">
+                <BranchingDashboard />
+              </div>
+            ) : activeTab === "executive" ? (
+              <div className="flex-1 overflow-y-auto">
+                <ExecutiveDashboard />
+              </div>
             ) : activeTab === "diagnostic" ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-zinc-500 gap-4">
-                <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center">
-                  <Activity className="w-8 h-8 text-emerald-500" />
+              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-muted-foreground gap-4">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center border border-border">
+                  <Activity className="w-8 h-8 text-primary" />
                 </div>
                 <div className="max-w-md">
-                  <h3 className="text-xl font-bold text-zinc-100 uppercase tracking-widest">Live Infrastructure Status</h3>
+                  <h3 className="text-xl font-bold text-foreground uppercase tracking-widest">Live Infrastructure Status</h3>
                   <p className="mt-2 text-sm">Deep diagnostic of the MariaDB / RAG infrastructure running on the backend.</p>
                   <div className="mt-8 grid grid-cols-2 gap-4 text-left">
-                    <div className="p-3 rounded-lg bg-zinc-900/50 border border-zinc-800">
-                      <p className="text-[10px] text-zinc-500 font-bold uppercase">Backend</p>
-                      <p className="text-xs text-zinc-300">FastAPI / Python 3.13</p>
+                    <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase">Backend</p>
+                      <p className="text-xs text-foreground">FastAPI / Python 3.13</p>
                     </div>
-                    <div className="p-3 rounded-lg bg-zinc-900/50 border border-zinc-800">
-                      <p className="text-[10px] text-zinc-500 font-bold uppercase">LLM Engine</p>
-                      <p className="text-xs text-zinc-300">MariaDB SkyAI Copilot</p>
+                    <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase">LLM Engine</p>
+                      <p className="text-xs text-foreground">MariaDB SkyAI Copilot</p>
                     </div>
                   </div>
                 </div>

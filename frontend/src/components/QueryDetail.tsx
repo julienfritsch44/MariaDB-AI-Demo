@@ -125,7 +125,7 @@ export function QueryDetail({
 
     if (isLoading) {
         return (
-            <div className="h-full flex items-center justify-center border-l border-zinc-800 bg-zinc-950">
+            <div className="h-full flex items-center justify-center border-l border-border bg-card">
                 <ReasoningLoader />
             </div>
         )
@@ -133,7 +133,7 @@ export function QueryDetail({
 
     if (!suggestion || !query) {
         return (
-            <div className="h-full border-l border-zinc-800 bg-zinc-950">
+            <div className="h-full border-l border-border bg-card">
                 <EmptyState
                     icon={Search}
                     title="Select a Query"
@@ -153,7 +153,7 @@ export function QueryDetail({
     const estimatedSavings = calculateSavings()
 
     return (
-        <div className="flex flex-col h-full border-l border-zinc-800 bg-zinc-950">
+        <div className="flex flex-col h-full border-l border-border bg-card">
             <div className="flex-1 overflow-y-auto relative scrollbar-thin scrollbar-thumb-zinc-800">
                 {/* 1. Ultra-Dense Header Metrics Row (Sticky) */}
                 {/* ... (Keep existing Metric Header as is, but maybe less sticky if scroll container changes?) */}
@@ -195,14 +195,14 @@ export function QueryDetail({
                                         {query.impact_score} <span className="text-sm font-medium opacity-80">IMPACT SCORE</span>
                                     </h3>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <Badge variant="outline" className="text-[10px] bg-zinc-950/50 border-zinc-800 text-zinc-400">
+                                        <Badge variant="outline" className="text-[10px] bg-card/50 border-border text-muted-foreground">
                                             Rows: {query.rows_examined.toLocaleString()}
                                         </Badge>
-                                        <Badge variant="outline" className="text-[10px] bg-zinc-950/50 border-zinc-800 text-zinc-400">
+                                        <Badge variant="outline" className="text-[10px] bg-card/50 border-border text-muted-foreground">
                                             Time: {(query.query_time * 1000).toFixed(2)}ms
                                         </Badge>
                                         {suggestion.analysis_time_ms && (
-                                            <Badge variant="outline" className="text-[10px] bg-emerald-500/5 border-emerald-500/20 text-emerald-500/80 flex items-center gap-1">
+                                            <Badge variant="outline" className="text-[10px] bg-primary/5 border-primary/20 text-primary/80 flex items-center gap-1">
                                                 <Zap className="w-2.5 h-2.5" /> AI: {suggestion.analysis_time_ms}ms
                                             </Badge>
                                         )}
@@ -214,11 +214,11 @@ export function QueryDetail({
                             <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-right">
                                 {/* Savings (Primary) */}
                                 <div className="col-span-2 group cursor-pointer" onClick={() => toggleSection('costAnalysis')}>
-                                    <div className="text-[10px] uppercase text-emerald-500/70 font-bold flex items-center justify-end gap-1">
+                                    <div className="text-[10px] uppercase text-primary/70 font-bold flex items-center justify-end gap-1">
                                         Est. Monthly Savings
                                         <ChevronDown className="w-3 h-3" />
                                     </div>
-                                    <div className="text-2xl font-mono font-bold text-emerald-400 flex items-center justify-end">
+                                    <div className="text-2xl font-mono font-bold text-primary flex items-center justify-end">
                                         <DollarSign className="w-5 h-5 mr-0.5" />
                                         {estimatedSavings}
                                     </div>
@@ -226,27 +226,27 @@ export function QueryDetail({
 
                                 {/* Confidence (Secondary) */}
                                 <div className="group cursor-pointer mt-2" onClick={() => toggleSection('confidence')}>
-                                    <div className="text-[10px] uppercase text-zinc-500 font-semibold mb-0.5 flex items-center justify-end gap-1">
+                                    <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-0.5 flex items-center justify-end gap-1">
                                         Confidence
                                         <ChevronDown className="w-3 h-3" />
                                     </div>
                                     <div className="flex items-center justify-end gap-1.5">
-                                        <div className="h-1.5 w-12 bg-zinc-800 rounded-full overflow-hidden">
+                                        <div className="h-1.5 w-12 bg-muted/50 rounded-full overflow-hidden">
                                             <div
-                                                className="h-full bg-emerald-500 rounded-full"
+                                                className="h-full bg-primary rounded-full"
                                                 style={{ width: `${suggestion.confidence * 100}%` }}
                                             />
                                         </div>
-                                        <span className="text-xs font-mono font-bold text-emerald-500">{(suggestion.confidence * 100).toFixed(0)}%</span>
+                                        <span className="text-xs font-mono font-bold text-primary">{(suggestion.confidence * 100).toFixed(0)}%</span>
                                     </div>
                                 </div>
 
                                 {/* Cost (Secondary) */}
                                 <div className="mt-2">
-                                    <div className="text-[10px] uppercase text-zinc-500 font-semibold mb-0.5">
+                                    <div className="text-[10px] uppercase text-muted-foreground font-semibold mb-0.5">
                                         New Cost
                                     </div>
-                                    <div className="text-xs font-mono font-bold text-zinc-300">
+                                    <div className="text-xs font-mono font-bold text-foreground">
                                         ${suggestion.cost_with_fix || '0.00'}
                                     </div>
                                 </div>
@@ -267,17 +267,17 @@ export function QueryDetail({
                                     <SectionHeader icon={DollarSign} title="ROI Calculation Logic" variant="emerald" className="mb-2" />
                                     <div className="grid grid-cols-2 gap-4 text-xs">
                                         <div>
-                                            <span className="text-zinc-500 block">Rows Examined (Overhead)</span>
-                                            <span className="text-zinc-300 font-mono">{query.rows_examined.toLocaleString()} rows</span>
+                                            <span className="text-muted-foreground block">Rows Examined (Overhead)</span>
+                                            <span className="text-foreground font-mono">{query.rows_examined.toLocaleString()} rows</span>
                                         </div>
                                         <div>
-                                            <span className="text-zinc-500 block">Estimated Compute Cost</span>
-                                            <span className="text-zinc-300 font-mono">
+                                            <span className="text-muted-foreground block">Estimated Compute Cost</span>
+                                            <span className="text-foreground font-mono">
                                                 {((query.rows_examined / 1000000) * 0.02).toFixed(4)} credits/exec
                                             </span>
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-zinc-600 pt-2 border-t border-emerald-900/20 mt-2">
+                                    <p className="text-[10px] text-muted-foreground pt-2 border-t border-emerald-900/20 mt-2">
                                         *Estimates based on standard cloud compute credits per million rows scanned. Actual savings depend on query frequency and instance type.
                                     </p>
                                 </div>
@@ -295,9 +295,9 @@ export function QueryDetail({
                                 exit={{ height: 0, opacity: 0, marginBottom: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="bg-zinc-900 border border-zinc-800 rounded-md p-4">
+                                <div className="bg-muted border border-border rounded-md p-4">
                                     <SectionHeader icon={Info} title="Why this confidence?" className="mb-2" />
-                                    <p className="text-xs text-zinc-400 leading-relaxed">
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
                                         {suggestion.confidence_breakdown}
                                     </p>
                                 </div>
@@ -306,15 +306,15 @@ export function QueryDetail({
                     </AnimatePresence>
 
                     {/* Why FinOps? Comparison Section */}
-                    <div className="border border-zinc-800 rounded-md overflow-hidden bg-gradient-to-r from-emerald-500/5 to-zinc-900/20">
+                    <div className="border border-border rounded-md overflow-hidden bg-gradient-to-r from-emerald-500/5 to-zinc-900/20">
                         <button
                             onClick={() => toggleSection('comparison')}
-                            className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900/50 transition-colors"
+                            className="w-full flex items-center justify-between p-3 px-4 hover:bg-muted/50 transition-colors"
                         >
-                            <span className="text-sm font-semibold flex items-center gap-2 text-emerald-400">
+                            <span className="text-sm font-semibold flex items-center gap-2 text-primary">
                                 <Sparkles className="w-4 h-4" /> Why FinOps Auditor?
                             </span>
-                            {sectionsOpen.comparison ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                            {sectionsOpen.comparison ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                         </button>
                         <AnimatePresence>
                             {sectionsOpen.comparison && (
@@ -324,7 +324,7 @@ export function QueryDetail({
                                     exit={{ height: 0, opacity: 0 }}
                                     className="overflow-hidden"
                                 >
-                                    <div className="p-4 pt-0 border-t border-zinc-800">
+                                    <div className="p-4 pt-0 border-t border-border">
                                         <div className="pt-3">
                                             <ComparisonPanel
                                                 copilotResponse="This query performs a full table scan because there is no index on the filtered column. Consider adding an index to improve performance."
@@ -358,7 +358,7 @@ export function QueryDetail({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-6 gap-2 text-[10px] bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all"
+                                        className="h-6 gap-2 text-[10px] bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 hover:text-emerald-300 transition-all"
                                         onClick={handleApplyFix}
                                         disabled={isApplyingFix}
                                     >
@@ -371,14 +371,14 @@ export function QueryDetail({
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 {/* Original */}
                                 <div className="space-y-1">
-                                    <div className="text-[10px] uppercase text-zinc-500 font-semibold pl-1">Current Slow Query</div>
-                                    <CodeContainer code={query.sql_text} className="bg-zinc-900/30 border border-zinc-800" />
+                                    <div className="text-[10px] uppercase text-muted-foreground font-semibold pl-1">Current Slow Query</div>
+                                    <CodeContainer code={query.sql_text} className="bg-muted/30 border border-border" />
                                 </div>
 
                                 {/* New */}
                                 <div className="space-y-1">
-                                    <div className="text-[10px] uppercase text-emerald-500/70 font-semibold pl-1">Optimized Query</div>
-                                    <CodeContainer code={suggestion.sql_fix} className="bg-zinc-950 border border-emerald-900/30" />
+                                    <div className="text-[10px] uppercase text-primary/70 font-semibold pl-1">Optimized Query</div>
+                                    <CodeContainer code={suggestion.sql_fix} className="bg-card border border-emerald-900/30" />
                                 </div>
                             </div>
                         </div>
@@ -388,15 +388,15 @@ export function QueryDetail({
                     <div className="grid grid-cols-2 gap-4">
                         {/* Diagnosis */}
                         {suggestion.query_explanation && (
-                            <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
+                            <div className="border border-border rounded-md overflow-hidden bg-muted/20 h-fit">
                                 <button
                                     onClick={() => toggleSection('explanation')}
-                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
+                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-muted transition-colors"
                                 >
-                                    <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
+                                    <span className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
                                         <Search className="w-4 h-4" /> Diagnosis
                                     </span>
-                                    {sectionsOpen.explanation ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                                    {sectionsOpen.explanation ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                                 </button>
                                 <AnimatePresence>
                                     {sectionsOpen.explanation && (
@@ -406,7 +406,7 @@ export function QueryDetail({
                                             exit={{ height: 0, opacity: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="p-4 pt-0 text-sm text-zinc-300 leading-relaxed border-t border-zinc-800">
+                                            <div className="p-4 pt-0 text-sm text-foreground leading-relaxed border-t border-border">
                                                 <div className="pt-3">{suggestion.query_explanation}</div>
                                             </div>
                                         </motion.div>
@@ -417,15 +417,15 @@ export function QueryDetail({
 
                         {/* Performance Assessment */}
                         {suggestion.performance_assessment && (
-                            <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
+                            <div className="border border-border rounded-md overflow-hidden bg-muted/20 h-fit">
                                 <button
                                     onClick={() => toggleSection('assessment')}
-                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
+                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-muted transition-colors"
                                 >
-                                    <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
+                                    <span className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
                                         <Scale className="w-4 h-4" /> Performance Assessment
                                     </span>
-                                    {sectionsOpen.assessment ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                                    {sectionsOpen.assessment ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                                 </button>
                                 <AnimatePresence>
                                     {sectionsOpen.assessment && (
@@ -435,7 +435,7 @@ export function QueryDetail({
                                             exit={{ height: 0, opacity: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="p-4 pt-0 text-sm text-zinc-300 leading-relaxed border-t border-zinc-800">
+                                            <div className="p-4 pt-0 text-sm text-foreground leading-relaxed border-t border-border">
                                                 <div className="pt-3">{suggestion.performance_assessment}</div>
                                             </div>
                                         </motion.div>
@@ -446,15 +446,15 @@ export function QueryDetail({
 
                         {/* Detailed Insights */}
                         {suggestion.actionable_insights && (
-                            <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
+                            <div className="border border-border rounded-md overflow-hidden bg-muted/20 h-fit">
                                 <button
                                     onClick={() => toggleSection('insights')}
-                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
+                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-muted transition-colors"
                                 >
-                                    <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
+                                    <span className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
                                         <Lightbulb className="w-4 h-4" /> Detailed Insights
                                     </span>
-                                    {sectionsOpen.insights ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                                    {sectionsOpen.insights ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                                 </button>
                                 <AnimatePresence>
                                     {sectionsOpen.insights && (
@@ -464,7 +464,7 @@ export function QueryDetail({
                                             exit={{ height: 0, opacity: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="p-4 pt-0 text-sm text-zinc-300 leading-relaxed border-t border-zinc-800">
+                                            <div className="p-4 pt-0 text-sm text-foreground leading-relaxed border-t border-border">
                                                 <div className="pt-3">{suggestion.actionable_insights}</div>
                                             </div>
                                         </motion.div>
@@ -474,15 +474,15 @@ export function QueryDetail({
                         )}
 
                         {/* Risk Assessment (Normalized Style) */}
-                        <div className="border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
+                        <div className="border border-border rounded-md overflow-hidden bg-muted/20 h-fit">
                             <button
                                 onClick={() => toggleSection('risks')}
-                                className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
+                                className="w-full flex items-center justify-between p-3 px-4 hover:bg-muted transition-colors"
                             >
-                                <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
+                                <span className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
                                     <ShieldAlert className="w-4 h-4" /> Risk Assessment
                                 </span>
-                                {sectionsOpen.risks ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                                {sectionsOpen.risks ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                             </button>
                             <AnimatePresence>
                                 {sectionsOpen.risks && (
@@ -492,18 +492,18 @@ export function QueryDetail({
                                         exit={{ height: 0, opacity: 0 }}
                                         className="overflow-hidden"
                                     >
-                                        <div className="p-4 pt-0 text-sm text-zinc-300 leading-relaxed border-t border-zinc-800">
+                                        <div className="p-4 pt-0 text-sm text-foreground leading-relaxed border-t border-border">
                                             {suggestion.risks && suggestion.risks.length > 0 ? (
                                                 <ul className="space-y-1.5 pt-3">
                                                     {suggestion.risks.map((risk, idx) => (
-                                                        <li key={idx} className="text-xs text-zinc-400 flex items-start gap-2">
-                                                            <span className="text-zinc-600 block mt-0.5">•</span>
+                                                        <li key={idx} className="text-xs text-muted-foreground flex items-start gap-2">
+                                                            <span className="text-muted-foreground block mt-0.5">•</span>
                                                             {risk}
                                                         </li>
                                                     ))}
                                                 </ul>
                                             ) : (
-                                                <p className="text-xs text-zinc-500 pt-3">No significant risks identified.</p>
+                                                <p className="text-xs text-muted-foreground pt-3">No significant risks identified.</p>
                                             )}
                                         </div>
                                     </motion.div>
@@ -513,15 +513,15 @@ export function QueryDetail({
 
                         {/* 5. Sources Footnote (Now Grid Item) */}
                         {Object.keys(suggestion.source_justifications).length > 0 && (
-                            <div className="col-span-2 border border-zinc-800 rounded-md overflow-hidden bg-zinc-900/20 h-fit">
+                            <div className="col-span-2 border border-border rounded-md overflow-hidden bg-muted/20 h-fit">
                                 <button
                                     onClick={() => toggleSection('sources')}
-                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-zinc-900 transition-colors"
+                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-muted transition-colors"
                                 >
-                                    <span className="text-sm font-semibold flex items-center gap-2 text-zinc-400">
+                                    <span className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
                                         <Ticket className="w-4 h-4" /> Grounded in Real Data ({Object.keys(suggestion.source_justifications).length})
                                     </span>
-                                    {sectionsOpen.sources ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                                    {sectionsOpen.sources ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                                 </button>
 
                                 <AnimatePresence>
@@ -532,7 +532,7 @@ export function QueryDetail({
                                             exit={{ height: 0, opacity: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="p-4 pt-0 border-t border-zinc-800">
+                                            <div className="p-4 pt-0 border-t border-border">
                                                 <div className="pt-3 flex flex-col gap-1">
                                                     {Object.entries(suggestion.source_justifications).map(([source, justification], idx) => {
                                                         const isJira = source.toLowerCase().startsWith("jira:");
@@ -545,16 +545,16 @@ export function QueryDetail({
                                                         return (
                                                             <div
                                                                 key={idx}
-                                                                className="flex items-center justify-between p-2 rounded-md hover:bg-zinc-900/50 group transition-colors border border-transparent hover:border-zinc-800 cursor-pointer"
+                                                                className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 group transition-colors border border-transparent hover:border-border cursor-pointer"
                                                                 onClick={() => window.open(url, '_blank')}
                                                             >
                                                                 <div className="flex items-center gap-3 min-w-0">
-                                                                    <span className="shrink-0 text-xs font-mono text-emerald-500 group-hover:text-emerald-400 flex items-center gap-1">
+                                                                    <span className="shrink-0 text-xs font-mono text-primary group-hover:text-primary flex items-center gap-1">
                                                                         {isJira ? jiraKey : "MariaDB Docs"}
                                                                         <ExternalLink className="w-2.5 h-2.5 opacity-50" />
                                                                     </span>
 
-                                                                    <span className="text-xs text-zinc-400 truncate">
+                                                                    <span className="text-xs text-muted-foreground truncate">
                                                                         {justification}
                                                                     </span>
                                                                 </div>

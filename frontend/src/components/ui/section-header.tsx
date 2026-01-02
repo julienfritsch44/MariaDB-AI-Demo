@@ -15,8 +15,8 @@ export function SectionHeader({
     variant = "default"
 }: SectionHeaderProps) {
     const colorStyles = {
-        default: "text-zinc-500",
-        emerald: "text-emerald-500",
+        default: "text-muted-foreground",
+        emerald: "text-primary",
         danger: "text-red-400",
         warning: "text-amber-400"
     }

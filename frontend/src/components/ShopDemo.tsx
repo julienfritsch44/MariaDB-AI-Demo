@@ -86,31 +86,31 @@ export function ShopDemo() {
     }, [isSimulating])
 
     return (
-        <div className="h-full flex flex-col bg-zinc-950 text-zinc-100 overflow-hidden font-sans">
+        <div className="h-full flex flex-col bg-card text-foreground overflow-hidden font-sans">
             {/* Shop Header */}
-            <header className="h-14 border-b border-zinc-800 bg-zinc-900 px-6 flex items-center justify-between shrink-0">
+            <header className="h-14 border-b border-border bg-muted px-6 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="bg-indigo-600 p-2 rounded-lg">
                         <ShoppingCart className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-base font-bold text-zinc-100 tracking-tight">ShopAdmin</h1>
-                        <p className="text-[10px] text-zinc-500">eCommerce Control Center</p>
+                        <h1 className="text-base font-bold text-foreground tracking-tight">ShopAdmin</h1>
+                        <p className="text-[10px] text-muted-foreground">eCommerce Control Center</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     {statusMessage && (
-                        <span className="text-xs text-zinc-400">{statusMessage}</span>
+                        <span className="text-xs text-muted-foreground">{statusMessage}</span>
                     )}
                     <Badge
                         variant="outline"
                         className={isSimulating
-                            ? "bg-emerald-500/20 border-emerald-500 text-emerald-400"
-                            : "bg-zinc-800 border-zinc-700 text-zinc-500"
+                            ? "bg-primary/20 border-primary text-primary"
+                            : "bg-muted/50 border-border text-muted-foreground"
                         }
                     >
                         {isSimulating ? (
-                            <><span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse" />LIVE</>
+                            <><span className="w-2 h-2 rounded-full bg-primary mr-2 animate-pulse" />LIVE</>
                         ) : (
                             "STANDBY"
                         )}
@@ -148,7 +148,7 @@ export function ShopDemo() {
                                         addLog(`Test failed: ${e.message}`)
                                     }
                                 }}
-                                className="h-12 px-4 text-sm border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+                                className="h-12 px-4 text-sm border-border text-foreground hover:bg-muted/50"
                             >
                                 Test Database
                             </Button>
@@ -158,7 +158,7 @@ export function ShopDemo() {
                                 disabled={isLoading}
                                 className={`h-12 px-6 text-sm font-bold transition-all ${isSimulating
                                     ? "bg-red-500 hover:bg-red-600 text-white"
-                                    : "bg-emerald-500 hover:bg-emerald-600 text-white"
+                                    : "bg-primary hover:bg-emerald-600 text-white"
                                     }`}
                             >
                                 {isLoading ? (
@@ -175,41 +175,41 @@ export function ShopDemo() {
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Card className="bg-zinc-900 border-zinc-800">
+                        <Card className="bg-muted border-border">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-xs font-medium text-zinc-500 flex items-center justify-between">
+                                <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
                                     Total Revenue
-                                    <span className="text-emerald-400 text-xs font-bold">+12.5%</span>
+                                    <span className="text-primary text-xs font-bold">+12.5%</span>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold text-zinc-100">
+                                <div className="text-2xl font-bold text-foreground">
                                     $<AnimatedNumber value={stats.revenue} formatFn={n => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-zinc-900 border-zinc-800">
+                        <Card className="bg-muted border-border">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-xs font-medium text-zinc-500 flex items-center justify-between">
+                                <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
                                     Live Orders
-                                    <Activity className="w-4 h-4 text-zinc-600" />
+                                    <Activity className="w-4 h-4 text-muted-foreground" />
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold text-zinc-100">
+                                <div className="text-2xl font-bold text-foreground">
                                     <AnimatedNumber value={stats.orders} />
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-zinc-900 border-zinc-800">
+                        <Card className="bg-muted border-border">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-xs font-medium text-zinc-500 flex items-center justify-between">
+                                <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
                                     Active Visitors
-                                    <Users className="w-4 h-4 text-zinc-600" />
+                                    <Users className="w-4 h-4 text-muted-foreground" />
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold text-zinc-100">
+                                <div className="text-2xl font-bold text-foreground">
                                     <AnimatedNumber value={stats.activeUsers} />
                                 </div>
                             </CardContent>
@@ -219,17 +219,17 @@ export function ShopDemo() {
                     {/* Debug Logs & Alerts */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Debug Log */}
-                        <Card className="bg-zinc-900 border-zinc-800">
+                        <Card className="bg-muted border-border">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm text-zinc-300">Debug Log</CardTitle>
+                                <CardTitle className="text-sm text-foreground">Debug Log</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="bg-zinc-950 border border-zinc-800 rounded-md p-3 h-40 overflow-y-auto font-mono text-xs">
+                                <div className="bg-card border border-border rounded-md p-3 h-40 overflow-y-auto font-mono text-xs">
                                     {logs.length === 0 ? (
-                                        <span className="text-zinc-600">No logs yet. Click Start Simulation.</span>
+                                        <span className="text-muted-foreground">No logs yet. Click Start Simulation.</span>
                                     ) : (
                                         logs.map((log, i) => (
-                                            <div key={i} className={`${log.includes("ERROR") ? "text-red-400" : "text-zinc-400"}`}>
+                                            <div key={i} className={`${log.includes("ERROR") ? "text-red-400" : "text-muted-foreground"}`}>
                                                 {log}
                                             </div>
                                         ))
@@ -239,9 +239,9 @@ export function ShopDemo() {
                         </Card>
 
                         {/* System Alerts */}
-                        <Card className="bg-zinc-900 border-zinc-800">
+                        <Card className="bg-muted border-border">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm text-zinc-300">System Alerts</CardTitle>
+                                <CardTitle className="text-sm text-foreground">System Alerts</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex gap-3 text-amber-300 text-xs">
@@ -251,10 +251,10 @@ export function ShopDemo() {
                                         <span className="text-amber-400/70">Reporting module is causing high CPU load.</span>
                                     </div>
                                 </div>
-                                <div className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg flex gap-3 text-zinc-400 text-xs">
+                                <div className="p-3 bg-muted/50/50 border border-border rounded-lg flex gap-3 text-muted-foreground text-xs">
                                     <Package className="w-4 h-4 shrink-0 mt-0.5" />
                                     <div>
-                                        <span className="font-semibold block text-zinc-300">Low Stock Warning</span>
+                                        <span className="font-semibold block text-foreground">Low Stock Warning</span>
                                         <span>Item 'Gaming Mouse X1' is below threshold (5 left).</span>
                                     </div>
                                 </div>

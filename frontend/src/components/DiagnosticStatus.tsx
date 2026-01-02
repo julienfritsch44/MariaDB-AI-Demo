@@ -67,7 +67,7 @@ export function DiagnosticStatus() {
             case "timeout_or_error": return <AlertCircle className="w-3.5 h-3.5 text-red-500" />
             case "config_missing": return <Settings className="w-3.5 h-3.5 text-yellow-500" />
             case "empty": return <AlertTriangle className="w-3.5 h-3.5 text-yellow-500" />
-            default: return <AlertTriangle className="w-3.5 h-3.5 text-zinc-500" />
+            default: return <AlertTriangle className="w-3.5 h-3.5 text-muted-foreground" />
         }
     }
 
@@ -112,30 +112,30 @@ export function DiagnosticStatus() {
     }
 
     return (
-        <Card className="border-zinc-800 bg-zinc-950/50 flex flex-col h-full max-h-screen">
-            <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0 border-b border-zinc-900 shrink-0">
-                <CardTitle className="text-xs font-semibold text-zinc-100 flex items-center gap-2">
-                    <Activity className="w-3.5 h-3.5 text-emerald-500" />
+        <Card className="border-border bg-card/50 flex flex-col h-full max-h-screen">
+            <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0 border-b border-border shrink-0">
+                <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-2">
+                    <Activity className="w-3.5 h-3.5 text-primary" />
                     SYSTEM DIAGNOSTIC
                 </CardTitle>
                 <div className="flex items-center gap-3">
                     <Button
                         size="sm"
                         variant="outline"
-                        className="h-6 text-[10px] px-2 border-zinc-800 hover:bg-zinc-800 text-zinc-400"
+                        className="h-6 text-[10px] px-2 border-border hover:bg-muted/50 text-muted-foreground"
                         onClick={toggleLogs}
                     >
                         {showLogs ? 'Hide Logs' : 'View Logs'}
                     </Button>
                     {lastRun && (
-                        <span className="text-[10px] text-zinc-500">
+                        <span className="text-[10px] text-muted-foreground">
                             {lastRun.toLocaleTimeString()}
                         </span>
                     )}
                     <Button
                         size="icon"
                         variant="ghost"
-                        className="h-6 w-6 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-900"
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-muted"
                         onClick={runDiagnostic}
                         disabled={isLoading}
                     >
@@ -147,27 +147,27 @@ export function DiagnosticStatus() {
                 <div className="divide-y divide-zinc-900 overflow-y-auto shrink-0 max-h-[50vh]">
                     {diagnostics.length === 0 && isLoading ? (
                         <div className="p-8 text-center">
-                            <RefreshCcw className="w-6 h-6 animate-spin text-zinc-700 mx-auto mb-2" />
-                            <p className="text-[11px] text-zinc-500">Deep testing in progress...</p>
+                            <RefreshCcw className="w-6 h-6 animate-spin text-foreground mx-auto mb-2" />
+                            <p className="text-[11px] text-muted-foreground">Deep testing in progress...</p>
                         </div>
                     ) : (
                         diagnostics.map((check, idx) => (
-                            <div key={idx} className="p-3 flex items-center justify-between hover:bg-zinc-100/5 transition-colors">
+                            <div key={idx} className="p-3 flex items-center justify-between hover:bg-background/5 transition-colors">
                                 <div className="flex items-center gap-2.5">
-                                    <div className="w-7 h-7 rounded-full bg-zinc-900 flex items-center justify-center">
-                                        {check.service.includes("MariaDB") && <Database className="w-3.5 h-3.5 text-zinc-400" />}
-                                        {check.service.includes("Embeddings") && <Cpu className="w-3.5 h-3.5 text-zinc-400" />}
-                                        {check.service.includes("Jira") && <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />}
-                                        {check.service.includes("SkyAI") && <Zap className="w-3.5 h-3.5 text-zinc-400" />}
+                                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
+                                        {check.service.includes("MariaDB") && <Database className="w-3.5 h-3.5 text-muted-foreground" />}
+                                        {check.service.includes("Embeddings") && <Cpu className="w-3.5 h-3.5 text-muted-foreground" />}
+                                        {check.service.includes("Jira") && <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />}
+                                        {check.service.includes("SkyAI") && <Zap className="w-3.5 h-3.5 text-muted-foreground" />}
                                     </div>
                                     <div>
-                                        <p className="text-[11px] font-medium text-zinc-200">{check.service}</p>
+                                        <p className="text-[11px] font-medium text-foreground">{check.service}</p>
                                         <div className="flex items-center gap-2 mt-0.5">
                                             <Badge variant="outline" className={`px-1.5 py-0 text-[9px] font-bold h-3.5 border ${getStatusColor(check.status)}`}>
                                                 {getStatusText(check.status)}
                                             </Badge>
                                             {check.latency_ms && (
-                                                <span className="text-[10px] text-zinc-600 flex items-center gap-1">
+                                                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                                                     <Clock className="w-2.5 h-2.5" />
                                                     {check.latency_ms}ms
                                                 </span>
@@ -186,15 +186,15 @@ export function DiagnosticStatus() {
                                             {check.error}
                                         </p>
                                     ) : check.document_count !== undefined ? (
-                                        <p className="text-[10px] text-emerald-500 font-mono">
+                                        <p className="text-[10px] text-primary font-mono">
                                             {check.document_count} tickets
                                         </p>
                                     ) : check.http_status ? (
-                                        <p className="text-[10px] text-zinc-500 font-mono">
+                                        <p className="text-[10px] text-muted-foreground font-mono">
                                             HTTP {check.http_status}
                                         </p>
                                     ) : (
-                                        <CheckCircle2 className="w-4 h-4 text-emerald-500/50" />
+                                        <CheckCircle2 className="w-4 h-4 text-primary/50" />
                                     )}
                                 </div>
                             </div>
@@ -204,26 +204,26 @@ export function DiagnosticStatus() {
 
                 {/* Logs Terminal */}
                 {showLogs && (
-                    <div className="border-t border-zinc-800 flex flex-col flex-1 min-h-0 bg-[#0c0c0c]">
-                        <div className="px-3 py-1.5 border-b border-zinc-800 flex items-center justify-between">
-                            <span className="text-[10px] font-mono text-zinc-500 uppercase">Server Logs (Tail 100)</span>
+                    <div className="border-t border-border flex flex-col flex-1 min-h-0 bg-[#0c0c0c]">
+                        <div className="px-3 py-1.5 border-b border-border flex items-center justify-between">
+                            <span className="text-[10px] font-mono text-muted-foreground uppercase">Server Logs (Tail 100)</span>
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-4 w-4 text-zinc-500 hover:text-zinc-100"
+                                className="h-4 w-4 text-muted-foreground hover:text-foreground"
                                 onClick={fetchLogs}
                                 disabled={isLoadingLogs}
                             >
                                 <RefreshCcw className={`w-3 h-3 ${isLoadingLogs ? 'animate-spin' : ''}`} />
                             </Button>
                         </div>
-                        <div className="flex-1 overflow-x-auto overflow-y-auto p-3 font-mono text-[10px] text-zinc-400 whitespace-pre">
+                        <div className="flex-1 overflow-x-auto overflow-y-auto p-3 font-mono text-[10px] text-muted-foreground whitespace-pre">
                             {logs.length > 0 ? (
                                 logs.map((line, i) => (
-                                    <div key={i} className="hover:text-zinc-100">{line}</div>
+                                    <div key={i} className="hover:text-foreground">{line}</div>
                                 ))
                             ) : (
-                                <span className="text-zinc-600 italic">No logs available or empty.</span>
+                                <span className="text-muted-foreground italic">No logs available or empty.</span>
                             )}
                         </div>
                     </div>

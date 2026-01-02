@@ -13,12 +13,12 @@ interface ReasoningLoaderProps {
 
 const colorStyles = {
     emerald: {
-        bg: "bg-emerald-500/10",
-        border: "border-emerald-500/20",
-        text: "text-emerald-500",
-        textLight: "text-emerald-400",
+        bg: "bg-primary/10",
+        border: "border-primary/20",
+        text: "text-primary",
+        textLight: "text-primary",
         gradient: "from-emerald-500 to-teal-400",
-        pulse: "bg-emerald-500/20"
+        pulse: "bg-primary/20"
     },
     amber: {
         bg: "bg-amber-500/10",
@@ -123,7 +123,7 @@ export function ReasoningLoader({
                         exit={{ opacity: 0, height: 0 }}
                         className="w-full mb-6 overflow-hidden"
                     >
-                        <div className={cn("bg-zinc-900/80 border rounded-lg p-4", colors.border)}>
+                        <div className={cn("bg-muted/80 border rounded-lg p-4", colors.border)}>
                             {/* Header */}
                             <div className="flex items-center gap-2 mb-3">
                                 <Search className={cn("w-4 h-4 animate-pulse", colors.textLight)} />
@@ -133,7 +133,7 @@ export function ReasoningLoader({
                             </div>
 
                             {/* Progress Bar */}
-                            <div className="h-1 bg-zinc-800 rounded-full overflow-hidden mb-3">
+                            <div className="h-1 bg-muted/50 rounded-full overflow-hidden mb-3">
                                 <motion.div
                                     className={cn("h-full bg-gradient-to-r", colors.gradient)}
                                     initial={{ width: "0%" }}
@@ -143,7 +143,7 @@ export function ReasoningLoader({
                             </div>
 
                             {/* Scrolling Tickets */}
-                            <div className="h-20 overflow-hidden relative rounded bg-zinc-950/50">
+                            <div className="h-20 overflow-hidden relative rounded bg-card/50">
                                 <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-transparent to-zinc-950/80 z-10 pointer-events-none" />
                                 <motion.div
                                     animate={{ y: -currentTicketIndex * 20 }}
@@ -157,7 +157,7 @@ export function ReasoningLoader({
                                                 "flex items-center gap-2 px-2 h-5 text-xs transition-all",
                                                 idx === currentTicketIndex + SAMPLE_TICKETS.length
                                                     ? cn(colors.textLight, "scale-105")
-                                                    : "text-zinc-600 scale-100"
+                                                    : "text-muted-foreground scale-100"
                                             )}
                                         >
                                             <Ticket className="w-3 h-3 shrink-0" />
@@ -170,7 +170,7 @@ export function ReasoningLoader({
 
                             {/* Counter */}
                             <div className="mt-2 text-right">
-                                <span className="text-[10px] font-mono text-zinc-500">
+                                <span className="text-[10px] font-mono text-muted-foreground">
                                     Scanned: <span className={colors.textLight}>{scannedCount.toLocaleString()}</span> / {totalTickets.toLocaleString()}
                                 </span>
                             </div>
@@ -201,16 +201,16 @@ export function ReasoningLoader({
                                     <Loader2 className={cn("w-4 h-4 animate-spin", colors.textLight)} />
                                 )}
                                 {status === "pending" && (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-muted/70" />
                                 )}
                             </div>
 
                             {/* Text */}
                             <span className={cn(
                                 "text-sm transition-colors duration-300",
-                                status === "completed" && "text-zinc-500",
+                                status === "completed" && "text-muted-foreground",
                                 status === "current" && cn(colors.textLight, "font-medium"),
-                                status === "pending" && "text-zinc-700"
+                                status === "pending" && "text-foreground"
                             )}>
                                 {step}
                             </span>
@@ -219,7 +219,7 @@ export function ReasoningLoader({
                 })}
             </div>
 
-            <p className="mt-6 text-[10px] text-zinc-600 animate-pulse">
+            <p className="mt-6 text-[10px] text-muted-foreground animate-pulse">
                 Powered by MariaDB Vector + SkyAI Copilot
             </p>
         </div>

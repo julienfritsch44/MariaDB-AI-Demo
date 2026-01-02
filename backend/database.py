@@ -68,7 +68,7 @@ def get_db_connection(database: str = None):
             user=os.getenv("SKYSQL_USERNAME"),
             password=os.getenv("SKYSQL_PASSWORD"),
             database=database,
-            ssl=True,
+            ssl_verify_cert=False,
             connect_timeout=3
         )
     except Exception as e:

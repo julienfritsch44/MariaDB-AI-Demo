@@ -4,26 +4,33 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  /* SkySQL Light Mode Colors */
+  --background: 220 14% 96%;        /* #F3F4F6 - Page background */
+  --foreground: 222 47% 11%;        /* #111827 - Primary text */
+  --card: 0 0% 100%;                /* #FFFFFF - Card background */
+  --card-foreground: 222 47% 11%;   /* #111827 - Card text */
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.5rem;
+  --popover-foreground: 222 47% 11%;
+  --primary: 194 100% 40%;          /* #00A9CE - SkySQL Blue */
+  --primary-foreground: 0 0% 100%;  /* White text on primary */
+  --secondary: 220 13% 91%;         /* #E5E7EB - Light gray */
+  --secondary-foreground: 215 16% 47%; /* #6B7280 - Gray text */
+  --muted: 220 14% 96%;             /* #F9FAFB - Muted background */
+  --muted-foreground: 220 9% 46%;   /* #6B7280 - Muted text */
+  --accent: 220 13% 91%;            /* #E5E7EB - Accent */
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 84% 60%;         /* #EF4444 - Red danger */
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 91%;            /* #E5E7EB - Borders */
+  --input: 220 13% 91%;
+  --ring: 194 100% 40%;             /* #00A9CE - Focus ring */
+  --radius: 0.375rem;               /* 6px - SkySQL border radius */
+  
+  /* SkySQL Specific Colors */
+  --skysql-header: 195 100% 14%;    /* #1A3D47 - Dark Teal header */
+  --skysql-success: 160 84% 39%;    /* #10B981 - Success green */
+  --skysql-warning: 38 92% 50%;     /* #F59E0B - Warning amber */
+  --skysql-info: 217 91% 60%;       /* #3B82F6 - Info blue */
 }
 
 .dark {

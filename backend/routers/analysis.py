@@ -171,7 +171,7 @@ async def analyze_slow_queries(limit: int = 10):
                     # Early exit if we found data
                     if rows:
                         print(f"[/analyze] Found {len(rows)} entries from SkySQL API")
-                        break
+                        return rows
                 else:
                     print(f"[/analyze] SkySQL API error: {logs_resp.status_code} {logs_resp.text[:200]}")
             else:

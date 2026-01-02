@@ -27,10 +27,10 @@ export function PerformanceMonitor() {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-4 right-4 z-50 p-3 bg-zinc-900 border border-zinc-700 rounded-full shadow-lg hover:bg-zinc-800 transition-all group"
+                className="fixed bottom-4 right-4 z-50 p-3 bg-muted border border-border rounded-full shadow-lg hover:bg-muted/50 transition-all group"
                 title="Performance Monitor"
             >
-                <Gauge className="w-5 h-5 text-emerald-400" />
+                <Gauge className="w-5 h-5 text-primary" />
                 {stats.slowCalls > 0 && (
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                         {stats.slowCalls}
@@ -41,51 +41,51 @@ export function PerformanceMonitor() {
     }
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 w-[400px] bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden">
+        <div className="fixed bottom-4 right-4 z-50 w-[400px] bg-muted border border-border rounded-xl shadow-2xl overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-zinc-800 border-b border-zinc-700">
+            <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b border-border">
                 <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-emerald-400" />
-                    <span className="text-sm font-bold text-zinc-100 uppercase tracking-wider">
+                    <Activity className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-bold text-foreground uppercase tracking-wider">
                         Performance Monitor
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="p-1.5 hover:bg-zinc-700 rounded transition-colors"
+                        className="p-1.5 hover:bg-muted/70 rounded transition-colors"
                         title={isExpanded ? "Collapse" : "Expand"}
                     >
                         {isExpanded ? (
-                            <ChevronDown className="w-4 h-4 text-zinc-400" />
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
                         ) : (
-                            <ChevronUp className="w-4 h-4 text-zinc-400" />
+                            <ChevronUp className="w-4 h-4 text-muted-foreground" />
                         )}
                     </button>
                     <button
                         onClick={clearHistory}
-                        className="p-1.5 hover:bg-zinc-700 rounded transition-colors"
+                        className="p-1.5 hover:bg-muted/70 rounded transition-colors"
                         title="Clear history"
                     >
-                        <Trash2 className="w-4 h-4 text-zinc-400" />
+                        <Trash2 className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="p-1.5 hover:bg-zinc-700 rounded transition-colors"
+                        className="p-1.5 hover:bg-muted/70 rounded transition-colors"
                         title="Close"
                     >
-                        <X className="w-4 h-4 text-zinc-400" />
+                        <X className="w-4 h-4 text-muted-foreground" />
                     </button>
                 </div>
             </div>
 
             {/* Stats Summary */}
-            <div className="grid grid-cols-4 gap-2 p-3 bg-zinc-850 border-b border-zinc-700">
+            <div className="grid grid-cols-4 gap-2 p-3 bg-zinc-850 border-b border-border">
                 <StatCard
                     icon={<Activity className="w-3 h-3" />}
                     label="Calls"
                     value={stats.totalCalls.toString()}
-                    color="text-zinc-300"
+                    color="text-foreground"
                 />
                 <StatCard
                     icon={<Clock className="w-3 h-3" />}
@@ -97,13 +97,13 @@ export function PerformanceMonitor() {
                     icon={<Zap className="w-3 h-3" />}
                     label="Fast"
                     value={stats.fastestCall ? formatDuration(stats.fastestCall) : "-"}
-                    color="text-emerald-400"
+                    color="text-primary"
                 />
                 <StatCard
                     icon={<AlertTriangle className="w-3 h-3" />}
                     label="Slow"
                     value={stats.slowCalls.toString()}
-                    color={stats.slowCalls > 0 ? "text-red-400" : "text-zinc-500"}
+                    color={stats.slowCalls > 0 ? "text-red-400" : "text-muted-foreground"}
                 />
             </div>
 
@@ -111,7 +111,7 @@ export function PerformanceMonitor() {
             {isExpanded && (
                 <div className="max-h-[300px] overflow-y-auto">
                     {entries.length === 0 ? (
-                        <div className="p-6 text-center text-zinc-500 text-sm">
+                        <div className="p-6 text-center text-muted-foreground text-sm">
                             No API calls recorded yet.
                             <br />
                             <span className="text-xs">Interact with the app to see performance data.</span>
@@ -127,18 +127,18 @@ export function PerformanceMonitor() {
             )}
 
             {/* Legend */}
-            <div className="px-3 py-2 bg-zinc-800 border-t border-zinc-700 flex items-center justify-center gap-4 text-[10px]">
+            <div className="px-3 py-2 bg-muted/50 border-t border-border flex items-center justify-center gap-4 text-[10px]">
                 <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-zinc-400">&lt;200ms</span>
+                    <span className="w-2 h-2 rounded-full bg-primary" />
+                    <span className="text-muted-foreground">&lt;200ms</span>
                 </span>
                 <span className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-amber-500" />
-                    <span className="text-zinc-400">200-500ms</span>
+                    <span className="text-muted-foreground">200-500ms</span>
                 </span>
                 <span className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-red-500" />
-                    <span className="text-zinc-400">&gt;500ms</span>
+                    <span className="text-muted-foreground">&gt;500ms</span>
                 </span>
             </div>
         </div>
@@ -147,8 +147,8 @@ export function PerformanceMonitor() {
 
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
     return (
-        <div className="bg-zinc-800/50 rounded-lg p-2 text-center">
-            <div className="flex items-center justify-center gap-1 text-zinc-500 text-[10px] uppercase mb-1">
+        <div className="bg-muted/50/50 rounded-lg p-2 text-center">
+            <div className="flex items-center justify-center gap-1 text-muted-foreground text-[10px] uppercase mb-1">
                 {icon}
                 {label}
             </div>
@@ -159,16 +159,16 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
 
 function RequestRow({ entry }: { entry: PerformanceEntry }) {
     const isError = entry.status >= 400 || entry.error
-    const statusColor = isError ? "text-red-400" : "text-emerald-400"
+    const statusColor = isError ? "text-red-400" : "text-primary"
 
     return (
-        <div className={`px-3 py-2 hover:bg-zinc-800/50 transition-colors ${getDurationBgColor(entry.duration)}`}>
+        <div className={`px-3 py-2 hover:bg-muted/50/50 transition-colors ${getDurationBgColor(entry.duration)}`}>
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="text-[10px] font-mono text-zinc-500 uppercase w-8 shrink-0">
+                    <span className="text-[10px] font-mono text-muted-foreground uppercase w-8 shrink-0">
                         {entry.method}
                     </span>
-                    <span className="text-xs text-zinc-300 truncate" title={entry.endpoint}>
+                    <span className="text-xs text-foreground truncate" title={entry.endpoint}>
                         {entry.endpoint}
                     </span>
                 </div>
@@ -180,13 +180,13 @@ function RequestRow({ entry }: { entry: PerformanceEntry }) {
                         {formatDuration(entry.duration)}
                     </span>
                     {entry.serverTime && (
-                        <span className="text-[10px] text-zinc-500" title="Server processing time">
+                        <span className="text-[10px] text-muted-foreground" title="Server processing time">
                             (srv: {Math.round(entry.serverTime)}ms)
                         </span>
                     )}
                 </div>
             </div>
-            <div className="text-[10px] text-zinc-600 mt-1">
+            <div className="text-[10px] text-muted-foreground mt-1">
                 {formatTime(entry.timestamp)}
                 {entry.error && <span className="ml-2 text-red-400">{entry.error}</span>}
             </div>

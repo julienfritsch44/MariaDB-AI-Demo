@@ -10,14 +10,14 @@ interface CodeContainerProps {
 export function CodeContainer({ code, className, lang = "sql" }: CodeContainerProps) {
     return (
         <div className={cn(
-            "bg-zinc-950 border border-zinc-800 rounded-md shadow-sm overflow-hidden",
+            "bg-card border border-border rounded-md shadow-sm overflow-hidden",
             className
         )}>
             <div className="p-3 overflow-x-auto">
                 {lang === "sql" ? (
                     <SqlCode code={code} />
                 ) : (
-                    <pre className="text-xs font-mono text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                    <pre className="text-xs font-mono text-foreground whitespace-pre-wrap leading-relaxed">
                         {code}
                     </pre>
                 )}

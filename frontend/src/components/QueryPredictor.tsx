@@ -70,18 +70,18 @@ export function QueryPredictorInput({ onPredict, isLoading, setIsLoading }: Quer
 
     return (
         <div className="space-y-4">
-            <Card className="border-border/40 bg-zinc-900/30">
+            <Card className="border-border/40 bg-muted/30">
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-sm font-medium text-zinc-100">
-                            <ShieldAlert className="w-4 h-4 text-emerald-500" />
+                        <CardTitle className="flex items-center gap-2 text-sm font-medium text-foreground">
+                            <ShieldAlert className="w-4 h-4 text-primary" />
                             SQL Query Risk Analysis
                         </CardTitle>
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={loadDemoQuery}
-                            className="text-xs h-7 border-zinc-700 bg-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700"
+                            className="text-xs h-7 border-border bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted/70"
                         >
                             <Database className="w-3 h-3 mr-1.5" />
                             Load Demo
@@ -93,7 +93,7 @@ export function QueryPredictorInput({ onPredict, isLoading, setIsLoading }: Quer
                         value={sql}
                         onChange={(e) => setSql(e.target.value)}
                         placeholder="Paste your SQL query here..."
-                        className="w-full h-40 p-3 bg-zinc-950/50 border border-zinc-800 rounded-md font-mono text-xs text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700 resize-none"
+                        className="w-full h-40 p-3 bg-card/50 border border-border rounded-md font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-border focus:ring-1 focus:ring-border resize-none"
                     />
 
                     {error && (
@@ -106,7 +106,7 @@ export function QueryPredictorInput({ onPredict, isLoading, setIsLoading }: Quer
                     <Button
                         onClick={handlePredict}
                         disabled={!sql.trim() || isLoading}
-                        className="w-full h-9 bg-zinc-100 text-zinc-900 hover:bg-zinc-200 transition-colors font-medium text-xs"
+                        className="w-full h-9 bg-background text-foreground hover:bg-muted transition-colors font-medium text-xs"
                     >
                         {isLoading ? (
                             <>
@@ -129,9 +129,9 @@ export function QueryPredictorInput({ onPredict, isLoading, setIsLoading }: Quer
 // Risk level styling
 const riskStyles = {
     LOW: {
-        bg: "bg-emerald-500/5",
+        bg: "bg-primary/5",
         border: "border-emerald-900/50",
-        text: "text-emerald-500",
+        text: "text-primary",
         icon: CheckCircle2,
         glow: ""
     },
@@ -150,9 +150,9 @@ const riskStyles = {
         glow: ""
     },
     UNKNOWN: {
-        bg: "bg-zinc-500/5",
-        border: "border-zinc-800",
-        text: "text-zinc-500",
+        bg: "bg-muted-foreground/30/5",
+        border: "border-border",
+        text: "text-muted-foreground",
         icon: AlertTriangle,
         glow: ""
     }
@@ -204,7 +204,7 @@ export function PredictorResultPanel({
     // Loading state
     if (isLoading) {
         return (
-            <div className="h-full flex items-center justify-center border-l border-zinc-800 bg-zinc-950">
+            <div className="h-full flex items-center justify-center border-l border-border bg-card">
                 <ReasoningLoader steps={RISK_ANALYSIS_STEPS} colorVariant="amber" />
             </div>
         )
@@ -213,7 +213,7 @@ export function PredictorResultPanel({
     // Empty state
     if (!result) {
         return (
-            <div className="h-full border-l border-zinc-800 bg-zinc-950">
+            <div className="h-full border-l border-border bg-card">
                 <EmptyState
                     icon={ShieldAlert}
                     title="No Query Analyzed Yet"
@@ -227,7 +227,7 @@ export function PredictorResultPanel({
     const RiskIcon = style.icon
 
     return (
-        <div className="flex flex-col h-full border-l border-zinc-800 bg-zinc-950">
+        <div className="flex flex-col h-full border-l border-border bg-card">
             <div className="flex-1 overflow-y-auto relative scrollbar-thin scrollbar-thumb-zinc-800">
                 <div className="p-6 space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                     {/* Risk Header */}
@@ -241,17 +241,17 @@ export function PredictorResultPanel({
                                             {result.risk_level} RISK
                                         </span>
                                     </div>
-                                    <div className="text-xs text-zinc-500 mt-1">
-                                        Risk Score: <span className="font-mono text-zinc-300">{result.risk_score}/100</span>
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                        Risk Score: <span className="font-mono text-foreground">{result.risk_score}/100</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Risk Meter */}
                             <div className="w-32">
-                                <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
+                                <div className="h-2 bg-muted rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full transition-all duration-500 ${result.risk_level === "LOW" ? "bg-emerald-500" :
+                                        className={`h-full transition-all duration-500 ${result.risk_level === "LOW" ? "bg-primary" :
                                             result.risk_level === "MEDIUM" ? "bg-amber-500" :
                                                 "bg-red-500"
                                             }`}
@@ -265,8 +265,8 @@ export function PredictorResultPanel({
                     {/* Reason */}
                     <div className="space-y-2">
                         <SectionHeader icon={AlertTriangle} title="Risk Assessment" />
-                        <div className="p-4 rounded-md border border-zinc-800 bg-zinc-900/50">
-                            <p className="text-sm text-zinc-300 leading-relaxed">{result.reason}</p>
+                        <div className="p-4 rounded-md border border-border bg-muted/50">
+                            <p className="text-sm text-foreground leading-relaxed">{result.reason}</p>
                         </div>
                     </div>
 
@@ -274,8 +274,8 @@ export function PredictorResultPanel({
                     {result.query_analysis && (
                         <div className="space-y-2">
                             <SectionHeader icon={Lightbulb} title="Technical Analysis" />
-                            <div className="p-4 rounded-md border border-zinc-800 bg-zinc-900/50">
-                                <p className="text-sm text-zinc-400 leading-relaxed">{result.query_analysis}</p>
+                            <div className="p-4 rounded-md border border-border bg-muted/50">
+                                <p className="text-sm text-muted-foreground leading-relaxed">{result.query_analysis}</p>
                             </div>
                         </div>
                     )}
@@ -299,7 +299,7 @@ export function PredictorResultPanel({
                                 {result.similar_issues.slice(0, 5).map((issue: SimilarIssue) => (
                                     <div
                                         key={issue.id}
-                                        className="flex items-center justify-between p-2 rounded-md hover:bg-zinc-900/50 group transition-colors border border-transparent hover:border-zinc-800"
+                                        className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 group transition-colors border border-transparent hover:border-border"
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
                                             <a
@@ -312,13 +312,13 @@ export function PredictorResultPanel({
                                                 <ExternalLink className="w-2.5 h-2.5 opacity-50" />
                                             </a>
 
-                                            <span className="text-xs text-zinc-400 truncate">
+                                            <span className="text-xs text-muted-foreground truncate">
                                                 {issue.summary}
                                             </span>
                                         </div>
 
                                         <div className="shrink-0 ml-4">
-                                            <span className="text-[10px] font-mono text-zinc-600 group-hover:text-zinc-500">
+                                            <span className="text-[10px] font-mono text-muted-foreground group-hover:text-muted-foreground">
                                                 {issue.similarity.toFixed(0)}%
                                             </span>
                                         </div>

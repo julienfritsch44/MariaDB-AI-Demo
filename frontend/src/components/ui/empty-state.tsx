@@ -16,15 +16,15 @@ export function EmptyState({
 }: EmptyStateProps) {
     return (
         <div className={cn(
-            "h-full flex flex-col items-center justify-center text-zinc-500 p-8 text-center",
+            "h-full flex flex-col items-center justify-center text-muted-foreground p-8 text-center",
             className
         )}>
-            <div className="p-3 rounded-full bg-zinc-900 border border-zinc-800 mb-4">
-                <Icon className="w-6 h-6 text-zinc-600" />
+            <div className="p-3 rounded-full bg-muted border border-border mb-4">
+                <Icon className="w-6 h-6 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium text-zinc-400">{title}</p>
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
             {description && (
-                <p className="text-xs mt-1 text-zinc-600 max-w-xs mx-auto">
+                <p className="text-xs mt-1 text-muted-foreground max-w-xs mx-auto">
                     {description}
                 </p>
             )}

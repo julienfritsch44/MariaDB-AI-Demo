@@ -140,3 +140,30 @@ class FixResponse(BaseModel):
     success: bool
     message: str
     error: Optional[str] = None
+
+
+# =============================================================================
+# Smart Sandboxing Models
+# =============================================================================
+
+class SandboxRequest(BaseModel):
+    sql: str
+    database: Optional[str] = "shop_demo"
+    timeout_seconds: Optional[int] = 5
+
+
+class SandboxResult(BaseModel):
+    columns: List[str]
+    rows: List[List[Any]]
+    rows_affected: int
+    execution_time_ms: float
+
+
+class SandboxResponse(BaseModel):
+    success: bool
+    mode: str = "sandbox"  # Always "sandbox" to indicate safe mode
+    message: str
+    result: Optional[SandboxResult] = None
+    error: Optional[str] = None
+    query_type: Optional[str] = None  # SELECT, UPDATE, DELETE, etc.
+    warning: Optional[str] = None

@@ -78,14 +78,14 @@ export function QueryRewriterInput({ onRewrite, isLoading, setIsLoading }: Query
 
     return (
         <div className="space-y-4">
-            <Card className="border-border/40 bg-zinc-900/30 overflow-hidden relative">
+            <Card className="border-border/40 bg-muted/30 overflow-hidden relative">
                 <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                    <Wand2 className="w-24 h-24 text-zinc-100" />
+                    <Wand2 className="w-24 h-24 text-foreground" />
                 </div>
 
                 <CardHeader className="pb-3 relative z-10">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-sm font-medium text-zinc-100">
+                        <CardTitle className="flex items-center gap-2 text-sm font-medium text-foreground">
                             <Zap className="w-4 h-4 text-yellow-500" />
                             Self-Healing SQL Rewriter
                         </CardTitle>
@@ -93,7 +93,7 @@ export function QueryRewriterInput({ onRewrite, isLoading, setIsLoading }: Query
                             variant="outline"
                             size="sm"
                             onClick={loadDemoQuery}
-                            className="text-xs h-7 border-zinc-700 bg-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700"
+                            className="text-xs h-7 border-border bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted/70"
                         >
                             <Database className="w-3 h-3 mr-1.5" />
                             Load Anti-Pattern
@@ -105,7 +105,7 @@ export function QueryRewriterInput({ onRewrite, isLoading, setIsLoading }: Query
                         value={sql}
                         onChange={(e) => setSql(e.target.value)}
                         placeholder="Paste an inefficient query here..."
-                        className="w-full h-40 p-3 bg-zinc-950/50 border border-zinc-800 rounded-md font-mono text-xs text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700 resize-none transition-all"
+                        className="w-full h-40 p-3 bg-card/50 border border-border rounded-md font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-border focus:ring-1 focus:ring-border resize-none transition-all"
                     />
 
                     {error && (
@@ -118,7 +118,7 @@ export function QueryRewriterInput({ onRewrite, isLoading, setIsLoading }: Query
                     <Button
                         onClick={handleRewrite}
                         disabled={!sql.trim() || isLoading}
-                        className="w-full h-10 bg-zinc-100 text-zinc-900 hover:bg-zinc-200 transition-all font-medium text-xs group"
+                        className="w-full h-10 bg-background text-foreground hover:bg-muted transition-all font-medium text-xs group"
                     >
                         {isLoading ? (
                             <>
@@ -135,14 +135,14 @@ export function QueryRewriterInput({ onRewrite, isLoading, setIsLoading }: Query
                 </CardContent>
             </Card>
 
-            <div className="p-4 rounded-md border border-zinc-800 bg-zinc-900/20">
-                <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-3">Supported Anti-Patterns</h4>
+            <div className="p-4 rounded-md border border-border bg-muted/20">
+                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Supported Anti-Patterns</h4>
                 <div className="grid grid-cols-2 gap-2">
                     {[
                         "IN Subqueries", "SELECT *", "LIKE Wildcards", "Cartesian Products", "Implicit Joins"
                     ].map(pattern => (
-                        <div key={pattern} className="flex items-center gap-1.5 text-xs text-zinc-400">
-                            <div className="w-1 h-1 rounded-full bg-zinc-600" />
+                        <div key={pattern} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <div className="w-1 h-1 rounded-full bg-muted-foreground/20" />
                             {pattern}
                         </div>
                     ))}
@@ -230,7 +230,7 @@ export function RewriterResultPanel({
     }
     if (isLoading) {
         return (
-            <div className="h-full flex items-center justify-center border-l border-zinc-800 bg-zinc-950">
+            <div className="h-full flex items-center justify-center border-l border-border bg-card">
                 <ReasoningLoader steps={SELF_HEALING_STEPS} colorVariant="yellow" />
             </div>
         )
@@ -238,7 +238,7 @@ export function RewriterResultPanel({
 
     if (!result) {
         return (
-            <div className="h-full border-l border-zinc-800 bg-zinc-950">
+            <div className="h-full border-l border-border bg-card">
                 <EmptyState
                     icon={Wand2}
                     title="Self-Healing SQL"
@@ -251,7 +251,7 @@ export function RewriterResultPanel({
     const hasImprovements = result.rewritten_sql !== result.original_sql
 
     return (
-        <div className="flex flex-col h-full border-l border-zinc-800 bg-zinc-950">
+        <div className="flex flex-col h-full border-l border-border bg-card">
             <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800">
                 <div className="p-6 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
 
@@ -272,15 +272,15 @@ export function RewriterResultPanel({
                                         {result.simulation.recommendation}
                                     </span>
                                 </div>
-                                <div className="text-[10px] text-zinc-500 font-mono">
+                                <div className="text-[10px] text-muted-foreground font-mono">
                                     VIRTUAL INDEX CLONE ACTIVE
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div className="p-3 rounded-lg bg-zinc-950/50 border border-zinc-800">
-                                    <div className="text-[9px] text-zinc-500 uppercase font-bold mb-1">Baseline Rows</div>
-                                    <div className="text-lg font-mono font-bold text-zinc-400">
+                                <div className="p-3 rounded-lg bg-card/50 border border-border">
+                                    <div className="text-[9px] text-muted-foreground uppercase font-bold mb-1">Baseline Rows</div>
+                                    <div className="text-lg font-mono font-bold text-muted-foreground">
                                         {result.simulation.current_plan.rows_examined.toLocaleString()}
                                     </div>
                                 </div>
@@ -292,14 +292,14 @@ export function RewriterResultPanel({
                                 </div>
                             </div>
 
-                            <p className="text-xs text-zinc-400 leading-relaxed mb-4 italic">
+                            <p className="text-xs text-muted-foreground leading-relaxed mb-4 italic">
                                 "{result.simulation.ai_analysis}"
                             </p>
 
                             <div className="space-y-2">
-                                <div className="text-[10px] text-zinc-500 uppercase font-bold px-1">Suggested Index Fix</div>
+                                <div className="text-[10px] text-muted-foreground uppercase font-bold px-1">Suggested Index Fix</div>
                                 <div className="flex items-center gap-2">
-                                    <div className="flex-1 p-2 bg-zinc-950 border border-zinc-800 rounded font-mono text-[10px] text-yellow-300">
+                                    <div className="flex-1 p-2 bg-card border border-border rounded font-mono text-[10px] text-yellow-300">
                                         {result.simulation.create_index_sql}
                                     </div>
                                     <CopyButton text={result.simulation.create_index_sql} />
@@ -314,13 +314,13 @@ export function RewriterResultPanel({
                             <div className="space-y-1">
                                 <SectionHeader icon={Terminal} title="The Transformation" />
                                 {result.explanation && (
-                                    <p className="text-xs text-zinc-500 pl-6">{result.explanation}</p>
+                                    <p className="text-xs text-muted-foreground pl-6">{result.explanation}</p>
                                 )}
                             </div>
                             <Button
                                 onClick={handleApplyFix}
                                 disabled={isApplying || applySuccess}
-                                className={`gap-2 ${applySuccess ? "bg-emerald-500 hover:bg-emerald-600 text-zinc-950" : "bg-yellow-500 hover:bg-yellow-400 text-zinc-950"}`}
+                                className={`gap-2 ${applySuccess ? "bg-primary hover:bg-emerald-600 text-foreground" : "bg-yellow-500 hover:bg-yellow-400 text-foreground"}`}
                             >
                                 {isApplying ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -342,9 +342,9 @@ export function RewriterResultPanel({
                             {/* Original */}
                             <div className="space-y-2 opacity-60 grayscale-[0.5] hover:opacity-100 transition-opacity">
                                 <div className="flex items-center justify-between px-1">
-                                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Original Query</span>
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Original Query</span>
                                 </div>
-                                <div className="p-4 rounded-lg border border-zinc-800 bg-zinc-900/30 font-mono text-xs text-zinc-400">
+                                <div className="p-4 rounded-lg border border-border bg-muted/30 font-mono text-xs text-muted-foreground">
                                     <pre className="whitespace-pre-wrap">{result.original_sql}</pre>
                                 </div>
                             </div>
@@ -355,7 +355,7 @@ export function RewriterResultPanel({
                                     <span className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">Optimized Query</span>
                                     <CopyButton text={result.rewritten_sql} />
                                 </div>
-                                <div className="p-4 rounded-lg border border-yellow-500/20 bg-yellow-500/5 font-mono text-xs text-zinc-100 shadow-[0_0_30px_rgba(234,179,8,0.05)]">
+                                <div className="p-4 rounded-lg border border-yellow-500/20 bg-yellow-500/5 font-mono text-xs text-foreground shadow-[0_0_30px_rgba(234,179,8,0.05)]">
                                     <pre className="whitespace-pre-wrap">{result.rewritten_sql}</pre>
                                 </div>
 
@@ -371,7 +371,7 @@ export function RewriterResultPanel({
                                 {result.anti_patterns_detected.map((issue, i) => (
                                     <div key={i} className="flex items-start gap-2 p-3 rounded-lg border border-red-900/20 bg-red-950/10">
                                         <AlertCircle className="w-3.5 h-3.5 text-red-500 mt-0.5" />
-                                        <span className="text-xs text-zinc-400">{issue}</span>
+                                        <span className="text-xs text-muted-foreground">{issue}</span>
                                     </div>
                                 ))}
                             </div>
@@ -382,8 +382,8 @@ export function RewriterResultPanel({
                             <div className="space-y-2">
                                 {result.improvements.map((imp, i) => (
                                     <div key={i} className="flex items-start gap-2 p-3 rounded-lg border border-emerald-900/20 bg-emerald-950/10">
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5" />
-                                        <span className="text-xs text-zinc-400">{imp}</span>
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5" />
+                                        <span className="text-xs text-muted-foreground">{imp}</span>
                                     </div>
                                 ))}
                             </div>
@@ -398,25 +398,25 @@ export function RewriterResultPanel({
                                 {result.similar_jira_tickets.map((ticket) => (
                                     <div
                                         key={ticket.id}
-                                        className="flex items-center justify-between p-2 rounded-md hover:bg-zinc-900/50 group transition-colors border border-transparent hover:border-zinc-800"
+                                        className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 group transition-colors border border-transparent hover:border-border"
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
                                             <a
                                                 href={`https://jira.mariadb.org/browse/${ticket.id}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="shrink-0 text-xs font-mono text-emerald-500 hover:text-emerald-400 flex items-center gap-1"
+                                                className="shrink-0 text-xs font-mono text-primary hover:text-primary flex items-center gap-1"
                                             >
                                                 {ticket.id}
                                                 <ExternalLink className="w-2.5 h-2.5 opacity-50" />
                                             </a>
 
-                                            <div className="text-xs text-zinc-400 truncate flex items-center gap-2">
+                                            <div className="text-xs text-muted-foreground truncate flex items-center gap-2">
                                                 {ticket.analysis ? (
                                                     ticket.analysis.includes('|') ? (
                                                         <>
-                                                            <span className="text-emerald-500/70 uppercase text-[9px] font-bold shrink-0">Fix:</span>
-                                                            <span className="italic text-zinc-300 truncate">
+                                                            <span className="text-primary/70 uppercase text-[9px] font-bold shrink-0">Fix:</span>
+                                                            <span className="italic text-foreground truncate">
                                                                 {ticket.analysis.split('|')[1].replace(/SOLUTION:\s*/i, '').trim()}
                                                             </span>
                                                         </>
@@ -432,7 +432,7 @@ export function RewriterResultPanel({
                                         </div>
 
                                         <div className="shrink-0 ml-4">
-                                            <span className="text-[10px] font-mono text-zinc-600 group-hover:text-zinc-500">
+                                            <span className="text-[10px] font-mono text-muted-foreground group-hover:text-muted-foreground">
                                                 {ticket.similarity.toFixed(0)}%
                                             </span>
                                         </div>

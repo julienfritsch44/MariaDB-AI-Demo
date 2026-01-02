@@ -38,8 +38,8 @@ export function CopyButton({
             onClick={handleCopy}
             className={cn(
                 "h-6 text-[10px]",
-                variant === "ghost" ? "text-zinc-500 hover:text-zinc-300" : "",
-                copied ? "text-emerald-500" : "",
+                variant === "ghost" ? "text-muted-foreground hover:text-foreground" : "",
+                copied ? "text-primary" : "",
                 className
             )}
         >

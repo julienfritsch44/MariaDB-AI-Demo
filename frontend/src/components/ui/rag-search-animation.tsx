@@ -71,15 +71,15 @@ export function RAGSearchAnimation({
     }
 
     return (
-        <div className={cn("bg-zinc-900/50 border border-zinc-800 rounded-lg p-4", className)}>
+        <div className={cn("bg-muted/50 border border-border rounded-lg p-4", className)}>
             {/* Header */}
             <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                    <Database className="w-4 h-4 text-emerald-500" />
+                <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
+                    <Database className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                    <h4 className="text-sm font-semibold text-zinc-200">Knowledge Base Search</h4>
-                    <p className="text-xs text-zinc-500">
+                    <h4 className="text-sm font-semibold text-foreground">Knowledge Base Search</h4>
+                    <p className="text-xs text-muted-foreground">
                         Searching {totalTickets.toLocaleString()} Jira tickets...
                     </p>
                 </div>
@@ -95,7 +95,7 @@ export function RAGSearchAnimation({
                         className="space-y-2"
                     >
                         {/* Progress Bar */}
-                        <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden">
                             <motion.div
                                 className="h-full bg-gradient-to-r from-emerald-500 to-teal-400"
                                 initial={{ width: "0%" }}
@@ -106,10 +106,10 @@ export function RAGSearchAnimation({
 
                         {/* Counter */}
                         <div className="flex items-center justify-between text-xs">
-                            <span className="text-zinc-500 font-mono">
+                            <span className="text-muted-foreground font-mono">
                                 Scanned: {scannedCount.toLocaleString()} / {totalTickets.toLocaleString()}
                             </span>
-                            <Search className="w-3 h-3 text-emerald-500 animate-pulse" />
+                            <Search className="w-3 h-3 text-primary animate-pulse" />
                         </div>
 
                         {/* Scrolling Tickets */}
@@ -126,13 +126,13 @@ export function RAGSearchAnimation({
                                         className={cn(
                                             "flex items-center gap-2 px-2 py-1 rounded text-xs transition-all",
                                             idx === currentTicketIndex + SAMPLE_TICKETS.length
-                                                ? "bg-emerald-500/20 border border-emerald-500/30"
+                                                ? "bg-primary/20 border border-primary/30"
                                                 : "opacity-40"
                                         )}
                                     >
-                                        <Ticket className="w-3 h-3 text-zinc-500 shrink-0" />
-                                        <span className="font-mono text-emerald-400">{ticket.id}</span>
-                                        <span className="text-zinc-400 truncate">{ticket.title}</span>
+                                        <Ticket className="w-3 h-3 text-muted-foreground shrink-0" />
+                                        <span className="font-mono text-primary">{ticket.id}</span>
+                                        <span className="text-muted-foreground truncate">{ticket.title}</span>
                                     </div>
                                 ))}
                             </motion.div>
@@ -148,8 +148,8 @@ export function RAGSearchAnimation({
                         className="py-4 text-center"
                     >
                         <Sparkles className="w-8 h-8 text-amber-400 mx-auto mb-2 animate-pulse" />
-                        <p className="text-sm text-zinc-300">Finding matching patterns...</p>
-                        <p className="text-xs text-zinc-500 mt-1">Calculating semantic similarity</p>
+                        <p className="text-sm text-foreground">Finding matching patterns...</p>
+                        <p className="text-xs text-muted-foreground mt-1">Calculating semantic similarity</p>
                     </motion.div>
                 )}
 
@@ -159,7 +159,7 @@ export function RAGSearchAnimation({
                         animate={{ opacity: 1, y: 0 }}
                         className="space-y-2"
                     >
-                        <div className="flex items-center gap-2 text-emerald-400 mb-3">
+                        <div className="flex items-center gap-2 text-primary mb-3">
                             <CheckCircle2 className="w-4 h-4" />
                             <span className="text-sm font-medium">
                                 Found {foundTickets.length} relevant ticket{foundTickets.length !== 1 ? 's' : ''}
@@ -172,26 +172,26 @@ export function RAGSearchAnimation({
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.1 }}
-                                className="flex items-center justify-between p-2 bg-zinc-800/50 rounded border border-zinc-700/50 hover:border-emerald-500/30 transition-colors cursor-pointer group"
+                                className="flex items-center justify-between p-2 bg-muted/50/50 rounded border border-border/50 hover:border-primary/30 transition-colors cursor-pointer group"
                                 onClick={() => window.open(`https://jira.mariadb.org/browse/${ticket.id}`, '_blank')}
                             >
                                 <div className="flex items-center gap-2">
-                                    <Ticket className="w-4 h-4 text-emerald-500" />
-                                    <span className="font-mono text-sm text-emerald-400 group-hover:text-emerald-300">
+                                    <Ticket className="w-4 h-4 text-primary" />
+                                    <span className="font-mono text-sm text-primary group-hover:text-emerald-300">
                                         {ticket.id}
                                     </span>
-                                    <span className="text-xs text-zinc-400 truncate max-w-[200px]">
+                                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">
                                         {ticket.title}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <div className="w-16 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                                    <div className="w-16 h-1.5 bg-muted/70 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-emerald-500 rounded-full"
+                                            className="h-full bg-primary rounded-full"
                                             style={{ width: `${ticket.similarity * 100}%` }}
                                         />
                                     </div>
-                                    <span className="text-xs font-mono text-zinc-500">
+                                    <span className="text-xs font-mono text-muted-foreground">
                                         {(ticket.similarity * 100).toFixed(0)}%
                                     </span>
                                 </div>
