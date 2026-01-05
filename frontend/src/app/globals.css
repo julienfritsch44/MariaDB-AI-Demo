@@ -31,28 +31,26 @@
   --skysql-success: 160 84% 39%;    /* #10B981 - Success green */
   --skysql-warning: 38 92% 50%;     /* #F59E0B - Warning amber */
   --skysql-info: 217 91% 60%;       /* #3B82F6 - Info blue */
+
+  /* Neural Core Theme Variables */
+  --neural-bg: 240 10% 2%;
+  --neural-card: 240 10% 4%;
+  --neural-primary: 194 100% 50%;
+  --neural-accent: 170 100% 50%;
+  --neural-border: 240 10% 12%;
+  --neural-glow: rgba(0, 169, 206, 0.15);
 }
 
-.dark {
-  --background: 240 10% 3.9%;
+.neural-dark {
+  --background: var(--neural-bg);
   --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
+  --card: var(--neural-card);
   --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 142.1 76.2% 36.3%; /* Emerald 600 */
-  --primary-foreground: 355.7 100% 97.3%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 142.1 76.2% 36.3%;
+  --primary: var(--neural-primary);
+  --border: var(--neural-border);
+  --muted: 240 10% 8%;
+  --muted-foreground: 240 5% 65%;
+  --accent: var(--neural-accent);
 }
 
 @theme {
@@ -86,15 +84,34 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* Custom Glows */
+  --shadow-neural: 0 0 20px 0 var(--neural-glow);
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border transition-colors duration-300;
   }
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-neural rounded-xl transition-all duration-300 hover:border-white/10;
+  }
+  
+  .neon-text {
+    @apply text-primary drop-shadow-[0_0_8px_rgba(0,169,206,0.6)];
+  }
+
+  .neural-grid {
+    background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+    background-size: 40px 40px;
   }
 }
 
