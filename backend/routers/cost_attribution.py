@@ -68,13 +68,27 @@ def estimate_io_requests(sql: str, rows_examined: Optional[int] = None) -> int:
     # Estimation basée sur le type de requête
     sql_lower = sql.lower()
     
+    # Pattern: subquery IN (expensive)
+    if "in (select" in sql_lower:
+        return 5000
+        
+    # Pattern: JOIN (more efficient than subquery)
+    if "join" in sql_lower:
+        # Assume join with SELECT * is still expensive
+        if "select *" in sql_lower:
+            return 2000
+        return 500
+
     # Scan complet de table
     if "select *" in sql_lower and "where" not in sql_lower:
         return 10000  # Estimation haute pour full table scan
     
     # Requête avec WHERE mais sans index (estimation)
     if "where" in sql_lower:
-        return 1000
+        # If specific columns, it's cheaper than *
+        if "select *" in sql_lower:
+            return 1000
+        return 300
     
     # Requête simple
     return 100

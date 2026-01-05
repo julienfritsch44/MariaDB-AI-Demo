@@ -217,7 +217,7 @@ export function DiagnosticStatus() {
                                 <RefreshCcw className={`w-3 h-3 ${isLoadingLogs ? 'animate-spin' : ''}`} />
                             </Button>
                         </div>
-                        <div className="flex-1 overflow-x-auto overflow-y-auto p-3 font-mono text-[10px] text-muted-foreground whitespace-pre">
+                        <div className="flex-1 overflow-x-auto overflow-y-auto p-3 font-mono text-[10px] text-white whitespace-pre">
                             {logs.length > 0 ? (
                                 logs.map((line, i) => (
                                     <div key={i} className="hover:text-foreground">{line}</div>

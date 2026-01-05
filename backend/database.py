@@ -4,22 +4,36 @@ import mariadb
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 # Mock Classes for Demo Mode
 class MockCursor:
     def __init__(self):
         self.lastrowid = 1
         self.last_query = ""
+        self.rowcount = 0
     
     def execute(self, query, params=None):
         self.last_query = query.lower()
         print(f"[MOCK DB] Executing: {query[:50]}...")
-        pass
+        
+        # Set rowcount based on query type
+        if any(keyword in self.last_query for keyword in ['insert', 'update', 'delete']):
+            self.rowcount = 1  # Simulate successful modification
+        else:
+            self.rowcount = 0  # SELECT or other queries
         
     def fetchone(self):
-        # Generic mock response usually for Version or Count
-        return ["10.11.5-MariaDB-Mock"]
+        # Return appropriate mock data based on query type
+        if "count(*)" in self.last_query or "count(1)" in self.last_query:
+            # For COUNT queries, return integer 0
+            return [0]
+        elif "version()" in self.last_query:
+            # For VERSION queries, return version string
+            return ["10.11.5-MariaDB-Mock"]
+        else:
+            # Default: return None
+            return [None]
         
     def fetchall(self):
         # Mock Vector Search Results for LangChain
@@ -68,6 +82,7 @@ def get_db_connection(database: str = None):
             user=os.getenv("SKYSQL_USERNAME"),
             password=os.getenv("SKYSQL_PASSWORD"),
             database=database,
+            ssl=True,
             ssl_verify_cert=False,
             connect_timeout=3
         )

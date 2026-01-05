@@ -5,7 +5,7 @@ Automatically tunes vector search parameters for optimal performance
 
 import time
 import statistics
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from database import get_db_connection
@@ -40,7 +40,7 @@ class OptimizationMetrics(BaseModel):
 class VectorSearchResponse(BaseModel):
     success: bool
     results: List[VectorSearchResult]
-    optimized_params: Dict[str, any]
+    optimized_params: Dict[str, Any]
     metrics: OptimizationMetrics
     performance_gain: Optional[str] = None
     recommendations: List[str]
@@ -138,7 +138,7 @@ def optimize_search_parameters(
     initial_threshold: float,
     initial_limit: int,
     distribution_stats: Optional[Dict] = None
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """
     Dynamically optimize search parameters based on results
     

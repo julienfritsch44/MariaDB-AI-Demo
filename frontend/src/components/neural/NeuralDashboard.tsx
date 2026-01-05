@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { NeuralCore } from "./NeuralCore"
 import { BentoTile } from "./BentoTile"
 import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List } from "lucide-react"
@@ -10,11 +10,28 @@ interface NeuralDashboardProps {
     analysis: any
 }
 
+interface MetricsHistory {
+    financial_impact: number[]
+    risk_score: number[]
+    neural_score: number[]
+    rag_memory: number[]
+}
+
 export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
+    const [metricsHistory, setMetricsHistory] = useState<MetricsHistory | null>(null)
+
+    useEffect(() => {
+        // Fetch historical metrics for sparklines
+        fetch('http://127.0.0.1:8000/metrics/history')
+            .then(res => res.json())
+            .then(data => setMetricsHistory(data))
+            .catch(err => console.error('Failed to fetch metrics history:', err))
+    }, [])
+
     return (
-        <div className="flex-1 bg-background text-foreground overflow-y-auto neural-grid min-h-screen p-12">
+        <div className="flex-1 bg-background text-foreground overflow-y-auto neural-grid min-h-screen p-6 dark">
             {/* Header Overlay */}
-            <div className="flex items-center justify-between mb-16">
+            <div className="flex items-center justify-between mb-8">
                 <div className="space-y-2">
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -37,12 +54,19 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                 </button>
             </div>
 
-            <div className="grid grid-cols-12 gap-8 max-w-[1800px] mx-auto">
+            <div className="grid grid-cols-12 gap-4 max-w-[1800px] mx-auto">
                 {/* Row 1: Left Stats - Center Visual - Right Stats */}
 
                 {/* Left Col */}
-                <div className="col-span-12 lg:col-span-3 space-y-8">
-                    <BentoTile title="Financial Impact" subtitle="LEAKAGE ANALYSIS" icon={DollarSign} priority="high">
+                <div className="col-span-12 lg:col-span-3 space-y-4">
+                    <BentoTile
+                        title="Financial Impact"
+                        subtitle="LEAKAGE ANALYSIS"
+                        icon={DollarSign}
+                        priority="high"
+                        sparklineData={metricsHistory?.financial_impact}
+                        sparklineColor="rgb(245, 158, 11)"
+                    >
                         <div className="py-4">
                             <div className="text-6xl font-black text-amber-500 tracking-tighter">$14,250</div>
                             <div className="flex items-center gap-2 mt-3 text-xs font-mono">
@@ -52,7 +76,13 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                         </div>
                     </BentoTile>
 
-                    <BentoTile title="Risk Assessment" subtitle="AUTO-PREDICT" icon={ShieldAlert}>
+                    <BentoTile
+                        title="Risk Assessment"
+                        subtitle="AUTO-PREDICT"
+                        icon={ShieldAlert}
+                        sparklineData={metricsHistory?.risk_score}
+                        sparklineColor="rgb(239, 68, 68)"
+                    >
                         <div className="space-y-5 py-4">
                             <div className="flex justify-between items-end">
                                 <span className="text-2xl font-bold italic">HIGH</span>
@@ -75,15 +105,28 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                 </div>
 
                 {/* Right Col */}
-                <div className="col-span-12 lg:col-span-3 space-y-8">
-                    <BentoTile title="Neural Score" subtitle="GLOBAL PERFORMANCE" icon={Activity} priority="high">
+                <div className="col-span-12 lg:col-span-3 space-y-4">
+                    <BentoTile
+                        title="Neural Score"
+                        subtitle="GLOBAL PERFORMANCE"
+                        icon={Activity}
+                        priority="high"
+                        sparklineData={metricsHistory?.neural_score}
+                        sparklineColor="rgb(0, 169, 206)"
+                    >
                         <div className="py-4">
                             <div className="text-8xl font-black text-primary tracking-tighter">98.2</div>
                             <p className="text-xs text-muted-foreground mt-3 uppercase tracking-tight">Optimal Efficiency Baseline</p>
                         </div>
                     </BentoTile>
 
-                    <BentoTile title="RAG Memory" subtitle="KB SEEDS" icon={Zap}>
+                    <BentoTile
+                        title="RAG Memory"
+                        subtitle="KB SEEDS"
+                        icon={Zap}
+                        sparklineData={metricsHistory?.rag_memory}
+                        sparklineColor="rgb(59, 130, 246)"
+                    >
                         <div className="flex items-center gap-4 py-4">
                             <div className="text-5xl font-bold tracking-tighter">1,350</div>
                             <div className="flex-1">

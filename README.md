@@ -61,6 +61,16 @@ cp .env.example .env
 
 ### Development
 
+#### Option A: Quick Start (Recommended)
+
+Use the provided batch script to launch both Backend and Frontend in separate local terminals:
+
+```bash
+.\run_launch_app.bat
+```
+
+#### Option B: Manual Start
+
 ```bash
 # Start backend (port 8000)
 cd backend

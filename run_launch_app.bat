@@ -5,8 +5,8 @@ echo ===================================================
 
 :: Nettoyage des ports au cas où
 echo [1/3] Nettoyage des processus existants...
-powershell -Command "Stop-Process -Id (Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue).OwningProcess -Force -ErrorAction SilentlyContinue"
-powershell -Command "Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue).OwningProcess -Force -ErrorAction SilentlyContinue"
+powershell -Command "Get-Process | Where-Object {$_.ProcessName -match 'python|node|uvicorn'} | Stop-Process -Force -ErrorAction SilentlyContinue"
+timeout /t 2 /nobreak >nul
 
 :: Lancement du Backend
 echo [2/3] Lancement du Backend (MariaDB AI Service)...
@@ -17,7 +17,7 @@ cd ..
 :: Lancement du Frontend
 echo [3/3] Lancement du Frontend (Dashboard)...
 cd frontend
-start "MariaDB-Frontend" /min cmd /c "npx next dev -p 3000"
+start "MariaDB-Frontend" /min cmd /k "npx next dev -p 3000"
 cd ..
 
 echo ===================================================

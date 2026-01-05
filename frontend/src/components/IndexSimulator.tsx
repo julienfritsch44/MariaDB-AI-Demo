@@ -180,13 +180,6 @@ const recommendationStyles = {
 interface IndexSimulatorResultPanelProps {
     result: IndexSimulationResponse | null
     isLoading: boolean
-    // Chat Props
-    chatMessages: Message[]
-    chatInput: string
-    setChatInput: (value: string) => void
-    isChatLoading: boolean
-    onChatSend: (text?: string) => void
-    onChatClear?: () => void
 }
 
 function ExplainPlanCard({ plan, title, variant }: { plan: ExplainPlan, title: string, variant: "before" | "after" }) {
@@ -256,13 +249,7 @@ import { Bot, Trash2 } from "lucide-react"
 
 export function IndexSimulatorResultPanel({
     result,
-    isLoading,
-    chatMessages,
-    chatInput,
-    setChatInput,
-    isChatLoading,
-    onChatSend,
-    onChatClear
+    isLoading
 }: IndexSimulatorResultPanelProps) {
 
     // Loading state
@@ -349,23 +336,8 @@ export function IndexSimulatorResultPanel({
                         <CodeContainer code={result.create_index_sql} />
                     </div>
 
-                    {/* Copilot Chat */}
-                    <CopilotChat
-                        messages={chatMessages}
-                        isLoading={isChatLoading}
-                        onClear={onChatClear}
-                        className="min-h-[200px] max-h-[300px]"
-                    />
                 </div>
             </div>
-
-            {/* Sticky Bottom Input */}
-            <CopilotInput
-                value={chatInput}
-                onChange={setChatInput}
-                onSend={() => onChatSend()}
-                isLoading={isChatLoading}
-            />
         </div>
     )
 }

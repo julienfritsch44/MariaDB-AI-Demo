@@ -1,48 +1,52 @@
+
 import os
+import sys
 import mariadb
 from dotenv import load_dotenv
 
-load_dotenv()
+# Add backend to path
+sys.path.append(os.path.join(os.getcwd(), 'backend'))
+
+load_dotenv(override=True)
+
+DB_USER = os.getenv("SKYSQL_USERNAME")
+DB_PASSWORD = os.getenv("SKYSQL_PASSWORD")
+DB_HOST = os.getenv("SKYSQL_HOST")
+DB_PORT = int(os.getenv("SKYSQL_PORT", 3306))
+
+NEW_PASSWORD = "MariaDB_AI_Competition_2026!"
 
 def change_password():
-    new_password = input("Entrez le nouveau mot de passe: ")
-    confirm_password = input("Confirmez le nouveau mot de passe: ")
-    
-    if new_password != confirm_password:
-        print("❌ Les mots de passe ne correspondent pas!")
-        return False
-    
+    print(f"Connecting to {DB_HOST} as {DB_USER}...")
     try:
-        print("\nConnexion avec le mot de passe par défaut...")
         conn = mariadb.connect(
-            host=os.getenv("SKYSQL_HOST"),
-            port=int(os.getenv("SKYSQL_PORT", 4049)),
-            user=os.getenv("SKYSQL_USERNAME"),
-            password=os.getenv("SKYSQL_PASSWORD"),
-            ssl_verify_cert=False,
-            connect_timeout=10
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=DB_HOST,
+            port=DB_PORT,
+            ssl=True
         )
-        
         cursor = conn.cursor()
         
-        # Changer le mot de passe
-        print("Changement du mot de passe...")
-        cursor.execute(f"SET PASSWORD = PASSWORD('{new_password}')")
+        print("Changing password...")
+        # Using the syntax from the screenshot
+        # SET PASSWORD FOR 'user'@'%' = PASSWORD('new_pass');
+        # Since we are logged in as the user, we can often just use SET PASSWORD = ...
+        # But let's use the explicit syntax provided to be safe, assuming we have permissions.
+        # Actually, usually on SkySQL/Cloud, 'user'@'%' is the user.
+        
+        sql = f"SET PASSWORD FOR '{DB_USER}'@'%' = PASSWORD('{NEW_PASSWORD}')"
+        cursor.execute(sql)
         conn.commit()
         
-        print("\n✅ Mot de passe changé avec succès!")
-        print(f"\nMettez à jour le fichier .env avec:")
-        print(f"SKYSQL_PASSWORD={new_password}")
+        print(f"Password changed successfully to: {NEW_PASSWORD}")
+        print("Please update your .env file immediately.")
         
-        cursor.close()
         conn.close()
         
-        return True
-        
-    except Exception as e:
-        print(f"\n❌ Erreur: {e}")
-        return False
+    except mariadb.Error as e:
+        print(f"Error changing password: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    print("=== Changement du mot de passe MariaDB SkySQL ===\n")
     change_password()

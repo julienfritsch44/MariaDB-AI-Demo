@@ -286,29 +286,43 @@ Réponds UNIQUEMENT avec le JSON."""
         if rewritten_sql == sql and anti_patterns:
             # 1. Basic IN subquery to JOIN rewrite
             if 'IN (SELECT' in sql_upper:
+                # Improved regex to handle newlines and content after subquery
                 match = re.search(
                     r'(\w+)\s+IN\s*\(\s*SELECT\s+(\w+)\s+FROM\s+(\w+)(?:\s+WHERE\s+(.+?))?\s*\)',
-                    sql, re.IGNORECASE
+                    sql, re.IGNORECASE | re.DOTALL
                 )
                 if match:
+                    full_match = match.group(0)
                     outer_col = match.group(1)
                     inner_col = match.group(2)
                     inner_table = match.group(3)
                     inner_where = match.group(4)
                     inner_alias = inner_table[0].lower() + "2"
-                    join_condition = f"INNER JOIN {inner_table} {inner_alias} ON {outer_col} = {inner_alias}.{inner_col}"
+                    
+                    # Construction du JOIN
+                    join_stmt = f"INNER JOIN {inner_table} {inner_alias} ON {outer_col} = {inner_alias}.{inner_col}"
                     if inner_where:
-                        join_condition += f" AND {inner_alias}.{inner_where}"
+                        # Clean up inner where
+                        clean_inner_where = inner_where.strip()
+                        join_stmt += f" AND {inner_alias}.{clean_inner_where}"
                     
-                    rewritten_sql = re.sub(
-                        r'\s+WHERE\s+' + re.escape(match.group(0)),
-                        f' {join_condition} ',
-                        sql,
-                        flags=re.IGNORECASE
-                    )
-                    if rewritten_sql == sql: # Try without WHERE
-                         rewritten_sql = sql.replace(match.group(0), f"INNER JOIN {inner_table} {inner_alias} ON {outer_col} = {inner_alias}.{inner_col}")
+                    # Remplacement intelligent : on enlève la partie IN (...) de la clause WHERE
+                    # Si c'était la seule condition, on enlève 'WHERE'
+                    # Sinon on garde le reste
                     
+                    # On cherche si le IN est précédé de WHERE
+                    where_pattern = r'\s+WHERE\s+' + re.escape(full_match)
+                    if re.search(where_pattern, sql, re.IGNORECASE | re.DOTALL):
+                        rewritten_sql = re.sub(where_pattern, f" {join_stmt} WHERE ", sql, flags=re.IGNORECASE | re.DOTALL)
+                    else:
+                        rewritten_sql = sql.replace(full_match, f" {join_stmt} ")
+                    
+                    # Nettoyage si on a "WHERE AND" ou "WHERE OR" ou "WHERE )"
+                    rewritten_sql = re.sub(r'WHERE\s+(AND|OR)\s+', 'WHERE ', rewritten_sql, flags=re.IGNORECASE)
+                    rewritten_sql = re.sub(r'WHERE\s+\)', ')', rewritten_sql, flags=re.IGNORECASE)
+                    # Si WHERE est vide à la fin
+                    rewritten_sql = re.sub(r'WHERE\s*$', '', rewritten_sql, flags=re.IGNORECASE)
+
                     explanation = "Réécriture heuristique appliquée pour convertir IN subquery en JOIN."
     
             # 2. SELECT * to SELECT [columns] (heuristic)

@@ -164,13 +164,6 @@ import { Message } from "@/types"
 interface PredictorResultPanelProps {
     result: PredictResponse | null
     isLoading: boolean
-    // Chat Props
-    chatMessages: Message[]
-    chatInput: string
-    setChatInput: (value: string) => void
-    isChatLoading: boolean
-    onChatSend: (text?: string) => void
-    onChatClear?: () => void
 }
 
 import { ReasoningLoader } from "@/components/ui/reasoning-loader"
@@ -192,13 +185,7 @@ import { Input } from "@/components/ui/input"
 
 export function PredictorResultPanel({
     result,
-    isLoading,
-    chatMessages,
-    chatInput,
-    setChatInput,
-    isChatLoading,
-    onChatSend,
-    onChatClear
+    isLoading
 }: PredictorResultPanelProps) {
 
     // Loading state
@@ -328,23 +315,8 @@ export function PredictorResultPanel({
                         </div>
                     )}
 
-                    {/* Copilot Chat */}
-                    <CopilotChat
-                        messages={chatMessages}
-                        isLoading={isChatLoading}
-                        onClear={onChatClear}
-                        className="min-h-[200px] max-h-[300px]"
-                    />
                 </div>
             </div>
-
-            {/* Sticky Bottom Input */}
-            <CopilotInput
-                value={chatInput}
-                onChange={setChatInput}
-                onSend={() => onChatSend()}
-                isLoading={isChatLoading}
-            />
         </div>
     )
 }

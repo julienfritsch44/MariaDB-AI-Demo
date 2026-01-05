@@ -44,7 +44,7 @@ export default function BranchingDashboard() {
 
     const createBranch = async () => {
         if (!newBranchName.trim()) return
-        
+
         setCreating(true)
         try {
             const res = await fetch(`${API_BASE}/branching/create`, {
@@ -148,8 +148,8 @@ export default function BranchingDashboard() {
                 </Card>
             ) : (
                 <div className="grid gap-4">
-                    {branches.map((branch) => (
-                        <Card key={branch.branch_database} className="border-cyan-500/30">
+                    {branches.map((branch, i) => (
+                        <Card key={branch.branch_database || i} className="border-cyan-500/30">
                             <CardHeader>
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
@@ -158,10 +158,10 @@ export default function BranchingDashboard() {
                                         </CardTitle>
                                         <div className="flex items-center gap-4 mt-2">
                                             <Badge variant="outline" className="text-xs">
-                                                {branch.table_count} tables
+                                                {branch.table_count ?? 0} tables
                                             </Badge>
                                             <Badge variant="outline" className="text-xs">
-                                                {branch.size_mb.toFixed(1)} MB
+                                                {(branch.size_mb ?? 0).toFixed(1)} MB
                                             </Badge>
                                             <span className="text-xs text-muted-foreground">
                                                 Source: {branch.source_database}

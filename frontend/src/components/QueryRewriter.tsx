@@ -167,24 +167,11 @@ const SELF_HEALING_STEPS = [
 interface RewriterResultPanelProps {
     result: RewriteResponse | null
     isLoading: boolean
-    // Chat Props
-    chatMessages: Message[]
-    chatInput: string
-    setChatInput: (value: string) => void
-    isChatLoading: boolean
-    onChatSend: (text?: string) => void
-    onChatClear?: () => void
 }
 
 export function RewriterResultPanel({
     result,
-    isLoading,
-    chatMessages,
-    chatInput,
-    setChatInput,
-    isChatLoading,
-    onChatSend,
-    onChatClear
+    isLoading
 }: RewriterResultPanelProps) {
     const [isApplying, setIsApplying] = useState(false)
     const [applySuccess, setApplySuccess] = useState(false)
@@ -442,24 +429,8 @@ export function RewriterResultPanel({
                         </div>
                     )}
 
-                    {/* Copilot Chat */}
-                    <CopilotChat
-                        messages={chatMessages}
-                        isLoading={isChatLoading}
-                        onClear={onChatClear}
-                        className="min-h-[200px] max-h-[300px]"
-                    />
-
                 </div>
             </div>
-
-            {/* Sticky Bottom Input */}
-            <CopilotInput
-                value={chatInput}
-                onChange={setChatInput}
-                onSend={() => onChatSend()}
-                isLoading={isChatLoading}
-            />
         </div>
     )
 }

@@ -167,3 +167,21 @@ class SandboxResponse(BaseModel):
     error: Optional[str] = None
     query_type: Optional[str] = None  # SELECT, UPDATE, DELETE, etc.
     warning: Optional[str] = None
+
+
+# =============================================================================
+# Deployment Models
+# =============================================================================
+
+class DeploymentRequest(BaseModel):
+    sql: str
+    database: Optional[str] = "shop_demo"
+    environment: str = "production"
+
+class DeploymentResponse(BaseModel):
+    success: bool
+    message: str
+    rows_affected: Optional[int] = 0
+    execution_time_ms: Optional[float] = 0.0
+    deployment_id: Optional[str] = None
+    error: Optional[str] = None

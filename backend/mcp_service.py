@@ -99,6 +99,8 @@ class MCPService:
         
         self.record_tool_call(tool_name, args, status, detail)
         return result
+
+    def get_tools_manifest(self) -> Dict[str, Any]:
         """
         Return MCP tools manifest describing available tools.
         This is what an LLM would use to understand our capabilities.
@@ -214,26 +216,6 @@ class MCPService:
                 }
             ]
         }
-    
-    def execute_tool(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute an MCP tool and return the result."""
-        try:
-            if tool_name == "query_database":
-                return self._query_database(args.get("sql"), args.get("database", "shop_demo"))
-            elif tool_name == "search_knowledge_base":
-                return self._search_knowledge_base(args.get("query"), args.get("limit", 5))
-            elif tool_name == "analyze_query":
-                return self._analyze_query(args.get("sql"))
-            elif tool_name == "get_schema":
-                return self._get_schema(args.get("database"), args.get("table"))
-            elif tool_name == "list_databases":
-                return self._list_databases()
-            elif tool_name == "list_tables":
-                return self._list_tables(args.get("database"))
-            else:
-                return {"error": f"Unknown tool: {tool_name}"}
-        except Exception as e:
-            return {"error": str(e)}
     
     def _query_database(self, sql: str, database: str = "shop_demo") -> Dict[str, Any]:
         """Execute a read-only SQL query."""

@@ -130,14 +130,20 @@ def process_jira_issue(issue: dict) -> List[Dict]:
 
 def main():
     print("=" * 60)
-    print("Smart Jira Ingester - SQL Extraction Edition")
+    print("Smart Jira Ingester - SQL Extraction & Batch Edition")
     print("=" * 60)
     
     # Init services
     try:
+        from database import get_db_connection
+        conn_test = get_db_connection()
+        if hasattr(conn_test, 'cursor'):
+            print("✅ Database connection test passed")
+            conn_test.close()
+            
         store = VectorStore(get_db_params())
         store.init_schema()
-        print("✅ Vector Store connected")
+        print("✅ Vector Store schema initialized")
     except Exception as e:
         print(f"❌ Failed to connect to DB: {e}")
         return
@@ -146,7 +152,7 @@ def main():
     print(f"✅ Embedding model loaded: {embedding_service.model_name}")
     
     # Load Jira data
-    jira_path = os.path.join(os.path.dirname(__file__), "..", "jira_sample.json")
+    jira_path = os.path.join(os.path.dirname(__file__), "..", "jira_optimizer_issues.json")
     print(f"\n📂 Loading: {jira_path}")
     
     try:
@@ -158,7 +164,8 @@ def main():
         print(f"❌ Error loading JSON: {e}")
         return
     
-    # Process all issues
+    # Process all issues into chunks
+    print("🧩 Creating chunks...")
     all_chunks = []
     for issue in issues:
         chunks = process_jira_issue(issue)
@@ -169,36 +176,48 @@ def main():
     sql_count = sum(1 for c in all_chunks if c['chunk_type'] == 'sql')
     print(f"   - Summary chunks: {summary_count}")
     print(f"   - SQL chunks: {sql_count}")
-    print(f"   - Total chunks: {len(all_chunks)}")
+    print(f"   - Total chunks to process: {len(all_chunks)}")
     
-    # Embed and store
-    print(f"\n🔄 Embedding and storing...")
+    # Embed and store in batches
+    batch_size = 32
+    print(f"\n🔄 Embedding and storing in batches of {batch_size}...")
+    
     success = 0
     errors = 0
     
-    for i, chunk in enumerate(all_chunks):
+    for i in range(0, len(all_chunks), batch_size):
+        batch = all_chunks[i:i + batch_size]
+        batch_texts = [c['content'] for c in batch]
+        
         try:
-            embedding = embedding_service.get_embedding(chunk['content'])
-            if embedding:
-                store.add_document(
-                    source_type=chunk['source_type'],
-                    source_id=chunk['source_id'],
-                    content=chunk['content'],
-                    embedding=embedding
-                )
-                success += 1
+            embeddings = embedding_service.get_embeddings_batch(batch_texts)
+            
+            if len(embeddings) == len(batch):
+                for chunk, emb in zip(batch, embeddings):
+                    try:
+                        store.add_document(
+                            source_type=chunk['source_type'],
+                            source_id=chunk['source_id'],
+                            content=chunk['content'],
+                            embedding=emb
+                        )
+                        success += 1
+                    except Exception as e:
+                        errors += 1
+                        if errors <= 3: print(f"   ⚠️ Storage error on {chunk['source_id']}: {e}")
             else:
-                errors += 1
+                print(f"   ⚠️ Batch mismatch: got {len(embeddings)} embeddings for {len(batch)} texts")
+                errors += len(batch)
+                
         except Exception as e:
-            errors += 1
-            if errors <= 5:  # Only print first 5 errors
-                print(f"   ⚠️ Error on {chunk['source_id']}: {e}")
+            print(f"   ❌ Batch embedding error: {e}")
+            errors += len(batch)
         
         # Progress
-        if (i + 1) % 20 == 0:
-            print(f"   Processed {i+1}/{len(all_chunks)}...")
+        if (i + batch_size) % 64 == 0 or (i + batch_size) >= len(all_chunks):
+            print(f"   Processed {min(i + batch_size, len(all_chunks))}/{len(all_chunks)}...")
     
-    print(f"\n✅ Complete!")
+    print(f"\n✅ Ingestion Complete!")
     print(f"   - Successfully stored: {success}")
     print(f"   - Errors: {errors}")
     
@@ -206,8 +225,8 @@ def main():
     try:
         count = store.get_document_count()
         print(f"   - Total documents in DB: {count}")
-    except:
-        pass
+    except Exception as e:
+        print(f"   ⚠️ Could not verify count: {e}")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import { Sparkline } from "./Sparkline"
 import { LucideIcon } from "lucide-react"
 
 interface BentoTileProps {
@@ -10,6 +11,8 @@ interface BentoTileProps {
     children: React.ReactNode
     className?: string
     priority?: "low" | "medium" | "high"
+    sparklineData?: number[]
+    sparklineColor?: string
 }
 
 export function BentoTile({
@@ -18,7 +21,9 @@ export function BentoTile({
     icon: Icon,
     children,
     className = "",
-    priority = "medium"
+    priority = "medium",
+    sparklineData,
+    sparklineColor = "rgb(0, 169, 206)"
 }: BentoTileProps) {
     const priorityColors = {
         low: "border-white/5",
@@ -52,6 +57,13 @@ export function BentoTile({
             <div className="flex-1 z-10">
                 {children}
             </div>
+
+            {/* Sparkline Chart */}
+            {sparklineData && sparklineData.length > 0 && (
+                <div className="z-10 mt-2">
+                    <Sparkline data={sparklineData} color={sparklineColor} height={40} />
+                </div>
+            )}
 
             {/* Decorative corner accent */}
             <div className="absolute bottom-0 right-0 w-8 h-8 overflow-hidden pointer-events-none opacity-20">

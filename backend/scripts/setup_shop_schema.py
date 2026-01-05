@@ -8,18 +8,16 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
+# Database Config
 # Database Config
 DB_USER = os.getenv("SKYSQL_USERNAME")
 DB_PASSWORD = os.getenv("SKYSQL_PASSWORD")
 DB_HOST = os.getenv("SKYSQL_HOST")
 DB_PORT = int(os.getenv("SKYSQL_PORT", 3306))
-DB_DATABASE = "demo_schema" # Or maybe just use the default DB? Wait, SkySQL services usually have a `service` DB or similar. 
-# However, I should probably create a new database `shop_demo` if I have permissions, or use a default one.
-# Given I don't know the default DB name for SkySQL service, I'll try without DB first and create it, 
-# or use 'mysql' to check.
-# Actually, let's try to connect without specifying database, then create `shop_demo`.
+
+print(f"DEBUG: Connecting to {DB_HOST}:{DB_PORT} as {DB_USER}")
 
 def get_connection():
     try:
@@ -29,7 +27,8 @@ def get_connection():
             password=DB_PASSWORD,
             host=DB_HOST,
             port=DB_PORT,
-            ssl=True
+            ssl=True,
+            connect_timeout=10
             # database=DB_DATABASE # Connect without DB first to create it
         )
         return conn

@@ -42,35 +42,15 @@ interface QueryDetailProps {
     suggestion: Suggestion | null
     query: SlowQuery | null
     isLoading: boolean
-
-    // Chat Props
-    chatMessages: Message[]
-    chatInput: string
-    setChatInput: (value: string) => void
-    isChatLoading: boolean
-    onChatSend: (text?: string) => void
-    onChatClear?: () => void
 }
 
 export function QueryDetail({
     suggestion,
     query,
-    isLoading,
-    chatMessages,
-    chatInput,
-    setChatInput,
-    isChatLoading,
-    onChatSend,
-    onChatClear
+    isLoading
 }: QueryDetailProps) {
 
 
-    // Pre-fill chat input when query changes
-    useEffect(() => {
-        if (query) {
-            setChatInput("How can I optimize this query?")
-        }
-    }, [query, setChatInput])
 
     const [sectionsOpen, setSectionsOpen] = useState({
         explanation: false,
@@ -570,23 +550,8 @@ export function QueryDetail({
                         )}
                     </div>
 
-                    {/* Copilot Chat (Log Only) */}
-                    <CopilotChat
-                        messages={chatMessages}
-                        isLoading={isChatLoading}
-                        onClear={onChatClear}
-                    />
-
                 </div>
             </div>
-
-            {/* Sticky Bottom Input */}
-            <CopilotInput
-                value={chatInput}
-                onChange={setChatInput}
-                onSend={() => onChatSend()}
-                isLoading={isChatLoading}
-            />
         </div>
     )
 }

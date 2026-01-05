@@ -47,6 +47,7 @@ from routers import (
     diagnostics,
     analysis,
     metrics,
+    metrics_history,
     copilot,
     sandbox,
     cost_attribution,
@@ -59,7 +60,9 @@ from routers import (
     database_branching,
     safe_transaction,
     blast_radius,
-    vector_optimizer
+    blast_radius,
+    vector_optimizer,
+    deploy
 )
 
 # Import Timing Middleware
@@ -77,7 +80,7 @@ app.add_middleware(TimingMiddleware)
 # CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -86,6 +89,7 @@ app.add_middleware(
 # Include Routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(metrics.router, tags=["Metrics"])
+app.include_router(metrics_history.router, tags=["Metrics History"])
 app.include_router(simulation.router, prefix="/simulation", tags=["Traffic Simulator"])
 app.include_router(risk.router, tags=["Risk Predictor"])
 app.include_router(index.router, tags=["Index Simulator"])
@@ -98,9 +102,10 @@ app.include_router(wait_events.router, tags=["Wait Events"])
 app.include_router(resource_groups.router, tags=["Resource Groups"])
 app.include_router(diagnostics.router, tags=["Diagnostics"])
 app.include_router(analysis.router, tags=["Analysis"])
-app.include_router(copilot.router)
+app.include_router(copilot.router, tags=["Copilot"])
 app.include_router(brain.router, prefix="/brain", tags=["MariaDB Brain"])
 app.include_router(mcp.router, prefix="/mcp", tags=["MCP"])
+app.include_router(deploy.router, tags=["Deployment"])
 
 # New Strategic Features (90% → 100% Graal)
 app.include_router(plan_stability.router, tags=["Plan Stability"])
