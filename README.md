@@ -12,6 +12,8 @@ An intelligent tool that analyzes slow queries, calculates impact scores, and pr
 - 💬 **Copilot Integration** - Interactive optimization guidance
 - 🔍 **Vector Search** - Find solutions from documentation and tickets
 
+For a deep dive into the architecture and optimizations, see [Technical Walkthrough](docs/walkthrough.md).
+
 ## Architecture
 
 ```
@@ -39,7 +41,7 @@ An intelligent tool that analyzes slow queries, calculates impact scores, and pr
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/mariadb-finops-auditor.git
+git clone https://github.com/julienfritschheydon/MariaDB-AI-Demo.git
 cd mariadb-finops-auditor
 
 # Backend setup
