@@ -200,7 +200,7 @@ Confidence: ${rewriterResult.confidence}
   }
 
   return (
-    <div className={isImmersiveMode ? "neural-dark" : ""}>
+    <div>
       <PerformanceMonitor />
       {isImmersiveMode ? (
         <NeuralDashboard

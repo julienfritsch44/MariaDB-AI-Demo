@@ -29,7 +29,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
     }, [])
 
     return (
-        <div className="flex-1 bg-background text-foreground overflow-y-auto neural-grid min-h-screen p-6 dark">
+        <div className="flex-1 bg-background text-foreground overflow-y-auto neural-grid min-h-screen p-6 dark neural-dark">
             {/* Header Overlay */}
             <div className="flex items-center justify-between mb-8">
                 <div className="space-y-2">
