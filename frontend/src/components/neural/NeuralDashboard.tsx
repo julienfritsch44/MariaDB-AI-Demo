@@ -29,7 +29,20 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
     }, [])
 
     return (
-        <div className="flex-1 bg-background text-foreground overflow-y-auto neural-grid min-h-screen p-6 dark neural-dark">
+        <div
+            className="flex-1 overflow-y-auto neural-grid min-h-screen p-6 dark neural-dark bg-[#05050A] text-white"
+            style={{
+                '--background': '240 10% 2%',
+                '--foreground': '0 0% 98%',
+                '--card': '240 10% 4%',
+                '--card-foreground': '0 0% 98%',
+                '--primary': '194 100% 50%',
+                '--border': '240 10% 12%',
+                '--muted': '240 10% 8%',
+                '--muted-foreground': '240 5% 65%',
+                '--accent': '170 100% 50%'
+            } as React.CSSProperties}
+        >
             {/* Header Overlay */}
             <div className="flex items-center justify-between mb-8">
                 <div className="space-y-2">
@@ -100,7 +113,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
 
                 {/* Center Col - The Neural Core */}
                 <div className="col-span-12 lg:col-span-6 flex items-center justify-center relative">
-                    <div className="absolute inset-0 bg-primary/5 rounded-full blur-[120px]" />
+                    <div className="absolute inset-0 bg-primary/10 rounded-full blur-[150px]" />
                     <NeuralCore />
                 </div>
 
@@ -169,8 +182,8 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                 </div>
 
                 <div className="col-span-12 lg:col-span-4">
-                    <BentoTile title="Neural Insights" subtitle="AUTONOMOUS REASONING" icon={Brain}>
-                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 mt-2">
+                    <BentoTile title="Neural Insights" subtitle="AUTONOMOUS REASONING" icon={Brain} priority="high">
+                        <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 mt-2">
                             <h4 className="text-[10px] font-bold text-primary uppercase mb-2">Predictive Action:</h4>
                             <p className="text-xs text-foreground/90 leading-relaxed italic">
                                 "I've identified an indexing opportunity on the 'orders' table. Implementing this could reduce total leakage by 14% based on similar historical patterns in the production branch."
