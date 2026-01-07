@@ -330,6 +330,26 @@ async def list_baselines(limit: int = 50):
     """
     try:
         conn = get_db_connection()
+        
+        # Check if in mock mode
+        if isinstance(conn, type(conn)) and conn.__class__.__name__ == 'MockConnection':
+            mock_baseline = MockDataGenerator.get_plan_stability_baseline()
+            # Wrap in a list for the 'list' endpoint
+            return {
+                "success": True,
+                "count": 1,
+                "baselines": [
+                    {
+                        "fingerprint": mock_baseline['fingerprint'],
+                        "query_preview": "SELECT * FROM orders WHERE customer_id = ?",
+                        "best_execution_time_ms": mock_baseline['best_execution_time_ms'],
+                        "best_cost": float(mock_baseline['best_cost']),
+                        "created_at": mock_baseline['created_at'],
+                        "last_validated": mock_baseline['last_validated']
+                    }
+                ]
+            }
+            
         cursor = conn.cursor(dictionary=True)
         
         cursor.execute("""

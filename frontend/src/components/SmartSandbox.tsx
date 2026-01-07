@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -38,13 +38,22 @@ interface SandboxResponse {
     warning?: string
 }
 
-export function SmartSandbox() {
-    const [sql, setSql] = useState("")
+export function SmartSandbox({ initialQuery }: { initialQuery?: string }) {
+    const [sql, setSql] = useState(initialQuery || "")
     const [isLoading, setIsLoading] = useState(false)
     const [result, setResult] = useState<SandboxResponse | null>(null)
 
-    const handleTest = async () => {
-        if (!sql.trim()) return
+    useEffect(() => {
+        if (initialQuery && initialQuery !== sql) {
+            setSql(initialQuery)
+            handleTest(initialQuery)
+        }
+    }, [initialQuery])
+
+
+    const handleTest = async (queryToTest?: string) => {
+        const finalSql = queryToTest || sql
+        if (!finalSql.trim()) return
 
         setIsLoading(true)
         setResult(null)
@@ -53,8 +62,8 @@ export function SmartSandbox() {
             const res = await trackedFetch(`${API_BASE}/sandbox/test`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    sql: sql.trim(),
+                body: JSON.stringify({
+                    sql: finalSql.trim(),
                     database: "shop_demo",
                     timeout_seconds: 5
                 })
@@ -129,7 +138,7 @@ export function SmartSandbox() {
 
                     <div className="flex items-center gap-3">
                         <Button
-                            onClick={handleTest}
+                            onClick={() => handleTest()}
                             disabled={!sql.trim() || isLoading}
                             className="gap-2"
                         >
@@ -156,11 +165,10 @@ export function SmartSandbox() {
 
             {/* Results */}
             {result && (
-                <Card className={`border-2 ${
-                    result.success 
-                        ? 'border-green-500/30 bg-green-500/5' 
-                        : 'border-red-500/30 bg-red-500/5'
-                }`}>
+                <Card className={`border-2 ${result.success
+                    ? 'border-green-500/30 bg-green-500/5'
+                    : 'border-red-500/30 bg-red-500/5'
+                    }`}>
                     <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2 text-sm font-medium">
@@ -277,7 +285,7 @@ export function SmartSandbox() {
                         <div className="flex items-start gap-2 p-3 rounded-md bg-blue-500/10 border border-blue-500/30">
                             <Shield className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                             <div className="text-xs text-blue-400">
-                                <strong>Safe Mode Active:</strong> This query was executed inside a transaction 
+                                <strong>Safe Mode Active:</strong> This query was executed inside a transaction
                                 and automatically rolled back. No changes were persisted to the database.
                             </div>
                         </div>

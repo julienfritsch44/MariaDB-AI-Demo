@@ -12,7 +12,7 @@ import { UnifiedQueryAnalyzerClean } from "@/components/UnifiedQueryAnalyzerClea
 import { ShopDemo } from "@/components/ShopDemo"
 import PlanStabilityDashboard from "@/app/dashboard/plan-stability/page"
 import BranchingDashboard from "@/app/dashboard/branching/page"
-import { Activity, List, ShoppingCart, Wand2, ArrowRight, HeartPulse, Zap, ShieldAlert, Brain, Shield, Workflow, GitBranch, TrendingUp, Send, Moon, Sun } from "lucide-react"
+import { Activity, List, ShoppingCart, Wand2, ArrowRight, HeartPulse, Zap, ShieldAlert, Brain, Shield, Workflow, GitBranch, TrendingUp, Send, Moon, Sun, MessageSquare } from "lucide-react"
 import { useTheme } from "@/context/ThemeContext"
 import { DiagnosticStatus } from "@/components/DiagnosticStatus"
 import { MCPProof } from "@/components/MCPProof"
@@ -37,6 +37,7 @@ export default function Dashboard() {
   const [isCopilotOpen, setIsCopilotOpen] = useState(true)
   const [showPowerTools, setShowPowerTools] = useState(false)
   const [isImmersiveMode, setIsImmersiveMode] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Predictor state (lifted from QueryPredictor component)
   const [predictorResult, setPredictorResult] = useState<PredictResponse | null>(null)
@@ -188,6 +189,50 @@ Confidence: ${rewriterResult.confidence}
     }
   }
 
+  const togglePresentation = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true)
+        setIsImmersiveMode(true)
+      }).catch(err => console.error(err))
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().then(() => {
+          setIsFullscreen(false)
+          setIsImmersiveMode(false)
+        })
+      }
+    }
+  }
+
+  // Handle Global F11 for Presentation Mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F11') {
+        e.preventDefault()
+        togglePresentation()
+      }
+    }
+
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!document.fullscreenElement
+      setIsFullscreen(isCurrentlyFullscreen)
+      if (isCurrentlyFullscreen) {
+        setIsImmersiveMode(true)
+      } else {
+        setIsImmersiveMode(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
+
   const handleChatClear = () => {
     setChatMessages([{
       id: "welcome",
@@ -207,7 +252,14 @@ Confidence: ${rewriterResult.confidence}
       {isImmersiveMode ? (
         <NeuralDashboard
           analysis={analysis}
-          onBack={() => setIsImmersiveMode(false)}
+          onBack={() => {
+            setIsImmersiveMode(false)
+            if (document.fullscreenElement) {
+              document.exitFullscreen()
+            }
+          }}
+          isPresentationMode={isFullscreen}
+          onTogglePresentation={togglePresentation}
         />
       ) : (
         <main className="h-screen bg-background text-foreground overflow-hidden flex font-sans selection:bg-primary/20">
@@ -330,34 +382,50 @@ Confidence: ${rewriterResult.confidence}
                 </div>
               </button>
 
-              <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-card group cursor-help shadow-sm" title="MCP API Active">
-                <Activity className="w-4 h-4 text-primary animate-pulse" />
+              <div className="relative group">
+                <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center bg-card cursor-help shadow-sm group-hover:border-primary/50 transition-colors">
+                  <Activity className="w-4 h-4 text-primary animate-pulse" />
+                </div>
+                <div className="absolute left-full ml-3 px-3 py-2 bg-card border border-border text-foreground rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-all transform translate-x-[-10px] group-hover:translate-x-0 shadow-xl border-l-2 border-l-primary">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">MCP Engine: Active</span>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground leading-relaxed">
+                      Model Context Protocol bridging AI <br />
+                      with local MariaDB system tools.
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              {/* IMMERSIVE MODE TOGGLE */}
+              {/* COPILOT TOGGLE */}
               <button
-                onClick={() => setIsImmersiveMode(true)}
-                title="Enter Immersive Neural View"
-                className="p-3 rounded-xl bg-primary/10 border border-primary/40 text-primary hover:bg-primary/20 hover:border-primary transition-all hover:scale-110 mb-2 group relative shadow-[0_0_15px_rgba(0,169,206,0.1)]"
+                onClick={() => setIsCopilotOpen(!isCopilotOpen)}
+                title={isCopilotOpen ? "Hide Copilot" : "Show Copilot"}
+                className={`p-3 rounded-lg transition-all group relative ${isCopilotOpen
+                  ? "bg-primary/10 text-primary border border-primary/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
               >
-                <Brain className="w-6 h-6 animate-pulse" />
-                <div className="absolute left-full ml-4 px-3 py-2 bg-card border border-primary/30 text-primary text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-all transform translate-x-[-10px] group-hover:translate-x-0 shadow-xl uppercase tracking-widest">
-                  <span className="flex items-center gap-2">
-                    <Zap className="w-3 h-3 fill-primary" />
-                    Neural Core Active
-                  </span>
+                <MessageSquare className="w-6 h-6" />
+                <div className="absolute left-full ml-3 px-2 py-1 bg-card border border-border text-foreground text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-opacity shadow-md">
+                  {isCopilotOpen ? "Hide Copilot" : "Show Copilot"}
                 </div>
               </button>
+
+
             </div>
           </nav>
 
           {/* 2. SIDEBAR CONTENT (400px fixed) */}
-          <div className="w-[380px] border-r border-border flex flex-col bg-muted shrink-0 overflow-hidden">
-            {/* Header of Sidebar */}
-            <div className="h-12 border-b border-border flex items-center px-4 justify-between bg-card/50 dark:bg-muted/20">
-              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                {activeTab === "neural" ? "NEURAL CORE" :
-                  activeTab === "shop" ? "DEMO APP" :
+          {activeTab !== "neural" && (
+            <div className="w-[380px] border-r border-border flex flex-col bg-muted shrink-0 overflow-hidden">
+              {/* Header of Sidebar */}
+              <div className="h-12 border-b border-border flex items-center px-4 justify-between bg-card/50 dark:bg-muted/20">
+                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  {activeTab === "shop" ? "DEMO APP" :
                     activeTab === "queries" ? "QUERY LOGS" :
                       activeTab === "unified" ? "UNIFIED ANALYZER" :
                         activeTab === "predictor" ? "RISK ANALYSIS" :
@@ -367,165 +435,156 @@ Confidence: ${rewriterResult.confidence}
                                 activeTab === "branching" ? "DB BRANCHING" :
                                   activeTab === "diagnostic" ? "DIAGNOSTICS" :
                                     activeTab === "mcp" ? "AI COPILOT" : "SELF-HEALING"}
-              </span>
-              <span className="text-[10px] font-mono text-muted-foreground/60">v11.4.2</span>
-            </div>
-
-            <div className="flex-1 overflow-y-auto scrollbar-thin">
-              {activeTab === "shop" ? (
-                <div className="p-8 text-center text-zinc-500 space-y-4">
-                  <div className="mx-auto w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center">
-                    <ShoppingCart className="w-6 h-6 text-zinc-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-zinc-300">Application Dashboard</h3>
-                    <p className="text-xs mt-2 leading-relaxed">
-                      Interact with the application in the right panel to generate real-time database traffic and slow query logs.
-                    </p>
-                  </div>
-                </div>
-              ) : activeTab === "predictor" ? (
-                <div className="p-4">
-                  <QueryPredictorInput
-                    onPredict={setPredictorResult}
-                    isLoading={isPredicting}
-                    setIsLoading={setIsPredicting}
-                  />
-                </div>
-              ) : activeTab === "simulator" ? (
-                <div className="p-4">
-                  <IndexSimulatorInput
-                    onSimulate={setSimulatorResult}
-                    isLoading={isSimulating}
-                    setIsLoading={setIsSimulating}
-                  />
-                </div>
-              ) : activeTab === "rewriter" ? (
-                <div className="p-4">
-                  <QueryRewriterInput
-                    onRewrite={setRewriterResult}
-                    isLoading={isRewriting}
-                    setIsLoading={setIsRewriting}
-                  />
-                </div>
-              ) : activeTab === "sandbox" ? (
-                <div className="p-4 space-y-4">
-                  <div className="text-xs text-muted-foreground">
-                    Test queries safely without persisting changes
-                  </div>
-                </div>
-              ) : activeTab === "unified" ? (
-                <div className="p-4 space-y-4">
-                  <div className="text-xs font-semibold text-muted-foreground mb-3">Analysis History</div>
-                  {unifiedHistory.length === 0 ? (
-                    <div className="text-xs text-muted-foreground/60 text-center py-8">
-                      No queries analyzed yet
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {unifiedHistory.map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => setSelectedHistoryItem(item)}
-                          className="w-full p-3 rounded-md bg-muted/50 hover:bg-muted border border-border/40 hover:border-primary/50 transition-all text-left group"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className={`text-xs font-bold ${item.risk_level === 'HIGH' ? 'text-red-400' :
-                              item.risk_level === 'MEDIUM' ? 'text-amber-400' :
-                                'text-emerald-400'
-                              }`}>
-                              {item.risk_level} ({item.risk_score})
-                            </span>
-                            <span className="text-[10px] text-muted-foreground">
-                              {new Date(item.timestamp).toLocaleTimeString()}
-                            </span>
-                          </div>
-                          <div className="text-xs font-mono text-foreground/80 truncate group-hover:text-primary transition-colors">
-                            {item.sql}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {unifiedHistory.length > 0 && (
-                    <button
-                      onClick={() => setUnifiedHistory([])}
-                      className="w-full mt-4 p-2 text-xs text-muted-foreground hover:text-foreground border border-border/40 rounded-md hover:bg-muted/50 transition-colors"
-                    >
-                      Clear History
-                    </button>
-                  )}
-                </div>
-              ) : activeTab === "planstability" ? (
-                <div className="p-4 space-y-4">
-                  <div className="text-xs text-muted-foreground">
-                    Manage query plan baselines to prevent performance regressions
-                  </div>
-                </div>
-              ) : activeTab === "branching" ? (
-                <div className="p-4 space-y-4">
-                  <div className="text-xs text-muted-foreground">
-                    Create and manage database branches for safe testing
-                  </div>
-                </div>
-              ) : activeTab === "diagnostic" ? (
-                <div className="p-4 space-y-4">
-                  <DiagnosticStatus />
-                </div>
-              ) : analysis ? (
-                <div className="p-2">
-                  <SlowQueryTable
-                    queries={analysis.top_queries}
-                    onAnalyze={handleAnalyze}
-                    activeQueryId={selectedQuery?.id}
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center justify-center py-20 text-muted-foreground">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    <span className="text-xs">Connecting...</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Sidebar Footer Metrics */}
-            <div className="p-4 border-t border-border bg-card/50 space-y-3">
-              <div className="flex items-center justify-between text-[10px] uppercase tracking-tighter">
-                <span className="text-muted-foreground">Global Score</span>
-                <span className="text-primary font-bold">{analysis?.global_score ?? 0}</span>
-              </div>
-              <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-primary" style={{ width: `${analysis?.global_score ?? 0}%` }} />
-              </div>
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                  <span>SkySQL Active</span>
-                </div>
-                <span>{analysis?.total_queries ?? 0} Samples</span>
+                </span>
+                <span className="text-[10px] font-mono text-muted-foreground/60">v11.4.2</span>
               </div>
 
-              {/* NEURAL CORE COUNTER */}
-              <div className="pt-2 mt-2 border-t border-border/50">
-                <div className="flex items-center justify-between group">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
-                      <Brain className="w-3 h-3 text-primary animate-pulse" />
+              <div className="flex-1 overflow-y-auto scrollbar-thin">
+                {activeTab === "shop" ? (
+                  <div className="p-8 text-center text-zinc-500 space-y-4">
+                    <div className="mx-auto w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center">
+                      <ShoppingCart className="w-6 h-6 text-zinc-600" />
                     </div>
-                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Neural Core</span>
+                    <div>
+                      <h3 className="text-sm font-medium text-zinc-300">Application Dashboard</h3>
+                      <p className="text-xs mt-2 leading-relaxed">
+                        Interact with the application in the right panel to generate real-time database traffic and slow query logs.
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-[10px] font-mono text-primary font-bold">
-                    {analysis?.kb_count ? analysis.kb_count.toLocaleString() : "1,350"} Incidents
-                  </span>
+                ) : ["predictor", "rewriter", "sandbox", "simulator"].includes(activeTab) ? (
+                  <div className="p-0">
+                    <div className="p-4 border-b border-border bg-card/30">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                        <List className="w-3 h-3" />
+                        Select Query to Analyze
+                      </div>
+                    </div>
+                    {analysis ? (
+                      <SlowQueryTable
+                        queries={analysis.top_queries}
+                        onAnalyze={(id) => {
+                          handleAnalyze(id);
+                        }}
+                        activeQueryId={selectedQuery?.id}
+                      />
+                    ) : (
+                      <div className="p-8 text-center text-xs text-muted-foreground">Loading queries...</div>
+                    )}
+                  </div>
+                ) : activeTab === "unified" ? (
+                  <div className="p-4 space-y-4">
+                    <div className="text-xs font-semibold text-muted-foreground mb-3">Analysis History</div>
+                    {unifiedHistory.length === 0 ? (
+                      <div className="text-xs text-muted-foreground/60 text-center py-8">
+                        No queries analyzed yet
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {unifiedHistory.map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => setSelectedHistoryItem(item)}
+                            className="w-full p-3 rounded-md bg-muted/50 hover:bg-muted border border-border/40 hover:border-primary/50 transition-all text-left group"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className={`text-xs font-bold ${item.risk_level === 'HIGH' ? 'text-red-400' :
+                                item.risk_level === 'MEDIUM' ? 'text-amber-400' :
+                                  'text-emerald-400'
+                                }`}>
+                                {item.risk_level} ({item.risk_score})
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {new Date(item.timestamp).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <div className="text-xs font-mono text-foreground/80 truncate group-hover:text-primary transition-colors">
+                              {item.sql}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {unifiedHistory.length > 0 && (
+                      <button
+                        onClick={() => setUnifiedHistory([])}
+                        className="w-full mt-4 p-2 text-xs text-muted-foreground hover:text-foreground border border-border/40 rounded-md hover:bg-muted/50 transition-colors"
+                      >
+                        Clear History
+                      </button>
+                    )}
+                  </div>
+                ) : activeTab === "planstability" ? (
+                  <div className="p-4 space-y-4">
+                    <div className="text-xs text-muted-foreground">
+                      Manage query plan baselines to prevent performance regressions
+                    </div>
+                  </div>
+                ) : activeTab === "branching" ? (
+                  <div className="p-4 space-y-4">
+                    <div className="text-xs text-muted-foreground">
+                      Create and manage database branches for safe testing
+                    </div>
+                  </div>
+                ) : activeTab === "diagnostic" ? (
+                  <div className="p-4 space-y-4">
+                    <DiagnosticStatus />
+                  </div>
+                ) : analysis ? (
+                  <div className="p-2">
+                    <SlowQueryTable
+                      queries={analysis.top_queries}
+                      onAnalyze={handleAnalyze}
+                      activeQueryId={selectedQuery?.id}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-20 text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs">Connecting...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Sidebar Footer Metrics */}
+              <div className="p-4 border-t border-border bg-card/50 space-y-3">
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-tighter">
+                  <span className="text-muted-foreground">Global Score</span>
+                  <span className="text-primary font-bold">{analysis?.global_score ?? 0}</span>
                 </div>
-                <p className="text-[8px] text-muted-foreground/60 mt-1 leading-tight italic">
-                  Proactive RAG grounded in MariaDB Jira history.
-                </p>
+                <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-primary" style={{ width: `${analysis?.global_score ?? 0}%` }} />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    <span>SkySQL Active</span>
+                  </div>
+                  <span>{analysis?.total_queries ?? 0} Samples</span>
+                </div>
+
+                {/* NEURAL CORE COUNTER */}
+                <div className="pt-2 mt-2 border-t border-border/50">
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
+                        <Brain className="w-3 h-3 text-primary animate-pulse" />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Neural Core</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-primary font-bold">
+                      {analysis?.kb_count ? analysis.kb_count.toLocaleString() : "1,350"} Incidents
+                    </span>
+                  </div>
+                  <p className="text-[8px] text-muted-foreground/60 mt-1 leading-tight italic">
+                    Proactive RAG grounded in MariaDB Jira history.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
 
           {/* 3. MAIN PANEL + COPILOT */}
@@ -539,14 +598,6 @@ Confidence: ${rewriterResult.confidence}
                   <ArrowRight className="w-3 h-3" />
                   <span className="text-foreground">{activeTab}</span>
                 </div>
-                <button
-                  onClick={() => setIsCopilotOpen(!isCopilotOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs bg-card hover:bg-muted border border-border rounded-md transition-colors"
-                  title={isCopilotOpen ? "Hide AI Copilot" : "Show AI Copilot"}
-                >
-                  <Brain className="w-3.5 h-3.5" />
-                  <span>{isCopilotOpen ? "Hide" : "Show"} Copilot</span>
-                </button>
               </div>
 
               <div className="flex-1 overflow-hidden relative flex flex-col">
@@ -555,6 +606,11 @@ Confidence: ${rewriterResult.confidence}
                     <NeuralDashboard
                       analysis={analysis}
                       onBack={() => setActiveTab("queries")}
+                      onNavigate={(tab) => {
+                        setActiveTab(tab);
+                      }}
+                      isPresentationMode={isFullscreen}
+                      onTogglePresentation={togglePresentation}
                     />
                   </div>
                 ) : activeTab === "shop" ? (
@@ -569,23 +625,59 @@ Confidence: ${rewriterResult.confidence}
                     onChatClear={handleChatClear}
                   />
                 ) : activeTab === "predictor" ? (
-                  <PredictorResultPanel
-                    result={predictorResult}
-                    isLoading={isPredicting}
-                  />
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className="p-6 border-b border-border bg-card/50">
+                      <QueryPredictorInput
+                        initialQuery={selectedQuery?.sql_text}
+                        onPredict={setPredictorResult}
+                        isLoading={isPredicting}
+                        setIsLoading={setIsPredicting}
+                      />
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                      <PredictorResultPanel
+                        result={predictorResult}
+                        isLoading={isPredicting}
+                      />
+                    </div>
+                  </div>
                 ) : activeTab === "simulator" ? (
-                  <IndexSimulatorResultPanel
-                    result={simulatorResult}
-                    isLoading={isSimulating}
-                  />
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className="p-6 border-b border-border bg-card/50">
+                      <IndexSimulatorInput
+                        initialQuery={selectedQuery?.sql_text}
+                        onSimulate={setSimulatorResult}
+                        isLoading={isSimulating}
+                        setIsLoading={setIsSimulating}
+                      />
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                      <IndexSimulatorResultPanel
+                        result={simulatorResult}
+                        isLoading={isSimulating}
+                      />
+                    </div>
+                  </div>
                 ) : activeTab === "rewriter" ? (
-                  <RewriterResultPanel
-                    result={rewriterResult}
-                    isLoading={isRewriting}
-                  />
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className="p-6 border-b border-border bg-card/50">
+                      <QueryRewriterInput
+                        initialQuery={selectedQuery?.sql_text}
+                        onRewrite={setRewriterResult}
+                        isLoading={isRewriting}
+                        setIsLoading={setIsRewriting}
+                      />
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                      <RewriterResultPanel
+                        result={rewriterResult}
+                        isLoading={isRewriting}
+                      />
+                    </div>
+                  </div>
                 ) : activeTab === "sandbox" ? (
                   <div className="flex-1 overflow-y-auto p-6">
-                    <SmartSandbox />
+                    <SmartSandbox initialQuery={selectedQuery?.sql_text} />
                   </div>
                 ) : activeTab === "unified" ? (
                   <UnifiedQueryAnalyzerClean
@@ -646,13 +738,6 @@ Confidence: ${rewriterResult.confidence}
                       <Brain className="w-4 h-4 text-primary" />
                       <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">AI Copilot</span>
                     </div>
-                    <button
-                      onClick={() => setIsCopilotOpen(false)}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                      title="Close Copilot"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {chatMessages.map((msg) => (

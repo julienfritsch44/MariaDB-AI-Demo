@@ -3,41 +3,55 @@
 import React, { useEffect, useState } from "react"
 import { Brain } from "lucide-react"
 
-export function NeuralCore() {
+interface NeuralCoreProps {
+    isAlert?: boolean;
+}
+
+export function NeuralCore({ isAlert = false }: NeuralCoreProps) {
     const [rotation, setRotation] = useState(0)
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setRotation(prev => (prev + 0.5) % 360)
+            // Rotate faster in alert mode
+            const speed = isAlert ? 1.5 : 0.5;
+            setRotation(prev => (prev + speed) % 360)
         }, 50)
         return () => clearInterval(interval)
-    }, [])
+    }, [isAlert])
+
+    const coreColor = isAlert ? 'rgba(239, 68, 68, 0.8)' : 'rgba(0, 169, 206, 0.8)';
+    const glowColor = isAlert ? 'rgba(239, 68, 68, 0.4)' : 'rgba(0, 169, 206, 0.4)';
 
     return (
         <div className="relative w-full h-full flex items-center justify-center min-h-[400px]">
             {/* Background radial gradient glow needs to use CSS var for color */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--neural-glow)_0%,_transparent_70%)] opacity-70" />
+            <div
+                className="absolute inset-0 opacity-70 transition-colors duration-1000"
+                style={{
+                    background: `radial-gradient(circle at center, ${isAlert ? 'rgba(239, 68, 68, 0.15)' : 'var(--neural-glow)'} 0%, transparent 70%)`
+                }}
+            />
 
             {/* Animated SVG Neural Core */}
-            <div className="relative z-10 w-[500px] h-[500px] grayscale-[0.5] brightness-125">
-                <svg viewBox="0 0 200 200" className="w-full h-full filter drop-shadow-[0_0_30px_rgba(0,169,206,0.4)]">
+            <div className={`relative z-10 w-[500px] h-[500px] transition-all duration-1000 ${isAlert ? 'grayscale-0 brightness-150' : 'grayscale-[0.5] brightness-125'}`}>
+                <svg viewBox="0 0 200 200" className="w-full h-full filter" style={{ filter: `drop-shadow(0 0 30px ${glowColor})` }}>
                     <defs>
                         <linearGradient id="coreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="var(--color-primary)" />
-                            <stop offset="100%" stopColor="var(--color-accent)" />
+                            <stop offset="0%" stopColor={isAlert ? '#ef4444' : 'var(--color-primary)'} />
+                            <stop offset="100%" stopColor={isAlert ? '#991b1b' : 'var(--color-accent)'} />
                         </linearGradient>
                     </defs>
 
                     {/* Central Sphere */}
-                    <circle cx="100" cy="100" r="40" fill="url(#coreGradient)" className="animate-pulse opacity-20" />
+                    <circle cx="100" cy="100" r="40" fill="url(#coreGradient)" className={`${isAlert ? 'animate-[pulse_1s_infinite]' : 'animate-pulse'} opacity-20`} />
                     <circle cx="100" cy="100" r="30" fill="url(#coreGradient)" className="opacity-40" />
 
                     {/* Orbiting particles */}
                     <g style={{ transform: `rotate(${rotation}deg)`, transformOrigin: 'center' }}>
                         {[0, 60, 120, 180, 240, 300].map((angle, i) => (
                             <g key={i} transform={`rotate(${angle})`}>
-                                <circle cx="170" cy="100" r="2" fill="var(--color-primary)" />
-                                <path d="M 100 100 L 170 100" stroke="var(--color-primary)" strokeWidth="0.5" strokeDasharray="4 4" opacity="0.3" />
+                                <circle cx="170" cy="100" r="2" fill={isAlert ? '#ef4444' : 'var(--color-primary)'} />
+                                <path d="M 100 100 L 170 100" stroke={isAlert ? '#ef4444' : 'var(--color-primary)'} strokeWidth="0.5" strokeDasharray="4 4" opacity="0.3" />
                             </g>
                         ))}
                     </g>

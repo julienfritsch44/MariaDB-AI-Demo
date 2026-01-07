@@ -61,7 +61,6 @@ from routers import (
     database_branching,
     safe_transaction,
     blast_radius,
-    blast_radius,
     vector_optimizer,
     deploy
 )
@@ -91,7 +90,7 @@ app.add_middleware(
 app.include_router(health.router, tags=["Health"])
 app.include_router(metrics.router, tags=["Metrics"])
 app.include_router(metrics_history.router, tags=["Metrics History"])
-app.include_router(neural_metrics.router, tags=["Neural Metrics"])
+app.include_router(neural_metrics.router, prefix="/metrics", tags=["Neural Metrics"])
 app.include_router(simulation.router, prefix="/simulation", tags=["Traffic Simulator"])
 app.include_router(risk.router, tags=["Risk Predictor"])
 app.include_router(index.router, tags=["Index Simulator"])

@@ -34,18 +34,49 @@ const INDEX_SIMULATION_STEPS = [
 const API_BASE = "http://localhost:8000"
 
 interface IndexSimulatorInputProps {
+    initialQuery?: string
     onSimulate: (result: IndexSimulationResponse) => void
     isLoading: boolean
     setIsLoading: (loading: boolean) => void
 }
 
-export function IndexSimulatorInput({ onSimulate, isLoading, setIsLoading }: IndexSimulatorInputProps) {
-    const [sql, setSql] = useState("")
+export function IndexSimulatorInput({ initialQuery, onSimulate, isLoading, setIsLoading }: IndexSimulatorInputProps) {
+    const [sql, setSql] = useState(initialQuery || "")
     const [proposedIndex, setProposedIndex] = useState("")
     const [error, setError] = useState<string | null>(null)
 
-    const handleSimulate = async () => {
-        if (!sql.trim() || !proposedIndex.trim()) return
+    useEffect(() => {
+        if (initialQuery && initialQuery !== sql) {
+            setSql(initialQuery)
+
+            // Heuristic for proposed index
+            const tableMatch = initialQuery.match(/FROM\s+(\w+)/i);
+            const whereMatch = initialQuery.match(/WHERE\s+([^;]+)/i);
+
+            let suggestedIndex = proposedIndex;
+            if (tableMatch && whereMatch) {
+                const tableName = tableMatch[1];
+                const whereClause = whereMatch[1];
+                const columnMatch = whereClause.match(/(\w+)\s*[=<>]/g);
+                if (columnMatch) {
+                    const cols = Array.from(new Set(columnMatch.map(c => c.replace(/\s*[=<>]\s*/, '').trim())));
+                    suggestedIndex = `CREATE INDEX idx_${cols.join('_')} ON ${tableName}(${cols.join(', ')})`;
+                    setProposedIndex(suggestedIndex);
+                }
+            }
+
+            if (suggestedIndex) {
+                handleSimulate(initialQuery, suggestedIndex);
+            }
+        }
+    }, [initialQuery])
+
+
+    const handleSimulate = async (queryToSimulate?: string, indexToSimulate?: string) => {
+        const finalSql = queryToSimulate || sql
+        const finalIndex = indexToSimulate || proposedIndex
+
+        if (!finalSql.trim() || !finalIndex.trim()) return
 
         setIsLoading(true)
         setError(null)
@@ -55,8 +86,8 @@ export function IndexSimulatorInput({ onSimulate, isLoading, setIsLoading }: Ind
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    sql: sql.trim(),
-                    proposed_index: proposedIndex.trim()
+                    sql: finalSql.trim(),
+                    proposed_index: finalIndex.trim()
                 })
             })
 
@@ -131,7 +162,7 @@ export function IndexSimulatorInput({ onSimulate, isLoading, setIsLoading }: Ind
                     )}
 
                     <Button
-                        onClick={handleSimulate}
+                        onClick={() => handleSimulate()}
                         disabled={!sql.trim() || !proposedIndex.trim() || isLoading}
                         className="w-full h-9 bg-background text-foreground hover:bg-muted transition-colors font-medium text-xs"
                     >

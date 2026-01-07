@@ -25,17 +25,27 @@ import { useEffect } from "react"
 const API_BASE = "http://localhost:8000"
 
 interface QueryPredictorInputProps {
+    initialQuery?: string
     onPredict: (result: PredictResponse) => void
     isLoading: boolean
     setIsLoading: (loading: boolean) => void
 }
 
-export function QueryPredictorInput({ onPredict, isLoading, setIsLoading }: QueryPredictorInputProps) {
-    const [sql, setSql] = useState("")
+export function QueryPredictorInput({ initialQuery, onPredict, isLoading, setIsLoading }: QueryPredictorInputProps) {
+    const [sql, setSql] = useState(initialQuery || "")
     const [error, setError] = useState<string | null>(null)
 
-    const handlePredict = async () => {
-        if (!sql.trim()) return
+    useEffect(() => {
+        if (initialQuery && initialQuery !== sql) {
+            setSql(initialQuery)
+            handlePredict(initialQuery)
+        }
+    }, [initialQuery])
+
+
+    const handlePredict = async (queryToPredict?: string) => {
+        const finalSql = queryToPredict || sql
+        if (!finalSql.trim()) return
 
         setIsLoading(true)
         setError(null)
@@ -44,7 +54,7 @@ export function QueryPredictorInput({ onPredict, isLoading, setIsLoading }: Quer
             const res = await trackedFetch(`${API_BASE}/predict`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ sql: sql.trim() })
+                body: JSON.stringify({ sql: finalSql.trim() })
             })
 
             if (!res.ok) throw new Error(`API Error: ${res.status}`)
@@ -104,7 +114,7 @@ export function QueryPredictorInput({ onPredict, isLoading, setIsLoading }: Quer
                     )}
 
                     <Button
-                        onClick={handlePredict}
+                        onClick={() => handlePredict()}
                         disabled={!sql.trim() || isLoading}
                         className="w-full h-9 bg-background text-foreground hover:bg-muted transition-colors font-medium text-xs"
                     >

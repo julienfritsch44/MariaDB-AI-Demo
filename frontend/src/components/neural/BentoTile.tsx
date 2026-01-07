@@ -5,7 +5,7 @@ import { Sparkline } from "./Sparkline"
 import { LucideIcon } from "lucide-react"
 
 interface BentoTileProps {
-    title: string
+    title?: string
     subtitle?: string
     icon?: LucideIcon
     children: React.ReactNode
@@ -34,25 +34,29 @@ export function BentoTile({
     return (
         <div className={`p-6 flex flex-col space-y-4 group relative overflow-hidden rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border transition-all duration-300 hover:bg-white/80 dark:hover:bg-white/10 ${priorityColors[priority]} ${className}`}>
             {/* Ambient background glow */}
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
-            <div className="flex items-center justify-between z-10">
-                <div className="space-y-2">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
-                        {title}
-                    </h3>
-                    {subtitle && (
-                        <p className="text-[10px] text-muted-foreground/60 font-mono italic">
-                            {subtitle}
-                        </p>
+            {(title || subtitle || Icon) && (
+                <div className="flex items-center justify-between z-10">
+                    <div className="space-y-2">
+                        {title && (
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">
+                                {title}
+                            </h3>
+                        )}
+                        {subtitle && (
+                            <p className="text-[10px] text-muted-foreground/60 font-mono italic">
+                                {subtitle}
+                            </p>
+                        )}
+                    </div>
+                    {Icon && (
+                        <div className="w-8 h-8 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <Icon className="w-4 h-4 text-primary" />
+                        </div>
                     )}
                 </div>
-                {Icon && (
-                    <div className="w-8 h-8 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <Icon className="w-4 h-4 text-primary" />
-                    </div>
-                )}
-            </div>
+            )}
 
             <div className="flex-1 z-10">
                 {children}

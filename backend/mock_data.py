@@ -306,9 +306,12 @@ class MockDataGenerator:
             {
                 "branch_id": "br_migration_001",
                 "branch_name": "add_composite_index",
+                "branch_database": "shop_demo_branch_add_composite_index",
                 "source_database": "shop_demo",
+                "table_count": 42,
                 "status": "ACTIVE",
                 "created_at": (datetime.now() - timedelta(hours=2)).isoformat(),
+                "size_mb": 820.5,
                 "size_gb": 0.8,
                 "changes": [
                     "ALTER TABLE orders ADD INDEX idx_customer_status(customer_id, status)"
@@ -322,9 +325,12 @@ class MockDataGenerator:
             {
                 "branch_id": "br_schema_update_002",
                 "branch_name": "add_audit_columns",
+                "branch_database": "shop_demo_branch_add_audit_columns",
                 "source_database": "shop_demo",
+                "table_count": 42,
                 "status": "TESTING",
                 "created_at": (datetime.now() - timedelta(hours=5)).isoformat(),
+                "size_mb": 1228.8,
                 "size_gb": 1.2,
                 "changes": [
                     "ALTER TABLE customers ADD COLUMN last_modified_at TIMESTAMP",

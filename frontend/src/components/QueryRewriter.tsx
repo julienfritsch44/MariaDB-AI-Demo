@@ -34,17 +34,27 @@ import { trackedFetch } from "@/lib/usePerformance"
 const API_BASE = "http://localhost:8000"
 
 interface QueryRewriterInputProps {
+    initialQuery?: string
     onRewrite: (result: RewriteResponse) => void
     isLoading: boolean
     setIsLoading: (loading: boolean) => void
 }
 
-export function QueryRewriterInput({ onRewrite, isLoading, setIsLoading }: QueryRewriterInputProps) {
-    const [sql, setSql] = useState("")
+export function QueryRewriterInput({ initialQuery, onRewrite, isLoading, setIsLoading }: QueryRewriterInputProps) {
+    const [sql, setSql] = useState(initialQuery || "")
     const [error, setError] = useState<string | null>(null)
 
-    const handleRewrite = async () => {
-        if (!sql.trim()) return
+    useEffect(() => {
+        if (initialQuery && initialQuery !== sql) {
+            setSql(initialQuery)
+            handleRewrite(initialQuery)
+        }
+    }, [initialQuery])
+
+
+    const handleRewrite = async (queryToRewrite?: string) => {
+        const finalSql = queryToRewrite || sql
+        if (!finalSql.trim()) return
 
         setIsLoading(true)
         setError(null)
@@ -53,7 +63,7 @@ export function QueryRewriterInput({ onRewrite, isLoading, setIsLoading }: Query
             const res = await trackedFetch(`${API_BASE}/rewrite`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ sql: sql.trim() })
+                body: JSON.stringify({ sql: finalSql.trim() })
             })
 
             if (!res.ok) throw new Error(`API Error: ${res.status}`)
@@ -116,7 +126,7 @@ export function QueryRewriterInput({ onRewrite, isLoading, setIsLoading }: Query
                     )}
 
                     <Button
-                        onClick={handleRewrite}
+                        onClick={() => handleRewrite()}
                         disabled={!sql.trim() || isLoading}
                         className="w-full h-10 bg-background text-foreground hover:bg-muted transition-all font-medium text-xs group"
                     >
