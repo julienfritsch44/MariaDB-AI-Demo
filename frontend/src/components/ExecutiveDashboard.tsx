@@ -126,7 +126,7 @@ export default function ExecutiveDashboard() {
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Financial Impact */}
-        <div className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+        <div className="bg-white dark:bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-3">
             <div className="p-2 bg-emerald-500/10 rounded-lg">
               <DollarSign className="w-5 h-5 text-emerald-500" />
@@ -136,7 +136,7 @@ export default function ExecutiveDashboard() {
               {summary.financial?.cost_reduction_percentage ?? 0}%
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">
+          <div className="text-2xl font-bold text-gray-900 dark:text-foreground">
             ${((summary.financial?.annual_projection ?? 0) / 1000).toFixed(0)}K
           </div>
           <div className="text-xs text-muted-foreground mt-1">Annual Projection</div>
@@ -146,7 +146,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         {/* Incidents Prevented */}
-        <div className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+        <div className="bg-white dark:bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-3">
             <div className="p-2 bg-red-500/10 rounded-lg">
               <Shield className="w-5 h-5 text-red-500" />
@@ -155,7 +155,7 @@ export default function ExecutiveDashboard() {
               {((summary.incidents?.prevention_rate ?? 0) * 100).toFixed(0)}%
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">
+          <div className="text-2xl font-bold text-gray-900 dark:text-foreground">
             {summary.incidents?.total_prevented ?? 0}
           </div>
           <div className="text-xs text-muted-foreground mt-1">Incidents Prevented</div>
@@ -165,7 +165,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         {/* Performance Gains */}
-        <div className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+        <div className="bg-white dark:bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-3">
             <div className="p-2 bg-blue-500/10 rounded-lg">
               <Zap className="w-5 h-5 text-blue-500" />
@@ -174,7 +174,7 @@ export default function ExecutiveDashboard() {
               {summary.optimizations?.avg_performance_gain ?? 'N/A'}
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">
+          <div className="text-2xl font-bold text-gray-900 dark:text-foreground">
             {(summary.optimizations?.queries_optimized ?? 0).toLocaleString()}
           </div>
           <div className="text-xs text-muted-foreground mt-1">Queries Optimized</div>
@@ -184,7 +184,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         {/* Compliance Status */}
-        <div className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+        <div className="bg-white dark:bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-3">
             <div className="p-2 bg-purple-500/10 rounded-lg">
               <CheckCircle2 className="w-5 h-5 text-purple-500" />
@@ -193,7 +193,7 @@ export default function ExecutiveDashboard() {
               {summary.compliance?.gdpr_compliant ? "✓" : "✗"} GDPR
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">
+          <div className="text-2xl font-bold text-gray-900 dark:text-foreground">
             {summary.compliance?.pii_columns_masked ?? 0}
           </div>
           <div className="text-xs text-muted-foreground mt-1">PII Columns Masked</div>
@@ -206,15 +206,15 @@ export default function ExecutiveDashboard() {
       {/* Detailed Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Cost Breakdown */}
-        <div className="bg-card border border-border rounded-lg p-6">
+        <div className="bg-white dark:bg-card border border-border rounded-lg p-6 shadow-sm dark:shadow-none">
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
             <DollarSign className="w-5 h-5 mr-2 text-primary" />
             Cost Savings Breakdown
           </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-muted/30 rounded-lg">
               <div>
-                <div className="text-sm font-medium text-foreground">Intelligent Archiving</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-foreground">Intelligent Archiving</div>
                 <div className="text-xs text-muted-foreground">Storage optimization</div>
               </div>
               <div className="text-right">
@@ -222,9 +222,9 @@ export default function ExecutiveDashboard() {
                 <div className="text-xs text-muted-foreground">-60% costs</div>
               </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-muted/30 rounded-lg">
               <div>
-                <div className="text-sm font-medium text-foreground">Query Optimization</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-foreground">Query Optimization</div>
                 <div className="text-xs text-muted-foreground">Performance gains</div>
               </div>
               <div className="text-right">
@@ -232,9 +232,9 @@ export default function ExecutiveDashboard() {
                 <div className="text-xs text-muted-foreground">+67% faster</div>
               </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-muted/30 rounded-lg">
               <div>
-                <div className="text-sm font-medium text-foreground">Incident Prevention</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-foreground">Incident Prevention</div>
                 <div className="text-xs text-muted-foreground">Downtime avoided</div>
               </div>
               <div className="text-right">
@@ -242,9 +242,9 @@ export default function ExecutiveDashboard() {
                 <div className="text-xs text-muted-foreground">18.5h saved</div>
               </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-muted/30 rounded-lg">
               <div>
-                <div className="text-sm font-medium text-foreground">Resource Throttling</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-foreground">Resource Throttling</div>
                 <div className="text-xs text-muted-foreground">Cloud costs reduction</div>
               </div>
               <div className="text-right">
@@ -256,7 +256,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         {/* Incidents Breakdown */}
-        <div className="bg-card border border-border rounded-lg p-6">
+        <div className="bg-white dark:bg-card border border-border rounded-lg p-6 shadow-sm dark:shadow-none">
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
             <Shield className="w-5 h-5 mr-2 text-primary" />
             Incidents Prevented
@@ -268,7 +268,7 @@ export default function ExecutiveDashboard() {
                   <AlertTriangle className="w-4 h-4 text-red-500" />
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-foreground">Critical</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-foreground">Critical</div>
                   <div className="text-xs text-muted-foreground">Data corruption, downtime</div>
                 </div>
               </div>
@@ -282,7 +282,7 @@ export default function ExecutiveDashboard() {
                   <AlertTriangle className="w-4 h-4 text-amber-500" />
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-foreground">Medium</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-foreground">Medium</div>
                   <div className="text-xs text-muted-foreground">Performance degradation</div>
                 </div>
               </div>
@@ -296,7 +296,7 @@ export default function ExecutiveDashboard() {
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-foreground">Low</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-foreground">Low</div>
                   <div className="text-xs text-muted-foreground">Minor issues</div>
                 </div>
               </div>
@@ -306,7 +306,7 @@ export default function ExecutiveDashboard() {
             </div>
             <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-foreground">Downtime Avoided</div>
+                <div className="text-sm text-gray-900 dark:text-foreground">Downtime Avoided</div>
                 <div className="text-lg font-bold text-primary">
                   {summary.incidents?.estimated_downtime_avoided_hours ?? 0}h
                 </div>
@@ -320,7 +320,7 @@ export default function ExecutiveDashboard() {
       </div>
 
       {/* Activity Trend */}
-      <div className="bg-card border border-border rounded-lg p-6">
+      <div className="bg-white dark:bg-card border border-border rounded-lg p-6 shadow-sm dark:shadow-none">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
           <Activity className="w-5 h-5 mr-2 text-primary" />
           30-Day Activity Trend
@@ -329,7 +329,7 @@ export default function ExecutiveDashboard() {
           {(summary.trends ?? []).slice(-30).map((day, index) => {
             const maxQueries = Math.max(...(summary.trends ?? []).map(d => d.queries_analyzed));
             const height = (day.queries_analyzed / maxQueries) * 100;
-            
+
             return (
               <div
                 key={index}
@@ -340,8 +340,8 @@ export default function ExecutiveDashboard() {
                   style={{ height: `${height}%` }}
                 />
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  <div className="bg-card border border-border rounded px-2 py-1 text-xs whitespace-nowrap shadow-lg">
-                    <div className="font-semibold">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                  <div className="bg-white dark:bg-card border border-border rounded px-2 py-1 text-xs whitespace-nowrap shadow-lg">
+                    <div className="font-semibold text-gray-900 dark:text-foreground">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                     <div className="text-muted-foreground">{day.queries_analyzed} queries</div>
                     <div className="text-primary">{day.incidents_prevented} prevented</div>
                   </div>
@@ -358,25 +358,25 @@ export default function ExecutiveDashboard() {
 
       {/* Bottom Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-muted/30 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-foreground">
+        <div className="bg-slate-50 dark:bg-muted/30 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-gray-900 dark:text-foreground">
             {(summary.optimizations?.queries_analyzed ?? 0).toLocaleString()}
           </div>
           <div className="text-xs text-muted-foreground mt-1">Queries Analyzed</div>
         </div>
-        <div className="bg-muted/30 rounded-lg p-4 text-center">
+        <div className="bg-slate-50 dark:bg-muted/30 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-primary">
             {(((summary.optimizations?.queries_optimized ?? 0) / (summary.optimizations?.queries_analyzed || 1)) * 100).toFixed(1)}%
           </div>
           <div className="text-xs text-muted-foreground mt-1">Optimization Rate</div>
         </div>
-        <div className="bg-muted/30 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-foreground">
+        <div className="bg-slate-50 dark:bg-muted/30 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-gray-900 dark:text-foreground">
             {summary.optimizations?.indexes_suggested ?? 0}
           </div>
           <div className="text-xs text-muted-foreground mt-1">Indexes Suggested</div>
         </div>
-        <div className="bg-muted/30 rounded-lg p-4 text-center">
+        <div className="bg-slate-50 dark:bg-muted/30 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-emerald-500">
             {((summary.incidents?.prevention_rate ?? 0) * 100).toFixed(0)}%
           </div>

@@ -20,7 +20,7 @@ import { PerformanceMonitor } from "@/components/ui/PerformanceMonitor"
 import { trackedFetch } from "@/lib/usePerformance"
 import { Splash } from "@/components/Splash"
 import { UnifiedCopilot } from "@/components/UnifiedCopilot"
-import ExecutiveDashboard from "@/components/ExecutiveDashboard"
+
 import { NeuralDashboard } from "@/components/neural/NeuralDashboard"
 
 export default function Dashboard() {
@@ -218,7 +218,6 @@ Confidence: ${rewriterResult.confidence}
             </div>
 
             {[
-              { id: "executive", label: "Executive Summary", icon: TrendingUp },
               { id: "queries", label: "Slow Queries", icon: List },
               { id: "unified", label: "Unified Analyzer", icon: Workflow }
             ].map((tab) => {
