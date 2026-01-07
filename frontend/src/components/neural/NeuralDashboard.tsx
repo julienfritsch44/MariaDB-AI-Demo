@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react"
 import { NeuralCore } from "./NeuralCore"
 import { BentoTile } from "./BentoTile"
-import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List, Sun, Moon, X, Check, Archive, Database, Server } from "lucide-react"
+import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List, Sun, Moon, X, Check, Archive, Database, Server, ArrowRight } from "lucide-react"
 import { useTheme } from "@/context/ThemeContext"
 import { motion, AnimatePresence } from "framer-motion"
 

@@ -80,7 +80,7 @@ export function PerformanceMonitor() {
             </div>
 
             {/* Stats Summary */}
-            <div className="grid grid-cols-4 gap-2 p-3 bg-zinc-850 border-b border-border">
+            <div className="grid grid-cols-4 gap-2 p-3 bg-card border-b border-border">
                 <StatCard
                     icon={<Activity className="w-3 h-3" />}
                     label="Calls"
@@ -147,7 +147,7 @@ export function PerformanceMonitor() {
 
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
     return (
-        <div className="bg-muted/50/50 rounded-lg p-2 text-center">
+        <div className="bg-muted/50 rounded-lg p-2 text-center">
             <div className="flex items-center justify-center gap-1 text-muted-foreground text-[10px] uppercase mb-1">
                 {icon}
                 {label}
@@ -162,7 +162,7 @@ function RequestRow({ entry }: { entry: PerformanceEntry }) {
     const statusColor = isError ? "text-red-400" : "text-primary"
 
     return (
-        <div className={`px-3 py-2 hover:bg-muted/50/50 transition-colors ${getDurationBgColor(entry.duration)}`}>
+        <div className={`px-3 py-2 hover:bg-muted/50 transition-colors ${getDurationBgColor(entry.duration)}`}>
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                     <span className="text-[10px] font-mono text-muted-foreground uppercase w-8 shrink-0">
