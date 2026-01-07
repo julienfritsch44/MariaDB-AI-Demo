@@ -64,17 +64,6 @@ export function NeuralCore() {
             {/* Real-time pulse ripples */}
             <div className="absolute w-80 h-80 border border-primary/20 rounded-full animate-ping opacity-10" />
             <div className="absolute w-[40rem] h-[40rem] border border-primary/10 rounded-full animate-ping opacity-5 [animation-delay:1s]" />
-
-            {/* Label */}
-            <div className="absolute bottom-8 flex flex-col items-center space-y-2">
-                <span className="text-sm font-bold uppercase tracking-[0.3em] text-primary/80 neon-text">
-                    MariaDB Neural Core
-                </span>
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-mono text-muted-foreground italic">SYNACTIC ENGINE ACTIVE</span>
-                </div>
-            </div>
         </div>
     )
 }

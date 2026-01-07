@@ -31,7 +31,7 @@ export default function Dashboard() {
   const [selectedSuggestion, setSelectedSuggestion] = useState<Suggestion | null>(null)
   const [selectedQuery, setSelectedQuery] = useState<SlowQuery | null>(null)
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false)
-  const [activeTab, setActiveTab] = useState<"shop" | "predictor" | "simulator" | "rewriter" | "sandbox" | "unified" | "queries" | "diagnostic" | "mcp" | "planstability" | "branching">("queries")
+  const [activeTab, setActiveTab] = useState<"shop" | "predictor" | "simulator" | "rewriter" | "sandbox" | "unified" | "queries" | "diagnostic" | "mcp" | "planstability" | "branching" | "neural">("neural")
   const [unifiedHistory, setUnifiedHistory] = useState<any[]>([])
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<any | null>(null)
   const [isCopilotOpen, setIsCopilotOpen] = useState(true)
@@ -218,6 +218,7 @@ Confidence: ${rewriterResult.confidence}
             </div>
 
             {[
+              { id: "neural", label: "Neural Core", icon: Brain },
               { id: "queries", label: "Slow Queries", icon: List },
               { id: "unified", label: "Unified Analyzer", icon: Workflow }
             ].map((tab) => {
@@ -355,16 +356,17 @@ Confidence: ${rewriterResult.confidence}
             {/* Header of Sidebar */}
             <div className="h-12 border-b border-border flex items-center px-4 justify-between bg-card/50 dark:bg-muted/20">
               <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                {activeTab === "shop" ? "DEMO APP" :
-                  activeTab === "queries" ? "QUERY LOGS" :
-                    activeTab === "unified" ? "UNIFIED ANALYZER" :
-                      activeTab === "predictor" ? "RISK ANALYSIS" :
-                        activeTab === "simulator" ? "INDEX LAB" :
-                          activeTab === "sandbox" ? "SMART SANDBOX" :
-                            activeTab === "planstability" ? "PLAN STABILITY" :
-                              activeTab === "branching" ? "DB BRANCHING" :
-                                activeTab === "diagnostic" ? "DIAGNOSTICS" :
-                                  activeTab === "mcp" ? "AI COPILOT" : "SELF-HEALING"}
+                {activeTab === "neural" ? "NEURAL CORE" :
+                  activeTab === "shop" ? "DEMO APP" :
+                    activeTab === "queries" ? "QUERY LOGS" :
+                      activeTab === "unified" ? "UNIFIED ANALYZER" :
+                        activeTab === "predictor" ? "RISK ANALYSIS" :
+                          activeTab === "simulator" ? "INDEX LAB" :
+                            activeTab === "sandbox" ? "SMART SANDBOX" :
+                              activeTab === "planstability" ? "PLAN STABILITY" :
+                                activeTab === "branching" ? "DB BRANCHING" :
+                                  activeTab === "diagnostic" ? "DIAGNOSTICS" :
+                                    activeTab === "mcp" ? "AI COPILOT" : "SELF-HEALING"}
               </span>
               <span className="text-[10px] font-mono text-muted-foreground/60">v11.4.2</span>
             </div>
@@ -548,7 +550,14 @@ Confidence: ${rewriterResult.confidence}
               </div>
 
               <div className="flex-1 overflow-hidden relative flex flex-col">
-                {activeTab === "shop" ? (
+                {activeTab === "neural" ? (
+                  <div className="flex-1 overflow-y-auto">
+                    <NeuralDashboard
+                      analysis={analysis}
+                      onBack={() => setActiveTab("queries")}
+                    />
+                  </div>
+                ) : activeTab === "shop" ? (
                   <ShopDemo />
                 ) : activeTab === "mcp" ? (
                   <UnifiedCopilot

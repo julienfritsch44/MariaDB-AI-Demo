@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react"
 import { NeuralCore } from "./NeuralCore"
 import { BentoTile } from "./BentoTile"
-import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List, Sun, Moon, X, Check, Archive, Database, Server, ArrowRight } from "lucide-react"
+import { DetailModal } from "./DetailModal"
+import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List, Sun, Moon, X, Check, Archive, Database, Server, ArrowRight, AlertTriangle, Target, BookOpen } from "lucide-react"
 import { useTheme } from "@/context/ThemeContext"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -22,6 +23,9 @@ interface MetricsHistory {
 export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
     const [metricsHistory, setMetricsHistory] = useState<MetricsHistory | null>(null)
     const [showFinanceDetails, setShowFinanceDetails] = useState(false)
+    const [showRiskDetails, setShowRiskDetails] = useState(false)
+    const [showNeuralDetails, setShowNeuralDetails] = useState(false)
+    const [showRAGDetails, setShowRAGDetails] = useState(false)
     const { theme, setTheme } = useTheme()
 
     const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -36,39 +40,6 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
 
     return (
         <div className="flex-1 overflow-y-auto neural-grid min-h-screen p-6 bg-background text-foreground transition-colors duration-300 relative">
-            {/* Header Overlay */}
-            <div className="flex items-center justify-between mb-8">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-4">
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${theme === 'dark' ? 'bg-primary/10 border border-primary/20' : 'bg-white border border-slate-200 shadow-sm'}`}>
-                            <Brain className="w-10 h-10 text-primary" />
-                        </div>
-                        <h1 className="text-6xl font-black uppercase tracking-tighter italic">
-                            Neural <span className="text-primary thin">Core</span>
-                        </h1>
-                    </div>
-                    <p className="text-sm text-muted-foreground font-mono uppercase tracking-widest pl-20">
-                        Autonomous Database Intelligence v4.0 • {theme === 'dark' ? 'Dark' : 'Light'} Mode
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={toggleTheme}
-                        className={`p-3 rounded-full transition-all hover:scale-105 ${theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-white' : 'bg-white hover:bg-slate-100 text-slate-900 border border-slate-200 shadow-sm'}`}
-                    >
-                        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                    </button>
-
-
-                    <button
-                        onClick={onBack}
-                        className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all hover:scale-105 ${theme === 'dark' ? 'bg-white/5 hover:bg-white/10 border border-white/10' : 'bg-white hover:bg-slate-100 border border-slate-200 shadow-sm text-slate-900'}`}
-                    >
-                        Exit Immersive View
-                    </button>
-                </div>
-            </div>
 
             <div className="grid grid-cols-12 gap-4 max-w-[1800px] mx-auto z-10 relative">
                 {/* Row 1: Left Stats - Center Visual - Right Stats */}
@@ -99,26 +70,33 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                         </BentoTile>
                     </div>
 
-                    <BentoTile
-                        title="Risk Assessment"
-                        subtitle="AUTO-PREDICT"
-                        icon={ShieldAlert}
-                        sparklineData={metricsHistory?.risk_score}
-                        sparklineColor="rgb(239, 68, 68)"
-                    >
-                        <div className="space-y-5 py-4">
-                            <div className="flex justify-between items-end">
-                                <span className="text-2xl font-bold italic">HIGH</span>
-                                <span className="text-xs font-mono text-muted-foreground">84/100</span>
+                    <div onClick={() => setShowRiskDetails(true)} className="cursor-pointer group relative">
+                        <div className="absolute inset-0 bg-red-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl" />
+                        <BentoTile
+                            title="Risk Assessment"
+                            subtitle="AUTO-PREDICT"
+                            icon={ShieldAlert}
+                            sparklineData={metricsHistory?.risk_score}
+                            sparklineColor="rgb(239, 68, 68)"
+                        >
+                            <div className="space-y-5 py-4">
+                                <div className="flex justify-between items-end">
+                                    <span className="text-2xl font-bold italic">HIGH</span>
+                                    <span className="text-xs font-mono text-muted-foreground">84/100</span>
+                                </div>
+                                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full bg-red-500 w-[84%]" />
+                                </div>
+                                <p className="text-[10px] text-muted-foreground leading-relaxed italic border-l border-white/10 pl-3">
+                                    Detected 3 potential deadlocks in production branch within last 15 minutes.
+                                </p>
+                                <div className="mt-2 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                    <span>Click for detailed analysis</span>
+                                    <ArrowRight className="w-3 h-3" />
+                                </div>
                             </div>
-                            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full bg-red-500 w-[84%]" />
-                            </div>
-                            <p className="text-[10px] text-muted-foreground leading-relaxed italic border-l border-white/10 pl-3">
-                                Detected 3 potential deadlocks in production branch within last 15 minutes.
-                            </p>
-                        </div>
-                    </BentoTile>
+                        </BentoTile>
+                    </div>
                 </div>
 
                 {/* Center Col - The Neural Core */}
@@ -129,39 +107,53 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
 
                 {/* Right Col */}
                 <div className="col-span-12 lg:col-span-3 space-y-4">
-                    <BentoTile
-                        title="Neural Score"
-                        subtitle="GLOBAL PERFORMANCE"
-                        icon={Activity}
-                        priority="high"
-                        sparklineData={metricsHistory?.neural_score}
-                        sparklineColor="rgb(0, 169, 206)"
-                    >
-                        <div className="py-4">
-                            <div className="text-8xl font-black text-primary tracking-tighter">98.2</div>
-                            <p className="text-xs text-muted-foreground mt-3 uppercase tracking-tight">Optimal Efficiency Baseline</p>
-                        </div>
-                    </BentoTile>
-
-                    <BentoTile
-                        title="RAG Memory"
-                        subtitle="KB SEEDS"
-                        icon={Zap}
-                        sparklineData={metricsHistory?.rag_memory}
-                        sparklineColor="rgb(59, 130, 246)"
-                    >
-                        <div className="flex items-center gap-4 py-4">
-                            <div className="text-5xl font-bold tracking-tighter">1,350</div>
-                            <div className="flex-1">
-                                <div className="text-[8px] text-muted-foreground uppercase mb-1">Jira Semantic Links</div>
-                                <div className="flex gap-1">
-                                    {[1, 2, 3, 4, 5, 6].map(i => (
-                                        <div key={i} className="flex-1 h-3 bg-primary/20 rounded-sm animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
-                                    ))}
+                    <div onClick={() => setShowNeuralDetails(true)} className="cursor-pointer group relative">
+                        <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl" />
+                        <BentoTile
+                            title="Neural Score"
+                            subtitle="GLOBAL PERFORMANCE"
+                            icon={Activity}
+                            priority="high"
+                            sparklineData={metricsHistory?.neural_score}
+                            sparklineColor="rgb(0, 169, 206)"
+                        >
+                            <div className="py-4">
+                                <div className="text-8xl font-black text-primary tracking-tighter group-hover:scale-110 transition-transform origin-left">98.2</div>
+                                <p className="text-xs text-muted-foreground mt-3 uppercase tracking-tight">Optimal Efficiency Baseline</p>
+                                <div className="mt-2 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                    <span>View performance metrics</span>
+                                    <ArrowRight className="w-3 h-3" />
                                 </div>
                             </div>
-                        </div>
-                    </BentoTile>
+                        </BentoTile>
+                    </div>
+
+                    <div onClick={() => setShowRAGDetails(true)} className="cursor-pointer group relative">
+                        <div className="absolute inset-0 bg-purple-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl" />
+                        <BentoTile
+                            title="RAG Memory"
+                            subtitle="KB SEEDS"
+                            icon={Zap}
+                            sparklineData={metricsHistory?.rag_memory}
+                            sparklineColor="rgb(139, 92, 246)"
+                        >
+                            <div className="flex items-center gap-4 py-4">
+                                <div className="text-5xl font-bold tracking-tighter group-hover:scale-110 transition-transform origin-left text-purple-500">12,847</div>
+                                <div className="flex-1">
+                                    <div className="text-[8px] text-muted-foreground uppercase mb-1">Jira Semantic Links</div>
+                                    <div className="flex gap-1">
+                                        {[1, 2, 3, 4, 5, 6].map(i => (
+                                            <div key={i} className="flex-1 h-3 bg-primary/20 rounded-sm animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-2 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                <span>Explore knowledge base</span>
+                                <ArrowRight className="w-3 h-3" />
+                            </div>
+                        </BentoTile>
+                    </div>
                 </div>
 
                 {/* Row 2: Bottom Wide Tiles */}
@@ -227,7 +219,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className={`relative w-full max-w-2xl rounded-2xl border p-6 shadow-2xl ${theme === 'dark' ? 'bg-[#0A0A12] border-white/10' : 'bg-white border-slate-200'}`}
+                            className="relative w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-2xl"
                         >
                             <button
                                 onClick={() => setShowFinanceDetails(false)}
@@ -249,12 +241,12 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 mb-6">
-                                <div className={`p-4 rounded-xl border ${theme === 'dark' ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                                <div className="p-4 rounded-xl border bg-muted/50 border-border">
                                     <div className="text-sm text-muted-foreground mb-1">Monthly Savings</div>
                                     <div className="text-3xl font-black text-emerald-500">$14,250</div>
                                     <div className="text-xs text-emerald-500/80 font-mono mt-1">+12.5% projected</div>
                                 </div>
-                                <div className={`p-4 rounded-xl border ${theme === 'dark' ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                                <div className="p-4 rounded-xl border bg-muted/50 border-border">
                                     <div className="text-sm text-muted-foreground mb-1">Annual Projection</div>
                                     <div className="text-3xl font-black text-foreground">$171,000</div>
                                     <div className="text-xs text-muted-foreground font-mono mt-1">Based on current trajectory</div>
@@ -268,7 +260,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                                     { icon: ShieldAlert, label: "Incident Prevention", desc: "Downtime avoidance", gain: "$3,250/mo", percent: "18.5h saved" },
                                     { icon: Server, label: "Resource Throttling", desc: "CPU/RAM right-sizing", gain: "Pending", percent: "Analysis..." }
                                 ].map((item, idx) => (
-                                    <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border transition-colors group ${theme === 'dark' ? 'bg-white/5 border-white/5 hover:border-white/10' : 'bg-slate-50 border-slate-100 hover:border-slate-200'}`}>
+                                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg border bg-muted/50 border-border hover:border-primary/30 transition-colors group">
                                         <div className="flex items-center gap-4">
                                             <div className="p-2 rounded-lg bg-primary/10 text-primary">
                                                 <item.icon className="w-4 h-4" />
@@ -301,6 +293,155 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* RISK DETAILS MODAL */}
+            <DetailModal
+                isOpen={showRiskDetails}
+                onClose={() => setShowRiskDetails(false)}
+                title="Risk Assessment Details"
+                subtitle="AUTO-PREDICT ANALYSIS"
+                icon={ShieldAlert}
+                iconColor="text-red-500"
+            >
+                <div className="space-y-4">
+                    <div className="p-4 rounded-xl border bg-red-500/5 border-red-500/20">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-bold">Current Risk Level</span>
+                            <span className="text-2xl font-black text-red-500">HIGH (84/100)</span>
+                        </div>
+                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-red-500 w-[84%]" />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <h3 className="text-sm font-bold mb-3">Detected Issues</h3>
+                        {[
+                            { icon: AlertTriangle, title: "Potential Deadlock #1", severity: "CRITICAL", desc: "Query on `orders` table holding lock for 2.3s", time: "2 mins ago" },
+                            { icon: AlertTriangle, title: "Potential Deadlock #2", severity: "HIGH", desc: "Concurrent UPDATE on `inventory` detected", time: "8 mins ago" },
+                            { icon: AlertTriangle, title: "Potential Deadlock #3", severity: "MEDIUM", desc: "Long-running transaction on `customers`", time: "15 mins ago" }
+                        ].map((issue, idx) => (
+                            <div key={idx} className="p-3 rounded-lg border bg-muted/50 border-border">
+                                <div className="flex items-start gap-3">
+                                    <div className="p-2 rounded-lg bg-red-500/10 text-red-500">
+                                        <issue.icon className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-sm font-bold">{issue.title}</span>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${issue.severity === 'CRITICAL' ? 'bg-red-500 text-white' :
+                                                issue.severity === 'HIGH' ? 'bg-orange-500 text-white' :
+                                                    'bg-amber-500 text-white'
+                                                }`}>{issue.severity}</span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">{issue.desc}</p>
+                                        <span className="text-[10px] text-muted-foreground italic">{issue.time}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </DetailModal>
+
+            {/* NEURAL SCORE DETAILS MODAL */}
+            <DetailModal
+                isOpen={showNeuralDetails}
+                onClose={() => setShowNeuralDetails(false)}
+                title="Neural Score Breakdown"
+                subtitle="GLOBAL PERFORMANCE METRICS"
+                icon={Activity}
+                iconColor="text-primary"
+            >
+                <div className="space-y-4">
+                    <div className="p-4 rounded-xl border bg-primary/5 border-primary/20">
+                        <div className="text-center">
+                            <div className="text-6xl font-black text-primary mb-2">98.2</div>
+                            <p className="text-xs text-muted-foreground uppercase">Optimal Efficiency Baseline</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        {[
+                            { label: "Query Optimization", score: 99, icon: Target },
+                            { label: "Resource Utilization", score: 97, icon: Zap },
+                            { label: "Incident Prevention", score: 98, icon: ShieldAlert },
+                            { label: "Knowledge Coverage", score: 99, icon: BookOpen }
+                        ].map((metric, idx) => (
+                            <div key={idx} className="p-3 rounded-lg border bg-muted/50 border-border">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <metric.icon className="w-4 h-4 text-primary" />
+                                    <span className="text-xs font-bold">{metric.label}</span>
+                                </div>
+                                <div className="flex items-end justify-between">
+                                    <span className="text-2xl font-black text-primary">{metric.score}</span>
+                                    <span className="text-[10px] text-muted-foreground">/100</span>
+                                </div>
+                                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mt-2">
+                                    <div className="h-full bg-primary" style={{ width: `${metric.score}%` }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="p-4 rounded-lg border bg-emerald-500/5 border-emerald-500/20">
+                        <div className="text-sm font-bold text-emerald-500 mb-2">✓ System Health: Excellent</div>
+                        <p className="text-xs text-muted-foreground">All subsystems operating within optimal parameters. No action required.</p>
+                    </div>
+                </div>
+            </DetailModal>
+
+            {/* RAG MEMORY DETAILS MODAL */}
+            <DetailModal
+                isOpen={showRAGDetails}
+                onClose={() => setShowRAGDetails(false)}
+                title="RAG Knowledge Base"
+                subtitle="SEMANTIC MEMORY ANALYSIS"
+                icon={Brain}
+                iconColor="text-purple-500"
+            >
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="p-4 rounded-xl border bg-purple-500/5 border-purple-500/20">
+                            <div className="text-sm text-muted-foreground mb-1">Total Embeddings</div>
+                            <div className="text-3xl font-black text-purple-500">12,847</div>
+                            <div className="text-xs text-muted-foreground font-mono mt-1">Jira + Docs</div>
+                        </div>
+                        <div className="p-4 rounded-xl border bg-muted/50 border-border">
+                            <div className="text-sm text-muted-foreground mb-1">Avg Similarity</div>
+                            <div className="text-3xl font-black text-foreground">94.2%</div>
+                            <div className="text-xs text-emerald-500 font-mono mt-1">+2.1% vs last week</div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <h3 className="text-sm font-bold mb-2">Knowledge Sources</h3>
+                        {[
+                            { source: "MariaDB Jira Issues", count: "8,420", coverage: 85, color: "text-red-500" },
+                            { source: "Official Documentation", count: "3,127", coverage: 95, color: "text-blue-500" },
+                            { source: "Community Forums", count: "1,300", coverage: 72, color: "text-amber-500" }
+                        ].map((item, idx) => (
+                            <div key={idx} className="p-3 rounded-lg border bg-muted/50 border-border">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                        <div className="text-sm font-bold">{item.source}</div>
+                                        <div className="text-xs text-muted-foreground font-mono">{item.count} embeddings</div>
+                                    </div>
+                                    <div className={`text-lg font-black ${item.color}`}>{item.coverage}%</div>
+                                </div>
+                                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div className={`h-full ${item.color.replace('text-', 'bg-')}`} style={{ width: `${item.coverage}%` }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="p-4 rounded-lg border bg-primary/5 border-primary/20">
+                        <div className="text-sm font-bold text-primary mb-2">📊 Last Sync: 3 hours ago</div>
+                        <p className="text-xs text-muted-foreground">Next scheduled update in 45 minutes. Auto-refresh enabled.</p>
+                    </div>
+                </div>
+            </DetailModal>
         </div>
     )
 }
