@@ -703,7 +703,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                 <div className="container mx-auto px-6 py-8 max-w-5xl">
                     <div className="space-y-6">
                         {/* Step 1: Query Input */}
-                        <Card id="card-input" className="border-border/40 bg-muted/30">
+                        <Card id="card-input" className="border-border/40 bg-muted/30 dark:bg-card">
                             <CardHeader className="pb-3">
                                 <div className="w-full flex items-center justify-between">
                                     <button
@@ -738,7 +738,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                                         value={sql}
                                         onChange={(e) => setSql(e.target.value)}
                                         placeholder="Paste your SQL query here..."
-                                        className="w-full h-32 p-3 rounded-md border border-border bg-background/50 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        className="w-full h-32 p-3 rounded-md border border-border bg-background dark:bg-muted/20 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
                                     />
 
                                     <div className="flex items-center gap-3">
@@ -772,7 +772,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
 
                         {/* Step 2: Risk Analysis */}
                         {riskResult && (
-                            <Card id="card-risk" className={`border-2 ${riskStyles[riskResult.risk_level as keyof typeof riskStyles]?.border || "border-border"} ${riskStyles[riskResult.risk_level as keyof typeof riskStyles]?.bg || "bg-muted/30"}`}>
+                            <Card id="card-risk" className={`border-2 ${riskStyles[riskResult.risk_level as keyof typeof riskStyles]?.border || "border-border"} ${riskStyles[riskResult.risk_level as keyof typeof riskStyles]?.bg || "bg-muted/30 dark:bg-card"}`}>
                                 <CardHeader className="pb-3">
                                     <button
                                         onClick={() => setCardsExpanded(prev => ({ ...prev, risk: !prev.risk }))}

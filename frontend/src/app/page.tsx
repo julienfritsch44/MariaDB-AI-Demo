@@ -31,7 +31,7 @@ export default function Dashboard() {
   const [selectedSuggestion, setSelectedSuggestion] = useState<Suggestion | null>(null)
   const [selectedQuery, setSelectedQuery] = useState<SlowQuery | null>(null)
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false)
-  const [activeTab, setActiveTab] = useState<"shop" | "predictor" | "simulator" | "rewriter" | "sandbox" | "unified" | "queries" | "diagnostic" | "mcp" | "planstability" | "branching" | "executive">("queries")
+  const [activeTab, setActiveTab] = useState<"shop" | "predictor" | "simulator" | "rewriter" | "sandbox" | "unified" | "queries" | "diagnostic" | "mcp" | "planstability" | "branching">("queries")
   const [unifiedHistory, setUnifiedHistory] = useState<any[]>([])
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<any | null>(null)
   const [isCopilotOpen, setIsCopilotOpen] = useState(true)
@@ -268,7 +268,7 @@ Confidence: ${rewriterResult.confidence}
               </button>
 
               {showPowerTools && (
-                <div className="absolute left-full ml-2 bottom-0 bg-card border border-border rounded-lg shadow-xl p-2 space-y-1 min-w-[180px] z-[200]">
+                <div className="absolute left-full ml-2 bottom-0 bg-card dark:bg-popover border border-border rounded-lg shadow-xl p-2 space-y-1 min-w-[180px] z-[200]">
                   {[
                     { id: "predictor", label: "Risk Predictor", icon: ShieldAlert },
                     { id: "rewriter", label: "Self-Healing", icon: Wand2 },
@@ -350,182 +350,181 @@ Confidence: ${rewriterResult.confidence}
             </div>
           </nav>
 
-          {/* 2. SIDEBAR CONTENT (400px fixed) - Hidden for executive tab */}
-          {activeTab !== "executive" && (
-            <div className="w-[380px] border-r border-border flex flex-col bg-muted shrink-0 overflow-hidden">
-              {/* Header of Sidebar */}
-              <div className="h-12 border-b border-border flex items-center px-4 justify-between bg-card/50">
-                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  {activeTab === "shop" ? "DEMO APP" :
-                    activeTab === "queries" ? "QUERY LOGS" :
-                      activeTab === "unified" ? "UNIFIED ANALYZER" :
-                        activeTab === "predictor" ? "RISK ANALYSIS" :
-                          activeTab === "simulator" ? "INDEX LAB" :
-                            activeTab === "sandbox" ? "SMART SANDBOX" :
-                              activeTab === "planstability" ? "PLAN STABILITY" :
-                                activeTab === "branching" ? "DB BRANCHING" :
-                                  activeTab === "diagnostic" ? "DIAGNOSTICS" :
-                                    activeTab === "mcp" ? "AI COPILOT" : "SELF-HEALING"}
-                </span>
-                <span className="text-[10px] font-mono text-muted-foreground/60">v11.4.2</span>
+          {/* 2. SIDEBAR CONTENT (400px fixed) */}
+          <div className="w-[380px] border-r border-border flex flex-col bg-muted shrink-0 overflow-hidden">
+            {/* Header of Sidebar */}
+            <div className="h-12 border-b border-border flex items-center px-4 justify-between bg-card/50 dark:bg-muted/20">
+              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                {activeTab === "shop" ? "DEMO APP" :
+                  activeTab === "queries" ? "QUERY LOGS" :
+                    activeTab === "unified" ? "UNIFIED ANALYZER" :
+                      activeTab === "predictor" ? "RISK ANALYSIS" :
+                        activeTab === "simulator" ? "INDEX LAB" :
+                          activeTab === "sandbox" ? "SMART SANDBOX" :
+                            activeTab === "planstability" ? "PLAN STABILITY" :
+                              activeTab === "branching" ? "DB BRANCHING" :
+                                activeTab === "diagnostic" ? "DIAGNOSTICS" :
+                                  activeTab === "mcp" ? "AI COPILOT" : "SELF-HEALING"}
+              </span>
+              <span className="text-[10px] font-mono text-muted-foreground/60">v11.4.2</span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto scrollbar-thin">
+              {activeTab === "shop" ? (
+                <div className="p-8 text-center text-zinc-500 space-y-4">
+                  <div className="mx-auto w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center">
+                    <ShoppingCart className="w-6 h-6 text-zinc-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-zinc-300">Application Dashboard</h3>
+                    <p className="text-xs mt-2 leading-relaxed">
+                      Interact with the application in the right panel to generate real-time database traffic and slow query logs.
+                    </p>
+                  </div>
+                </div>
+              ) : activeTab === "predictor" ? (
+                <div className="p-4">
+                  <QueryPredictorInput
+                    onPredict={setPredictorResult}
+                    isLoading={isPredicting}
+                    setIsLoading={setIsPredicting}
+                  />
+                </div>
+              ) : activeTab === "simulator" ? (
+                <div className="p-4">
+                  <IndexSimulatorInput
+                    onSimulate={setSimulatorResult}
+                    isLoading={isSimulating}
+                    setIsLoading={setIsSimulating}
+                  />
+                </div>
+              ) : activeTab === "rewriter" ? (
+                <div className="p-4">
+                  <QueryRewriterInput
+                    onRewrite={setRewriterResult}
+                    isLoading={isRewriting}
+                    setIsLoading={setIsRewriting}
+                  />
+                </div>
+              ) : activeTab === "sandbox" ? (
+                <div className="p-4 space-y-4">
+                  <div className="text-xs text-muted-foreground">
+                    Test queries safely without persisting changes
+                  </div>
+                </div>
+              ) : activeTab === "unified" ? (
+                <div className="p-4 space-y-4">
+                  <div className="text-xs font-semibold text-muted-foreground mb-3">Analysis History</div>
+                  {unifiedHistory.length === 0 ? (
+                    <div className="text-xs text-muted-foreground/60 text-center py-8">
+                      No queries analyzed yet
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {unifiedHistory.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => setSelectedHistoryItem(item)}
+                          className="w-full p-3 rounded-md bg-muted/50 hover:bg-muted border border-border/40 hover:border-primary/50 transition-all text-left group"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`text-xs font-bold ${item.risk_level === 'HIGH' ? 'text-red-400' :
+                              item.risk_level === 'MEDIUM' ? 'text-amber-400' :
+                                'text-emerald-400'
+                              }`}>
+                              {item.risk_level} ({item.risk_score})
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              {new Date(item.timestamp).toLocaleTimeString()}
+                            </span>
+                          </div>
+                          <div className="text-xs font-mono text-foreground/80 truncate group-hover:text-primary transition-colors">
+                            {item.sql}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {unifiedHistory.length > 0 && (
+                    <button
+                      onClick={() => setUnifiedHistory([])}
+                      className="w-full mt-4 p-2 text-xs text-muted-foreground hover:text-foreground border border-border/40 rounded-md hover:bg-muted/50 transition-colors"
+                    >
+                      Clear History
+                    </button>
+                  )}
+                </div>
+              ) : activeTab === "planstability" ? (
+                <div className="p-4 space-y-4">
+                  <div className="text-xs text-muted-foreground">
+                    Manage query plan baselines to prevent performance regressions
+                  </div>
+                </div>
+              ) : activeTab === "branching" ? (
+                <div className="p-4 space-y-4">
+                  <div className="text-xs text-muted-foreground">
+                    Create and manage database branches for safe testing
+                  </div>
+                </div>
+              ) : activeTab === "diagnostic" ? (
+                <div className="p-4 space-y-4">
+                  <DiagnosticStatus />
+                </div>
+              ) : analysis ? (
+                <div className="p-2">
+                  <SlowQueryTable
+                    queries={analysis.top_queries}
+                    onAnalyze={handleAnalyze}
+                    activeQueryId={selectedQuery?.id}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-20 text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs">Connecting...</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar Footer Metrics */}
+            <div className="p-4 border-t border-border bg-card/50 space-y-3">
+              <div className="flex items-center justify-between text-[10px] uppercase tracking-tighter">
+                <span className="text-muted-foreground">Global Score</span>
+                <span className="text-primary font-bold">{analysis?.global_score ?? 0}</span>
+              </div>
+              <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-primary" style={{ width: `${analysis?.global_score ?? 0}%` }} />
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  <span>SkySQL Active</span>
+                </div>
+                <span>{analysis?.total_queries ?? 0} Samples</span>
               </div>
 
-              <div className="flex-1 overflow-y-auto scrollbar-thin">
-                {activeTab === "shop" ? (
-                  <div className="p-8 text-center text-zinc-500 space-y-4">
-                    <div className="mx-auto w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center">
-                      <ShoppingCart className="w-6 h-6 text-zinc-600" />
+              {/* NEURAL CORE COUNTER */}
+              <div className="pt-2 mt-2 border-t border-border/50">
+                <div className="flex items-center justify-between group">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
+                      <Brain className="w-3 h-3 text-primary animate-pulse" />
                     </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-zinc-300">Application Dashboard</h3>
-                      <p className="text-xs mt-2 leading-relaxed">
-                        Interact with the application in the right panel to generate real-time database traffic and slow query logs.
-                      </p>
-                    </div>
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Neural Core</span>
                   </div>
-                ) : activeTab === "predictor" ? (
-                  <div className="p-4">
-                    <QueryPredictorInput
-                      onPredict={setPredictorResult}
-                      isLoading={isPredicting}
-                      setIsLoading={setIsPredicting}
-                    />
-                  </div>
-                ) : activeTab === "simulator" ? (
-                  <div className="p-4">
-                    <IndexSimulatorInput
-                      onSimulate={setSimulatorResult}
-                      isLoading={isSimulating}
-                      setIsLoading={setIsSimulating}
-                    />
-                  </div>
-                ) : activeTab === "rewriter" ? (
-                  <div className="p-4">
-                    <QueryRewriterInput
-                      onRewrite={setRewriterResult}
-                      isLoading={isRewriting}
-                      setIsLoading={setIsRewriting}
-                    />
-                  </div>
-                ) : activeTab === "sandbox" ? (
-                  <div className="p-4 space-y-4">
-                    <div className="text-xs text-muted-foreground">
-                      Test queries safely without persisting changes
-                    </div>
-                  </div>
-                ) : activeTab === "unified" ? (
-                  <div className="p-4 space-y-4">
-                    <div className="text-xs font-semibold text-muted-foreground mb-3">Analysis History</div>
-                    {unifiedHistory.length === 0 ? (
-                      <div className="text-xs text-muted-foreground/60 text-center py-8">
-                        No queries analyzed yet
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {unifiedHistory.map((item) => (
-                          <button
-                            key={item.id}
-                            onClick={() => setSelectedHistoryItem(item)}
-                            className="w-full p-3 rounded-md bg-muted/50 hover:bg-muted border border-border/40 hover:border-primary/50 transition-all text-left group"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className={`text-xs font-bold ${item.risk_level === 'HIGH' ? 'text-red-400' :
-                                item.risk_level === 'MEDIUM' ? 'text-amber-400' :
-                                  'text-emerald-400'
-                                }`}>
-                                {item.risk_level} ({item.risk_score})
-                              </span>
-                              <span className="text-[10px] text-muted-foreground">
-                                {new Date(item.timestamp).toLocaleTimeString()}
-                              </span>
-                            </div>
-                            <div className="text-xs font-mono text-foreground/80 truncate group-hover:text-primary transition-colors">
-                              {item.sql}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {unifiedHistory.length > 0 && (
-                      <button
-                        onClick={() => setUnifiedHistory([])}
-                        className="w-full mt-4 p-2 text-xs text-muted-foreground hover:text-foreground border border-border/40 rounded-md hover:bg-muted/50 transition-colors"
-                      >
-                        Clear History
-                      </button>
-                    )}
-                  </div>
-                ) : activeTab === "planstability" ? (
-                  <div className="p-4 space-y-4">
-                    <div className="text-xs text-muted-foreground">
-                      Manage query plan baselines to prevent performance regressions
-                    </div>
-                  </div>
-                ) : activeTab === "branching" ? (
-                  <div className="p-4 space-y-4">
-                    <div className="text-xs text-muted-foreground">
-                      Create and manage database branches for safe testing
-                    </div>
-                  </div>
-                ) : activeTab === "diagnostic" ? (
-                  <div className="p-4 space-y-4">
-                    <DiagnosticStatus />
-                  </div>
-                ) : analysis ? (
-                  <div className="p-2">
-                    <SlowQueryTable
-                      queries={analysis.top_queries}
-                      onAnalyze={handleAnalyze}
-                      activeQueryId={selectedQuery?.id}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center py-20 text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      <span className="text-xs">Connecting...</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Sidebar Footer Metrics */}
-              <div className="p-4 border-t border-border bg-card/50 space-y-3">
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-tighter">
-                  <span className="text-muted-foreground">Global Score</span>
-                  <span className="text-primary font-bold">{analysis?.global_score ?? 0}</span>
+                  <span className="text-[10px] font-mono text-primary font-bold">
+                    {analysis?.kb_count ? analysis.kb_count.toLocaleString() : "1,350"} Incidents
+                  </span>
                 </div>
-                <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary" style={{ width: `${analysis?.global_score ?? 0}%` }} />
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    <span>SkySQL Active</span>
-                  </div>
-                  <span>{analysis?.total_queries ?? 0} Samples</span>
-                </div>
-
-                {/* NEURAL CORE COUNTER */}
-                <div className="pt-2 mt-2 border-t border-border/50">
-                  <div className="flex items-center justify-between group">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
-                        <Brain className="w-3 h-3 text-primary animate-pulse" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Neural Core</span>
-                    </div>
-                    <span className="text-[10px] font-mono text-primary font-bold">
-                      {analysis?.kb_count ? analysis.kb_count.toLocaleString() : "1,350"} Incidents
-                    </span>
-                  </div>
-                  <p className="text-[8px] text-muted-foreground/60 mt-1 leading-tight italic">
-                    Proactive RAG grounded in MariaDB Jira history.
-                  </p>
-                </div>
+                <p className="text-[8px] text-muted-foreground/60 mt-1 leading-tight italic">
+                  Proactive RAG grounded in MariaDB Jira history.
+                </p>
               </div>
             </div>
-          )}
+          </div>
+
 
           {/* 3. MAIN PANEL + COPILOT */}
           <div className="flex-1 bg-card relative overflow-hidden flex">
@@ -595,10 +594,6 @@ Confidence: ${rewriterResult.confidence}
                 ) : activeTab === "branching" ? (
                   <div className="flex-1 overflow-y-auto">
                     <BranchingDashboard />
-                  </div>
-                ) : activeTab === "executive" ? (
-                  <div className="flex-1 overflow-y-auto">
-                    <ExecutiveDashboard />
                   </div>
                 ) : activeTab === "diagnostic" ? (
                   <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-muted-foreground gap-4">
