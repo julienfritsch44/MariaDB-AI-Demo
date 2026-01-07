@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react"
 import { NeuralCore } from "./NeuralCore"
 import { BentoTile } from "./BentoTile"
 import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List, Sun, Moon } from "lucide-react"
+import { useTheme } from "@/context/ThemeContext"
 
 interface NeuralDashboardProps {
     onBack: () => void
@@ -19,35 +20,9 @@ interface MetricsHistory {
 
 export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
     const [metricsHistory, setMetricsHistory] = useState<MetricsHistory | null>(null)
-    const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+    const { theme, setTheme } = useTheme()
 
-    const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark')
-
-    const darkVars = {
-        '--background': '240 10% 2%',
-        '--foreground': '0 0% 98%',
-        '--card': '240 10% 4%',
-        '--card-foreground': '0 0% 98%',
-        '--primary': '194 100% 50%',
-        '--border': '240 10% 12%',
-        '--muted': '240 10% 8%',
-        '--muted-foreground': '240 5% 65%',
-        '--accent': '170 100% 50%',
-        '--neural-glow': 'rgba(0, 169, 206, 0.25)' // Calculated RGB
-    } as React.CSSProperties
-
-    const lightVars = {
-        '--background': '210 40% 98%', // slate-50
-        '--foreground': '222 47% 11%', // slate-900
-        '--card': '0 0% 100%',
-        '--card-foreground': '222 47% 11%',
-        '--primary': '194 100% 40%', // Darker blue for contrast
-        '--border': '214 32% 91%', // slate-200
-        '--muted': '210 40% 96.1%',
-        '--muted-foreground': '215 16% 47%',
-        '--accent': '170 100% 40%',
-        '--neural-glow': 'rgba(0, 169, 206, 0.1)'
-    } as React.CSSProperties
+    const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
 
     useEffect(() => {
         // Fetch historical metrics for sparklines
@@ -58,10 +33,8 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
     }, [])
 
     return (
-        <div
-            className={`flex-1 overflow-y-auto neural-grid min-h-screen p-6 ${theme === 'dark' ? 'dark neural-dark bg-[#05050A] text-white' : 'bg-slate-50 text-slate-900'}`}
-            style={theme === 'dark' ? darkVars : lightVars}
-        >
+    return (
+        <div className="flex-1 overflow-y-auto neural-grid min-h-screen p-6 bg-background text-foreground transition-colors duration-300">
             {/* Header Overlay */}
             <div className="flex items-center justify-between mb-8">
                 <div className="space-y-2">

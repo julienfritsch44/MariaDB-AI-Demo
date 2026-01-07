@@ -12,7 +12,8 @@ import { UnifiedQueryAnalyzerClean } from "@/components/UnifiedQueryAnalyzerClea
 import { ShopDemo } from "@/components/ShopDemo"
 import PlanStabilityDashboard from "@/app/dashboard/plan-stability/page"
 import BranchingDashboard from "@/app/dashboard/branching/page"
-import { Activity, List, ShoppingCart, Wand2, ArrowRight, HeartPulse, Zap, ShieldAlert, Brain, Shield, Workflow, GitBranch, TrendingUp, Send } from "lucide-react"
+import { Activity, List, ShoppingCart, Wand2, ArrowRight, HeartPulse, Zap, ShieldAlert, Brain, Shield, Workflow, GitBranch, TrendingUp, Send, Moon, Sun } from "lucide-react"
+import { useTheme } from "@/context/ThemeContext"
 import { DiagnosticStatus } from "@/components/DiagnosticStatus"
 import { MCPProof } from "@/components/MCPProof"
 import { PerformanceMonitor } from "@/components/ui/PerformanceMonitor"
@@ -23,6 +24,7 @@ import ExecutiveDashboard from "@/components/ExecutiveDashboard"
 import { NeuralDashboard } from "@/components/neural/NeuralDashboard"
 
 export default function Dashboard() {
+  const { theme, setTheme } = useTheme()
   const [isStarted, setIsStarted] = useState(false)
 
   const [analysis, setAnalysis] = useState<QueryAnalysis | null>(null)
@@ -299,6 +301,14 @@ Confidence: ${rewriterResult.confidence}
             </div>
 
             <div className="mt-auto flex flex-col items-center gap-4">
+              {/* Theme Toggle */}
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+                className="p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+              >
+                {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
               {/* Diagnostic Icon moved to bottom */}
               <button
                 onClick={() => {
