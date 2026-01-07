@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react"
 import { NeuralCore } from "./NeuralCore"
 import { BentoTile } from "./BentoTile"
 import { DetailModal } from "./DetailModal"
-import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List, Sun, Moon, X, Check, Archive, Database, Server, ArrowRight, AlertTriangle, Target, BookOpen } from "lucide-react"
+import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, Sun, Moon, X, Check, Archive, Database, Server, ArrowRight, AlertTriangle, Target, BookOpen } from "lucide-react"
 import { useTheme } from "@/context/ThemeContext"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -20,15 +20,45 @@ interface MetricsHistory {
     rag_memory: number[]
 }
 
+interface LiveMetrics {
+    financial_impact: number
+    risk_score: number
+    neural_score: number
+    rag_memory_count: number
+    query_count: number
+    high_risk_count: number
+    avg_query_time: number
+    status: string
+}
+
 export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
     const [metricsHistory, setMetricsHistory] = useState<MetricsHistory | null>(null)
+    const [liveMetrics, setLiveMetrics] = useState<LiveMetrics | null>(null)
     const [showFinanceDetails, setShowFinanceDetails] = useState(false)
     const [showRiskDetails, setShowRiskDetails] = useState(false)
     const [showNeuralDetails, setShowNeuralDetails] = useState(false)
     const [showRAGDetails, setShowRAGDetails] = useState(false)
+    const [isFullscreen, setIsFullscreen] = useState(false)
     const { theme, setTheme } = useTheme()
 
     const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
+
+    // Gestion du mode plein écran
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().then(() => {
+                setIsFullscreen(true)
+            }).catch(err => {
+                console.error('Error attempting to enable fullscreen:', err)
+            })
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().then(() => {
+                    setIsFullscreen(false)
+                })
+            }
+        }
+    }
 
     useEffect(() => {
         // Fetch historical metrics for sparklines
@@ -36,6 +66,42 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
             .then(res => res.json())
             .then(data => setMetricsHistory(data))
             .catch(err => console.error('Failed to fetch metrics history:', err))
+
+        // Fetch live metrics for dashboard
+        const fetchLiveMetrics = () => {
+            fetch('http://127.0.0.1:8000/metrics/neural-dashboard')
+                .then(res => res.json())
+                .then(data => setLiveMetrics(data))
+                .catch(err => console.error('Failed to fetch live metrics:', err))
+        }
+
+        fetchLiveMetrics()
+        const interval = setInterval(fetchLiveMetrics, 5000) // Update every 5 seconds
+
+        return () => clearInterval(interval)
+    }, [])
+
+    useEffect(() => {
+        // Gestionnaire d'événement pour F11
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'F11') {
+                e.preventDefault()
+                toggleFullscreen()
+            }
+        }
+
+        // Gestionnaire pour détecter les changements de plein écran (ESC, etc.)
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement)
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        document.addEventListener('fullscreenchange', handleFullscreenChange)
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+            document.removeEventListener('fullscreenchange', handleFullscreenChange)
+        }
     }, [])
 
     return (
@@ -57,7 +123,9 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                             sparklineColor="rgb(245, 158, 11)"
                         >
                             <div className="py-4">
-                                <div className="text-6xl font-black text-amber-500 tracking-tighter group-hover:scale-110 transition-transform origin-left">$14,250</div>
+                                <div className="text-6xl font-black text-amber-500 tracking-tighter group-hover:scale-110 transition-transform origin-left">
+                                    ${liveMetrics?.financial_impact?.toLocaleString() || '14,250'}
+                                </div>
                                 <div className="flex items-center gap-2 mt-3 text-xs font-mono">
                                     <TrendingUp className="w-4 h-4 text-red-500" />
                                     <span className="text-red-500">+12% vs last month</span>
@@ -82,10 +150,10 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                             <div className="space-y-5 py-4">
                                 <div className="flex justify-between items-end">
                                     <span className="text-2xl font-bold italic">HIGH</span>
-                                    <span className="text-xs font-mono text-muted-foreground">84/100</span>
+                                    <span className="text-xs font-mono text-muted-foreground">{liveMetrics?.risk_score?.toFixed(0) || '84'}/100</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-red-500 w-[84%]" />
+                                    <div className="h-full bg-red-500" style={{ width: `${liveMetrics?.risk_score || 84}%` }} />
                                 </div>
                                 <p className="text-[10px] text-muted-foreground leading-relaxed italic border-l border-white/10 pl-3">
                                     Detected 3 potential deadlocks in production branch within last 15 minutes.
@@ -118,7 +186,9 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                             sparklineColor="rgb(0, 169, 206)"
                         >
                             <div className="py-4">
-                                <div className="text-8xl font-black text-primary tracking-tighter group-hover:scale-110 transition-transform origin-left">98.2</div>
+                                <div className="text-8xl font-black text-primary tracking-tighter group-hover:scale-110 transition-transform origin-left">
+                                    {liveMetrics?.neural_score?.toFixed(1) || '98.2'}
+                                </div>
                                 <p className="text-xs text-muted-foreground mt-3 uppercase tracking-tight">Optimal Efficiency Baseline</p>
                                 <div className="mt-2 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                                     <span>View performance metrics</span>
@@ -138,7 +208,9 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                             sparklineColor="rgb(139, 92, 246)"
                         >
                             <div className="flex items-center gap-4 py-4">
-                                <div className="text-5xl font-bold tracking-tighter group-hover:scale-110 transition-transform origin-left text-purple-500">12,847</div>
+                                <div className="text-5xl font-bold tracking-tighter group-hover:scale-110 transition-transform origin-left text-purple-500">
+                                    {liveMetrics?.rag_memory_count?.toLocaleString() || '12,847'}
+                                </div>
                                 <div className="flex-1">
                                     <div className="text-[8px] text-muted-foreground uppercase mb-1">Jira Semantic Links</div>
                                     <div className="flex gap-1">
@@ -157,33 +229,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                 </div>
 
                 {/* Row 2: Bottom Wide Tiles */}
-                <div className="col-span-12 lg:col-span-8">
-                    <BentoTile title="Query Stream" subtitle="LIVE TRAFFIC ANALYSIS" icon={List} className="h-full">
-                        <div className="space-y-3 pt-2">
-                            {analysis?.top_queries?.slice(0, 3).map((q: any) => (
-                                <div key={q.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 transition-all cursor-pointer group/item">
-                                    <div className="flex-1 min-w-0 pr-4">
-                                        <div className="text-[10px] font-mono text-primary truncate mb-1">{q.sql_text}</div>
-                                        <div className="flex gap-3 text-[8px] text-muted-foreground font-bold uppercase">
-                                            <span>Time: {q.query_time}s</span>
-                                            <span>Rows: {q.rows_sent}</span>
-                                        </div>
-                                    </div>
-                                    <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-[10px] font-bold group-hover/item:border-primary transition-colors">
-                                        {q.id}
-                                    </div>
-                                </div>
-                            ))}
-                            {(!analysis || !analysis.top_queries) && (
-                                <div className="text-center py-12 text-muted-foreground italic text-xs">
-                                    Syncing with MariaDB stream...
-                                </div>
-                            )}
-                        </div>
-                    </BentoTile>
-                </div>
-
-                <div className="col-span-12 lg:col-span-4">
+                <div className="col-span-12">
                     <BentoTile title="Neural Insights" subtitle="AUTONOMOUS REASONING" icon={Brain} priority="high">
                         <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 mt-2">
                             <h4 className="text-[10px] font-bold text-primary uppercase mb-2">Predictive Action:</h4>
@@ -197,6 +243,23 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                     </BentoTile>
                 </div>
             </div>
+
+            {/* Indicateur Mode Plein Écran */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: isFullscreen ? 0 : 0.4, y: 0 }}
+                transition={{ duration: 0.5, delay: 1 }}
+                className="fixed bottom-6 right-6 z-40 pointer-events-none select-none"
+            >
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg">
+                    <kbd className="px-2 py-1 text-[10px] font-mono font-bold bg-muted text-foreground rounded border border-border">
+                        F11
+                    </kbd>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                        Mode Présentation
+                    </span>
+                </div>
+            </motion.div>
 
             {/* Footer Branding */}
             <div className="mt-20 text-center opacity-30 select-none">
@@ -243,7 +306,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div className="p-4 rounded-xl border bg-muted/50 border-border">
                                     <div className="text-sm text-muted-foreground mb-1">Monthly Savings</div>
-                                    <div className="text-3xl font-black text-emerald-500">$14,250</div>
+                                    <div className="text-3xl font-black text-emerald-500">${liveMetrics?.financial_impact?.toLocaleString() || '14,250'}</div>
                                     <div className="text-xs text-emerald-500/80 font-mono mt-1">+12.5% projected</div>
                                 </div>
                                 <div className="p-4 rounded-xl border bg-muted/50 border-border">
@@ -307,10 +370,12 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                     <div className="p-4 rounded-xl border bg-red-500/5 border-red-500/20">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-bold">Current Risk Level</span>
-                            <span className="text-2xl font-black text-red-500">HIGH (84/100)</span>
+                            <span className="text-2xl font-black text-red-500">
+                                {liveMetrics?.risk_score && liveMetrics.risk_score > 70 ? 'HIGH' : liveMetrics?.risk_score && liveMetrics.risk_score > 40 ? 'MEDIUM' : 'LOW'} ({liveMetrics?.risk_score?.toFixed(0) || '84'}/100)
+                            </span>
                         </div>
                         <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-red-500 w-[84%]" />
+                            <div className="h-full bg-red-500" style={{ width: `${liveMetrics?.risk_score || 84}%` }} />
                         </div>
                     </div>
 
@@ -356,7 +421,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                 <div className="space-y-4">
                     <div className="p-4 rounded-xl border bg-primary/5 border-primary/20">
                         <div className="text-center">
-                            <div className="text-6xl font-black text-primary mb-2">98.2</div>
+                            <div className="text-6xl font-black text-primary mb-2">{liveMetrics?.neural_score?.toFixed(1) || '98.2'}</div>
                             <p className="text-xs text-muted-foreground uppercase">Optimal Efficiency Baseline</p>
                         </div>
                     </div>
@@ -404,7 +469,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="p-4 rounded-xl border bg-purple-500/5 border-purple-500/20">
                             <div className="text-sm text-muted-foreground mb-1">Total Embeddings</div>
-                            <div className="text-3xl font-black text-purple-500">12,847</div>
+                            <div className="text-3xl font-black text-purple-500">{liveMetrics?.rag_memory_count?.toLocaleString() || '12,847'}</div>
                             <div className="text-xs text-muted-foreground font-mono mt-1">Jira + Docs</div>
                         </div>
                         <div className="p-4 rounded-xl border bg-muted/50 border-border">
