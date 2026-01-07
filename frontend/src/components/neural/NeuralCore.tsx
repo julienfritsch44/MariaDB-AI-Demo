@@ -15,8 +15,8 @@ export function NeuralCore() {
 
     return (
         <div className="relative w-full h-full flex items-center justify-center min-h-[400px]">
-            {/* Background radial gradient glow */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,169,206,0.25)_0%,_transparent_70%)] opacity-70" />
+            {/* Background radial gradient glow needs to use CSS var for color */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--neural-glow)_0%,_transparent_70%)] opacity-70" />
 
             {/* Animated SVG Neural Core */}
             <div className="relative z-10 w-[500px] h-[500px] grayscale-[0.5] brightness-125">
@@ -55,8 +55,8 @@ export function NeuralCore() {
 
                 {/* Brain Icon overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center animate-pulse">
-                        <Brain className="w-12 h-12 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                    <div className="w-16 h-16 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 flex items-center justify-center animate-pulse shadow-xl dark:shadow-none">
+                        <Brain className="w-12 h-12 text-primary dark:text-white drop-shadow-[0_0_10px_rgba(0,169,206,0.5)] dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
                     </div>
                 </div>
             </div>

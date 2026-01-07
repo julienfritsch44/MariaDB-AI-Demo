@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react"
 import { NeuralCore } from "./NeuralCore"
 import { BentoTile } from "./BentoTile"
-import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List } from "lucide-react"
+import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List, Sun, Moon } from "lucide-react"
 
 interface NeuralDashboardProps {
     onBack: () => void
@@ -19,6 +19,35 @@ interface MetricsHistory {
 
 export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
     const [metricsHistory, setMetricsHistory] = useState<MetricsHistory | null>(null)
+    const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+
+    const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark')
+
+    const darkVars = {
+        '--background': '240 10% 2%',
+        '--foreground': '0 0% 98%',
+        '--card': '240 10% 4%',
+        '--card-foreground': '0 0% 98%',
+        '--primary': '194 100% 50%',
+        '--border': '240 10% 12%',
+        '--muted': '240 10% 8%',
+        '--muted-foreground': '240 5% 65%',
+        '--accent': '170 100% 50%',
+        '--neural-glow': 'rgba(0, 169, 206, 0.25)' // Calculated RGB
+    } as React.CSSProperties
+
+    const lightVars = {
+        '--background': '210 40% 98%', // slate-50
+        '--foreground': '222 47% 11%', // slate-900
+        '--card': '0 0% 100%',
+        '--card-foreground': '222 47% 11%',
+        '--primary': '194 100% 40%', // Darker blue for contrast
+        '--border': '214 32% 91%', // slate-200
+        '--muted': '210 40% 96.1%',
+        '--muted-foreground': '215 16% 47%',
+        '--accent': '170 100% 40%',
+        '--neural-glow': 'rgba(0, 169, 206, 0.1)'
+    } as React.CSSProperties
 
     useEffect(() => {
         // Fetch historical metrics for sparklines
@@ -30,24 +59,14 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
 
     return (
         <div
-            className="flex-1 overflow-y-auto neural-grid min-h-screen p-6 dark neural-dark bg-[#05050A] text-white"
-            style={{
-                '--background': '240 10% 2%',
-                '--foreground': '0 0% 98%',
-                '--card': '240 10% 4%',
-                '--card-foreground': '0 0% 98%',
-                '--primary': '194 100% 50%',
-                '--border': '240 10% 12%',
-                '--muted': '240 10% 8%',
-                '--muted-foreground': '240 5% 65%',
-                '--accent': '170 100% 50%'
-            } as React.CSSProperties}
+            className={`flex-1 overflow-y-auto neural-grid min-h-screen p-6 ${theme === 'dark' ? 'dark neural-dark bg-[#05050A] text-white' : 'bg-slate-50 text-slate-900'}`}
+            style={theme === 'dark' ? darkVars : lightVars}
         >
             {/* Header Overlay */}
             <div className="flex items-center justify-between mb-8">
                 <div className="space-y-2">
                     <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${theme === 'dark' ? 'bg-primary/10 border border-primary/20' : 'bg-white border border-slate-200 shadow-sm'}`}>
                             <Brain className="w-10 h-10 text-primary" />
                         </div>
                         <h1 className="text-6xl font-black uppercase tracking-tighter italic">
@@ -55,16 +74,26 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                         </h1>
                     </div>
                     <p className="text-sm text-muted-foreground font-mono uppercase tracking-widest pl-20">
-                        Autonomous Database Intelligence v4.0
+                        Autonomous Database Intelligence v4.0 • {theme === 'dark' ? 'Dark' : 'Light'} Mode
                     </p>
                 </div>
 
-                <button
-                    onClick={onBack}
-                    className="px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs font-bold uppercase tracking-widest transition-all hover:scale-105"
-                >
-                    Exit Immersive View
-                </button>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={toggleTheme}
+                        className={`p-3 rounded-full transition-all hover:scale-105 ${theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-white' : 'bg-white hover:bg-slate-100 text-slate-900 border border-slate-200 shadow-sm'}`}
+                    >
+                        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                    </button>
+
+
+                    <button
+                        onClick={onBack}
+                        className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all hover:scale-105 ${theme === 'dark' ? 'bg-white/5 hover:bg-white/10 border border-white/10' : 'bg-white hover:bg-slate-100 border border-slate-200 shadow-sm text-slate-900'}`}
+                    >
+                        Exit Immersive View
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-12 gap-4 max-w-[1800px] mx-auto">
@@ -173,7 +202,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                                 </div>
                             ))}
                             {(!analysis || !analysis.top_queries) && (
-                                <div className="text-center py-12 text-muted-foreground/40 italic text-xs">
+                                <div className="text-center py-12 text-muted-foreground italic text-xs">
                                     Syncing with MariaDB stream...
                                 </div>
                             )}
@@ -199,7 +228,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
             {/* Footer Branding */}
             <div className="mt-20 text-center opacity-30 select-none">
                 <div className="text-[8px] font-black uppercase tracking-[1em] mb-4">MariaDB Intelligence Layer</div>
-                <div className="h-[1px] w-40 bg-gradient-to-r from-transparent via-white to-transparent mx-auto" />
+                <div className={`h-[1px] w-40 mx-auto ${theme === 'dark' ? 'bg-gradient-to-r from-transparent via-white to-transparent' : 'bg-gradient-to-r from-transparent via-slate-900 to-transparent'}`} />
             </div>
         </div>
     )

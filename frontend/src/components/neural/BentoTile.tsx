@@ -26,13 +26,13 @@ export function BentoTile({
     sparklineColor = "rgb(0, 169, 206)"
 }: BentoTileProps) {
     const priorityColors = {
-        low: "border-white/10",
-        medium: "border-white/20",
-        high: "border-primary/40 shadow-[0_0_20px_rgba(0,169,206,0.2)]"
+        low: "border-slate-200 dark:border-white/20",
+        medium: "border-slate-300 dark:border-white/30",
+        high: "border-primary/60 shadow-lg shadow-primary/10 dark:border-primary/50 dark:shadow-[0_0_20px_rgba(0,169,206,0.2)]"
     }
 
     return (
-        <div className={`p-6 flex flex-col space-y-4 group relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-xl border transition-all duration-300 hover:bg-white/10 ${priorityColors[priority]} ${className}`}>
+        <div className={`p-6 flex flex-col space-y-4 group relative overflow-hidden rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border transition-all duration-300 hover:bg-white/80 dark:hover:bg-white/10 ${priorityColors[priority]} ${className}`}>
             {/* Ambient background glow */}
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
