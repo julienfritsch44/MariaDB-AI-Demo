@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from "react"
 import { NeuralCore } from "./NeuralCore"
 import { BentoTile } from "./BentoTile"
-import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List, Sun, Moon } from "lucide-react"
+import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, List, Sun, Moon, X, Check, Archive, Database, Server } from "lucide-react"
 import { useTheme } from "@/context/ThemeContext"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface NeuralDashboardProps {
     onBack: () => void
@@ -20,6 +21,7 @@ interface MetricsHistory {
 
 export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
     const [metricsHistory, setMetricsHistory] = useState<MetricsHistory | null>(null)
+    const [showFinanceDetails, setShowFinanceDetails] = useState(false)
     const { theme, setTheme } = useTheme()
 
     const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -33,7 +35,7 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
     }, [])
 
     return (
-        <div className="flex-1 overflow-y-auto neural-grid min-h-screen p-6 bg-background text-foreground transition-colors duration-300">
+        <div className="flex-1 overflow-y-auto neural-grid min-h-screen p-6 bg-background text-foreground transition-colors duration-300 relative">
             {/* Header Overlay */}
             <div className="flex items-center justify-between mb-8">
                 <div className="space-y-2">
@@ -68,27 +70,34 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-12 gap-4 max-w-[1800px] mx-auto">
+            <div className="grid grid-cols-12 gap-4 max-w-[1800px] mx-auto z-10 relative">
                 {/* Row 1: Left Stats - Center Visual - Right Stats */}
 
                 {/* Left Col */}
                 <div className="col-span-12 lg:col-span-3 space-y-4">
-                    <BentoTile
-                        title="Financial Impact"
-                        subtitle="LEAKAGE ANALYSIS"
-                        icon={DollarSign}
-                        priority="high"
-                        sparklineData={metricsHistory?.financial_impact}
-                        sparklineColor="rgb(245, 158, 11)"
-                    >
-                        <div className="py-4">
-                            <div className="text-6xl font-black text-amber-500 tracking-tighter">$14,250</div>
-                            <div className="flex items-center gap-2 mt-3 text-xs font-mono">
-                                <TrendingUp className="w-4 h-4 text-red-500" />
-                                <span className="text-red-500">+12% vs last month</span>
+                    <div onClick={() => setShowFinanceDetails(true)} className="cursor-pointer group relative">
+                        <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl" />
+                        <BentoTile
+                            title="Financial Impact"
+                            subtitle="LEAKAGE ANALYSIS"
+                            icon={DollarSign}
+                            priority="high"
+                            sparklineData={metricsHistory?.financial_impact}
+                            sparklineColor="rgb(245, 158, 11)"
+                        >
+                            <div className="py-4">
+                                <div className="text-6xl font-black text-amber-500 tracking-tighter group-hover:scale-110 transition-transform origin-left">$14,250</div>
+                                <div className="flex items-center gap-2 mt-3 text-xs font-mono">
+                                    <TrendingUp className="w-4 h-4 text-red-500" />
+                                    <span className="text-red-500">+12% vs last month</span>
+                                </div>
+                                <div className="mt-2 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                    <span>Click to view breakdown</span>
+                                    <ArrowRight className="w-3 h-3" />
+                                </div>
                             </div>
-                        </div>
-                    </BentoTile>
+                        </BentoTile>
+                    </div>
 
                     <BentoTile
                         title="Risk Assessment"
@@ -202,6 +211,96 @@ export function NeuralDashboard({ onBack, analysis }: NeuralDashboardProps) {
                 <div className="text-[8px] font-black uppercase tracking-[1em] mb-4">MariaDB Intelligence Layer</div>
                 <div className={`h-[1px] w-40 mx-auto ${theme === 'dark' ? 'bg-gradient-to-r from-transparent via-white to-transparent' : 'bg-gradient-to-r from-transparent via-slate-900 to-transparent'}`} />
             </div>
+
+            {/* FINANCIAL DETAILS MODAL */}
+            <AnimatePresence>
+                {showFinanceDetails && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowFinanceDetails(false)}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className={`relative w-full max-w-2xl rounded-2xl border p-6 shadow-2xl ${theme === 'dark' ? 'bg-[#0A0A12] border-white/10' : 'bg-white border-slate-200'}`}
+                        >
+                            <button
+                                onClick={() => setShowFinanceDetails(false)}
+                                className="absolute right-4 top-4 p-2 rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
+                            <div className="mb-6">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500">
+                                        <DollarSign className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold tracking-tight">Financial Breakdown</h2>
+                                        <p className="text-xs text-muted-foreground uppercase tracking-widest">FinOps Optimization Report</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div className={`p-4 rounded-xl border ${theme === 'dark' ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                                    <div className="text-sm text-muted-foreground mb-1">Monthly Savings</div>
+                                    <div className="text-3xl font-black text-emerald-500">$14,250</div>
+                                    <div className="text-xs text-emerald-500/80 font-mono mt-1">+12.5% projected</div>
+                                </div>
+                                <div className={`p-4 rounded-xl border ${theme === 'dark' ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                                    <div className="text-sm text-muted-foreground mb-1">Annual Projection</div>
+                                    <div className="text-3xl font-black text-foreground">$171,000</div>
+                                    <div className="text-xs text-muted-foreground font-mono mt-1">Based on current trajectory</div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                {[
+                                    { icon: Archive, label: "Intelligent Archiving", desc: "Cold storage optimization", gain: "$6,200/mo", percent: "-60% storage" },
+                                    { icon: Database, label: "Query Optimization", desc: "Index & plan improvements", gain: "$4,800/mo", percent: "+67% speed" },
+                                    { icon: ShieldAlert, label: "Incident Prevention", desc: "Downtime avoidance", gain: "$3,250/mo", percent: "18.5h saved" },
+                                    { icon: Server, label: "Resource Throttling", desc: "CPU/RAM right-sizing", gain: "Pending", percent: "Analysis..." }
+                                ].map((item, idx) => (
+                                    <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border transition-colors group ${theme === 'dark' ? 'bg-white/5 border-white/5 hover:border-white/10' : 'bg-slate-50 border-slate-100 hover:border-slate-200'}`}>
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                                                <item.icon className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold">{item.label}</div>
+                                                <div className="text-[10px] text-muted-foreground font-mono uppercase">{item.desc}</div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className={`text-sm font-bold ${item.gain === 'Pending' ? 'text-muted-foreground italic' : 'text-emerald-500'}`}>{item.gain}</div>
+                                            <div className="text-[10px] text-muted-foreground">{item.percent}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-6 pt-6 border-t border-dashed border-white/10 flex justify-between items-center">
+                                <div className="text-[10px] text-muted-foreground italic">
+                                    Last audited: 12 mins ago
+                                </div>
+                                <button
+                                    onClick={() => setShowFinanceDetails(false)}
+                                    className="px-4 py-2 bg-primary text-black text-xs font-bold uppercase rounded-lg hover:bg-primary/90 transition-colors"
+                                >
+                                    Close Report
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }
