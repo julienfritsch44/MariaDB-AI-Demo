@@ -684,6 +684,7 @@ Confidence: ${rewriterResult.confidence}
                     analysisHistory={unifiedHistory}
                     setAnalysisHistory={setUnifiedHistory}
                     selectedHistoryItem={selectedHistoryItem}
+                    analysis={analysis}
                     onLoadFromHistory={(item) => {
                       setSelectedHistoryItem(item)
                     }}

@@ -1,0 +1,86 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Loader2, Sparkles, ChevronDown, ChevronUp, Lightbulb } from "lucide-react"
+
+interface InputStepProps {
+    isExpanded: boolean
+    sql: string
+    isAnalyzing: boolean
+    onToggleExpand: () => void
+    onSqlChange: (value: string) => void
+    onAnalyze: () => void
+    onLoadDemo: () => void
+}
+
+export function InputStep({
+    isExpanded,
+    sql,
+    isAnalyzing,
+    onToggleExpand,
+    onSqlChange,
+    onAnalyze,
+    onLoadDemo
+}: InputStepProps) {
+    return (
+        <Card id="card-input" className="border-2 border-primary/30 bg-primary/5">
+            <CardHeader className="pb-3">
+                <button
+                    onClick={onToggleExpand}
+                    className="w-full flex items-center justify-between hover:opacity-80 transition-opacity"
+                >
+                    <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        Query Input
+                        {!isExpanded && (
+                            <Badge variant="outline" className="text-xs ml-2">Collapsed</Badge>
+                        )}
+                    </CardTitle>
+                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+            </CardHeader>
+            {isExpanded && (
+                <CardContent className="space-y-4">
+                    <div>
+                        <label className="text-sm font-medium mb-2 block">Enter your SQL query:</label>
+                        <textarea
+                            value={sql}
+                            onChange={(e) => onSqlChange(e.target.value)}
+                            placeholder="SELECT * FROM orders WHERE ..."
+                            className="w-full h-32 p-3 rounded-md border border-border bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={onAnalyze}
+                            disabled={!sql.trim() || isAnalyzing}
+                            className="flex-1 gap-2"
+                        >
+                            {isAnalyzing ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Analyzing...
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="w-4 h-4" />
+                                    Analyze Query
+                                </>
+                            )}
+                        </Button>
+
+                        <Button
+                            onClick={onLoadDemo}
+                            variant="outline"
+                            className="gap-2"
+                        >
+                            <Lightbulb className="w-4 h-4" />
+                            Load Demo Query
+                        </Button>
+                    </div>
+                </CardContent>
+            )}
+        </Card>
+    )
+}
