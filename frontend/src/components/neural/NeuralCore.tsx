@@ -5,22 +5,23 @@ import { Brain } from "lucide-react"
 
 interface NeuralCoreProps {
     isAlert?: boolean;
+    isSuccess?: boolean;
 }
 
-export function NeuralCore({ isAlert = false }: NeuralCoreProps) {
+export function NeuralCore({ isAlert = false, isSuccess = false }: NeuralCoreProps) {
     const [rotation, setRotation] = useState(0)
 
     useEffect(() => {
         const interval = setInterval(() => {
             // Rotate faster in alert mode
-            const speed = isAlert ? 1.5 : 0.5;
+            const speed = isAlert ? 1.5 : (isSuccess ? 0.8 : 0.5);
             setRotation(prev => (prev + speed) % 360)
         }, 50)
         return () => clearInterval(interval)
-    }, [isAlert])
+    }, [isAlert, isSuccess])
 
-    const coreColor = isAlert ? 'rgba(239, 68, 68, 0.8)' : 'rgba(0, 169, 206, 0.8)';
-    const glowColor = isAlert ? 'rgba(239, 68, 68, 0.4)' : 'rgba(0, 169, 206, 0.4)';
+    const coreColor = isAlert ? 'rgba(239, 68, 68, 0.8)' : (isSuccess ? 'rgba(16, 185, 129, 0.8)' : 'rgba(0, 169, 206, 0.8)');
+    const glowColor = isAlert ? 'rgba(239, 68, 68, 0.4)' : (isSuccess ? 'rgba(16, 185, 129, 0.4)' : 'rgba(0, 169, 206, 0.4)');
 
     return (
         <div className="relative w-full h-full flex items-center justify-center min-h-[400px]">
@@ -28,7 +29,7 @@ export function NeuralCore({ isAlert = false }: NeuralCoreProps) {
             <div
                 className="absolute inset-0 opacity-70 transition-colors duration-1000"
                 style={{
-                    background: `radial-gradient(circle at center, ${isAlert ? 'rgba(239, 68, 68, 0.15)' : 'var(--neural-glow)'} 0%, transparent 70%)`
+                    background: `radial-gradient(circle at center, ${isAlert ? 'rgba(239, 68, 68, 0.15)' : (isSuccess ? 'rgba(16, 185, 129, 0.15)' : 'var(--neural-glow)')} 0%, transparent 70%)`
                 }}
             />
 
@@ -37,8 +38,8 @@ export function NeuralCore({ isAlert = false }: NeuralCoreProps) {
                 <svg viewBox="0 0 200 200" className="w-full h-full filter" style={{ filter: `drop-shadow(0 0 30px ${glowColor})` }}>
                     <defs>
                         <linearGradient id="coreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor={isAlert ? '#ef4444' : 'var(--color-primary)'} />
-                            <stop offset="100%" stopColor={isAlert ? '#991b1b' : 'var(--color-accent)'} />
+                            <stop offset="0%" stopColor={isAlert ? '#ef4444' : (isSuccess ? '#10b981' : 'var(--color-primary)')} />
+                            <stop offset="100%" stopColor={isAlert ? '#991b1b' : (isSuccess ? '#047857' : 'var(--color-accent)')} />
                         </linearGradient>
                     </defs>
 
@@ -50,18 +51,18 @@ export function NeuralCore({ isAlert = false }: NeuralCoreProps) {
                     <g style={{ transform: `rotate(${rotation}deg)`, transformOrigin: 'center' }}>
                         {[0, 60, 120, 180, 240, 300].map((angle, i) => (
                             <g key={i} transform={`rotate(${angle})`}>
-                                <circle cx="170" cy="100" r="2" fill={isAlert ? '#ef4444' : 'var(--color-primary)'} />
-                                <path d="M 100 100 L 170 100" stroke={isAlert ? '#ef4444' : 'var(--color-primary)'} strokeWidth="0.5" strokeDasharray="4 4" opacity="0.3" />
+                                <circle cx="170" cy="100" r="2" fill={isAlert ? '#ef4444' : (isSuccess ? '#10b981' : 'var(--color-primary)')} />
+                                <path d="M 100 100 L 170 100" stroke={isAlert ? '#ef4444' : (isSuccess ? '#10b981' : 'var(--color-primary)')} strokeWidth="0.5" strokeDasharray="4 4" opacity="0.3" />
                             </g>
                         ))}
                     </g>
 
                     {/* Another set of orbiting lines */}
                     <g style={{ transform: `rotate(${-rotation * 0.7}deg)`, transformOrigin: 'center' }}>
-                        <circle cx="100" cy="100" r="80" stroke="var(--color-primary)" strokeWidth="0.5" fill="none" opacity="0.1" />
+                        <circle cx="100" cy="100" r="80" stroke={isSuccess ? '#10b981' : 'var(--color-primary)'} strokeWidth="0.5" fill="none" opacity="0.1" />
                         {[30, 90, 150, 210, 270, 330].map((angle, i) => (
                             <g key={i} transform={`rotate(${angle})`}>
-                                <circle cx="180" cy="100" r="1.5" fill="var(--color-accent)" />
+                                <circle cx="180" cy="100" r="1.5" fill={isSuccess ? '#10b981' : 'var(--color-accent)'} />
                             </g>
                         ))}
                     </g>

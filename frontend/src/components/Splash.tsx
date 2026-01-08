@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowRight, Zap, Shield, TrendingUp } from "lucide-react"
+import { ArrowRight, Zap, GitBranch, Activity, Brain } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface SplashProps {
@@ -12,7 +12,6 @@ interface SplashProps {
 export function Splash({ onConnect }: SplashProps) {
     const [step, setStep] = useState(0)
     const [countFeatures, setCountFeatures] = useState(0)
-    const [countROI, setCountROI] = useState(0)
 
     // Animation sequence
     useEffect(() => {
@@ -43,20 +42,6 @@ export function Splash({ onConnect }: SplashProps) {
         }
     }, [step])
 
-    useEffect(() => {
-        if (step >= 3) {
-            const interval = setInterval(() => {
-                setCountROI(prev => {
-                    if (prev >= 187) {
-                        clearInterval(interval)
-                        return 187
-                    }
-                    return prev + 5
-                })
-            }, 30)
-            return () => clearInterval(interval)
-        }
-    }, [step])
 
     const competitors = [
         { name: "AWS RDS", features: 6, width: "30%" },
@@ -66,9 +51,9 @@ export function Splash({ onConnect }: SplashProps) {
     ]
 
     const exclusiveFeatures = [
-        { icon: Shield, name: "Safe Transaction Mode", desc: "Anti-autocommit protection" },
-        { icon: TrendingUp, name: "Blast Radius Analyzer", desc: "Business impact assessment" },
-        { icon: Zap, name: "Adaptive Vector Optimizer", desc: "+35% performance gain" }
+        { icon: GitBranch, name: "Instant Branching", desc: "Virtual clones in 2.1s" },
+        { icon: Activity, name: "Risk Predictor", desc: "85/100 Predictive impact" },
+        { icon: Brain, name: "Neural Core Rewrite", desc: "Jira-aware SQL optimization" }
     ]
 
     return (
@@ -112,8 +97,8 @@ export function Splash({ onConnect }: SplashProps) {
                                 The Only DBA Tool That Does It All
                             </h2>
                             <p className="text-lg text-muted-foreground">
-                                <span className="text-primary font-bold">{countFeatures}</span> features • 
-                                <span className="text-purple-400 font-bold"> 3</span> exclusives • 
+                                <span className="text-primary font-bold">{countFeatures}</span> features •
+                                <span className="text-purple-400 font-bold"> 3</span> unique engines •
                                 <span className="text-blue-400 font-bold"> 1</span> interface
                             </p>
                         </motion.div>
@@ -152,11 +137,10 @@ export function Splash({ onConnect }: SplashProps) {
                                                     initial={{ width: 0 }}
                                                     animate={{ width: comp.width }}
                                                     transition={{ duration: 1, delay: 0.3 + idx * 0.1 }}
-                                                    className={`h-full rounded-full ${
-                                                        comp.name === "MariaDB Local Pilot" 
-                                                            ? "bg-gradient-to-r from-primary to-purple-500" 
-                                                            : "bg-muted-foreground/30"
-                                                    }`}
+                                                    className={`h-full rounded-full ${comp.name === "MariaDB Local Pilot"
+                                                        ? "bg-gradient-to-r from-primary to-purple-500"
+                                                        : "bg-muted-foreground/30"
+                                                        }`}
                                                 />
                                             </div>
                                         </motion.div>
@@ -215,10 +199,6 @@ export function Splash({ onConnect }: SplashProps) {
                                 Connect to MariaDB
                                 <ArrowRight className="ml-2 w-5 h-5" />
                             </Button>
-                            
-                            <p className="mt-4 text-xs text-muted-foreground font-mono">
-                                v3.0 GRAAL+ Edition • 120% Complete • MCP Enabled
-                            </p>
                         </motion.div>
                     )}
                 </AnimatePresence>

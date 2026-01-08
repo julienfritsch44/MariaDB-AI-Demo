@@ -38,6 +38,7 @@ import { HealingStep } from "./analyzer-steps/HealingStep"
 import { ComparisonStep } from "./analyzer-steps/ComparisonStep"
 import { BranchValidationStep } from "./analyzer-steps/BranchValidationStep"
 import { BranchCreationModal } from "./analyzer-steps/BranchCreationModal"
+import { DeploymentSuccessModal } from "./analyzer-steps/DeploymentSuccessModal"
 import { AnalyzerHeader } from "./analyzer-steps/AnalyzerHeader"
 import { ProgressBar } from "./analyzer-steps/ProgressBar"
 import type {
@@ -49,6 +50,7 @@ import type {
     ResourceGroupResponse,
     WorkflowStep
 } from "./analyzer-steps/types"
+import { IS_DEMO_MODE, DEMO_DEPLOYED_KEY } from "@/lib/constants"
 
 const API_BASE = "http://localhost:8000"
 
@@ -90,10 +92,6 @@ interface UnifiedQueryAnalyzerCleanProps {
 }
 
 export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory, onLoadFromHistory, selectedHistoryItem, analysis }: UnifiedQueryAnalyzerCleanProps) {
-    // --- DEMO MODE TOGGLE ---
-    const IS_DEMO_MODE = true
-    // ------------------------
-
     const [sql, setSql] = useState("")
     const [step, setStep] = useState<WorkflowStep>("input")
     const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -101,6 +99,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
     const [isRewriting, setIsRewriting] = useState(false)
     const [isDeploying, setIsDeploying] = useState(false)
     const [isDeployed, setIsDeployed] = useState(false)
+    const [deployStep, setDeployStep] = useState("")
 
     const [riskResult, setRiskResult] = useState<PredictResponse | null>(null)
     const [sandboxResult, setSandboxResult] = useState<SandboxResponse | null>(null)
@@ -719,6 +718,34 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
         if (!healingResult) return
 
         setIsDeploying(true)
+
+        // DEMO MODE OVERRIDE
+        if (IS_DEMO_MODE) {
+            setDeployStep("Validating Traffic Patterns...")
+            await new Promise(r => setTimeout(r, 800))
+
+            setDeployStep("Applying Optimized Execution Plan...")
+            await new Promise(r => setTimeout(r, 1000))
+
+            setDeployStep("Warming Up Buffer Pool...")
+            await new Promise(r => setTimeout(r, 700))
+
+            setDeployStep("Finalizing Canary Baseline...")
+            await new Promise(r => setTimeout(r, 500))
+
+            // Set flag for Neural Dashboard to turn green
+            console.log('[Analyzer] Setting deployment flag:', DEMO_DEPLOYED_KEY, 'to true');
+            localStorage.setItem(DEMO_DEPLOYED_KEY, 'true')
+
+            setIsDeployed(true)
+            setIsBranchModalOpen(false)
+            setIsDeploying(false)
+            setDeployStep("")
+            // Scroll to top to see the modal clearly
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+            return
+        }
+
         try {
             const res = await trackedFetch(`${API_BASE}/deploy/production`, {
                 method: "POST",
@@ -734,6 +761,10 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
 
             if (data.success) {
                 setIsDeployed(true)
+                // Open success modal after a short delay
+                setTimeout(() => {
+                    setIsBranchModalOpen(false) // Close branch modal if open
+                }, 500)
             } else {
                 console.error("Deployment failed:", data.message)
             }
@@ -790,6 +821,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                             isExpanded={cardsExpanded.input}
                             sql={sql}
                             isAnalyzing={isAnalyzing}
+                            analysis={analysis}
                             onToggleExpand={() => setCardsExpanded(prev => ({ ...prev, input: !prev.input }))}
                             onSqlChange={setSql}
                             onAnalyze={handleAnalyze}
@@ -852,6 +884,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                             onToggleExpand={() => setCardsExpanded(prev => ({ ...prev, comparison: !prev.comparison }))}
                             onOpenBranchModal={() => setIsBranchModalOpen(true)}
                             onDeploy={handleDeploy}
+                            deployStep={deployStep}
                         />
 
 
@@ -864,13 +897,14 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                             isDeployed={isDeployed}
                             onTestBranch={handleTestBranch}
                             onDeploy={handleDeploy}
+                            deployStep={deployStep}
                         />
 
                     </div>
                 </div>
             </div >
 
-            {/* Branch Creation Modal */}
+
             {/* Branch Creation Modal */}
             <BranchCreationModal
                 isOpen={isBranchModalOpen}
@@ -878,6 +912,16 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                 rewrittenSql={healingResult?.rewritten_sql}
                 onClose={() => setIsBranchModalOpen(false)}
                 onCreate={handleCreateBranch}
+            />
+
+            {/* Deployment Success Modal */}
+            <DeploymentSuccessModal
+                isOpen={isDeployed}
+                sandboxResult={sandboxResult}
+                optimizedSandboxResult={optimizedSandboxResult}
+                costEstimate={costEstimate}
+                optimizedCostEstimate={optimizedCostEstimate}
+                onClose={() => setIsDeployed(false)}
             />
         </div >
     )

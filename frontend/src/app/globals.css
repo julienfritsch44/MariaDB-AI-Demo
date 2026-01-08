@@ -178,6 +178,12 @@
     box-shadow: 0 0 15px rgba(245, 158, 11, 0.15) !important;
     background-color: rgba(245, 158, 11, 0.01) !important;
   }
+
+  .alert-emerald {
+    border-color: rgba(16, 185, 129, 0.6) !important;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2) !important;
+    background-color: rgba(16, 185, 129, 0.02) !important;
+  }
 }
 
 :where(.space-y-6 > :not(:last-child)) {

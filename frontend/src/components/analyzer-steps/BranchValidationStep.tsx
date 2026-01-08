@@ -11,6 +11,7 @@ interface BranchValidationStepProps {
     isDeployed: boolean
     onTestBranch: () => void
     onDeploy: () => void
+    deployStep?: string
 }
 
 export function BranchValidationStep({
@@ -20,7 +21,8 @@ export function BranchValidationStep({
     isDeploying,
     isDeployed,
     onTestBranch,
-    onDeploy
+    onDeploy,
+    deployStep
 }: BranchValidationStepProps) {
     if (!isVisible) return null
 
@@ -87,7 +89,7 @@ export function BranchValidationStep({
                                     {isDeploying ? (
                                         <>
                                             <Loader2 className="w-5 h-5 animate-spin" />
-                                            Promoting to Production...
+                                            {deployStep || "Promoting to Production..."}
                                         </>
                                     ) : isDeployed ? (
                                         <>

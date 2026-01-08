@@ -26,6 +26,7 @@ interface ComparisonStepProps {
     onToggleExpand: () => void
     onOpenBranchModal: () => void
     onDeploy: () => void
+    deployStep?: string
 }
 
 export function ComparisonStep({
@@ -40,7 +41,8 @@ export function ComparisonStep({
     isDeploying,
     onToggleExpand,
     onOpenBranchModal,
-    onDeploy
+    onDeploy,
+    deployStep
 }: ComparisonStepProps) {
     if (!isVisible || !optimizedSandboxResult || !sandboxResult) return null
 
@@ -177,7 +179,7 @@ export function ComparisonStep({
                                     {isDeploying ? (
                                         <>
                                             <Loader2 className="w-5 h-5 animate-spin" />
-                                            Deploying to Production...
+                                            {deployStep || "Deploying to Production..."}
                                         </>
                                     ) : (
                                         <>

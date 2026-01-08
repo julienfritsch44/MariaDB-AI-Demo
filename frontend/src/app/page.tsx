@@ -8,7 +8,7 @@ import { QueryPredictorInput, PredictorResultPanel } from "@/components/QueryPre
 import { IndexSimulatorInput, IndexSimulatorResultPanel } from "@/components/IndexSimulator"
 import { QueryRewriterInput, RewriterResultPanel } from "@/components/QueryRewriter"
 import { SmartSandbox } from "@/components/SmartSandbox"
-import { UnifiedQueryAnalyzerClean } from "@/components/UnifiedQueryAnalyzerClean"
+import { UnifiedQueryAnalyzerClean } from "@/components/UnifiedQueryAnalyzer"
 import { ShopDemo } from "@/components/ShopDemo"
 import PlanStabilityDashboard from "@/app/dashboard/plan-stability/page"
 import BranchingDashboard from "@/app/dashboard/branching/page"
@@ -247,7 +247,7 @@ Confidence: ${rewriterResult.confidence}
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-background">
       <PerformanceMonitor />
       {isImmersiveMode ? (
         <NeuralDashboard

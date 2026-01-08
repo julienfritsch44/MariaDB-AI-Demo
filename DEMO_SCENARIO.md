@@ -126,8 +126,6 @@
     *   **Dialogue Mike**: "I remember this patch. It saved the US cluster last year. The Pilot just recovered that engineering genius instantly."
     *   **Action [SCREEN]**: Quick hover over the changes (IN ➔ JOIN).
 
----- HERE ------
-
 ### 🎬 SCENE 3.2: THE SAFETY NET (6:30 - 8:00)
 *   **6:30 - 6:45**: **Plan: [VIDEO]**.
     *   **Action**: Mike stops smiling abruptly. He straightens up in his chair, leaning slightly forward. He locks eyes with the camera lens, dead serious.
@@ -157,6 +155,7 @@
 *   **8:15 - 8:30**: **Plan: [SCREEN]**.
     *   **Action**: Mike clicks on the blue **"+ Create Test Branch"** button. A text field appears. He types *"fix-mike-3am"*.
 
+
 *   **8:30 - 8:45**: **Plan: [VIDEO]**.
     *   **Action**: Mike leans back against his desk, a challenging look on his face. He holds a pen like a cigar (optional).
     *   **Dialogue Mike**: "While traditional clouds copy blocks for hours, we create an instant virtual clone. Watch."
@@ -167,6 +166,8 @@
 *   **9:00 - 9:15**: **Plan: [VIDEO]**.
     *   **Action**: Camera stays on Mike. He types aggressively. **(Camera Push-In)** He hits Enter with a theatrical "Boom". **(Camera Pans right)** He follows his hand pointing to the invisible screen.
     *   **Dialogue Mike**: "I just triggered a massive schema change on the clone. Boom. And look at production... Flatline. It didn't feel a thing."
+
+---- HERE ------
 
 ---
 

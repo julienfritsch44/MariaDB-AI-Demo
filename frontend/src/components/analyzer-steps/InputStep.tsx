@@ -1,12 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Sparkles, ChevronDown, ChevronUp, Lightbulb } from "lucide-react"
+import { Loader2, Sparkles, ChevronDown, ChevronUp, Lightbulb, Activity, ArrowRight } from "lucide-react"
 
 interface InputStepProps {
     isExpanded: boolean
     sql: string
     isAnalyzing: boolean
+    analysis?: any
     onToggleExpand: () => void
     onSqlChange: (value: string) => void
     onAnalyze: () => void
@@ -17,6 +18,7 @@ export function InputStep({
     isExpanded,
     sql,
     isAnalyzing,
+    analysis,
     onToggleExpand,
     onSqlChange,
     onAnalyze,
@@ -50,6 +52,35 @@ export function InputStep({
                             className="w-full h-32 p-3 rounded-md border border-border bg-background font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
                         />
                     </div>
+
+                    {/* LIVE SLOW QUERIES SECTION */}
+                    {analysis?.top_queries && analysis.top_queries.length > 0 && (
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground uppercase font-bold tracking-wider">
+                                <span>Detected Slow Queries (Live)</span>
+                                <Activity className="w-3 h-3 animate-pulse text-amber-500" />
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                                {analysis.top_queries.slice(0, 3).map((query: any, idx: number) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => onSqlChange(query.query_text || query.sql_text || "")}
+                                        className="flex items-center justify-between p-3 rounded border border-border bg-card hover:bg-muted/50 transition-colors text-left group"
+                                    >
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className="p-1.5 rounded bg-amber-500/10 text-amber-500 font-mono text-xs font-bold border border-amber-500/20">
+                                                {query.latency_ms}ms
+                                            </div>
+                                            <code className="text-xs text-muted-foreground truncate font-mono max-w-[300px]">
+                                                {(query.query_text || query.sql_text || "Query").substring(0, 50)}...
+                                            </code>
+                                        </div>
+                                        <ArrowRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex gap-2">
                         <Button

@@ -7,6 +7,7 @@ import { DetailModal } from "./DetailModal"
 import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, Sun, Moon, X, Check, Archive, Database, Server, ArrowRight, AlertTriangle, Target, BookOpen } from "lucide-react"
 import { useTheme } from "@/context/ThemeContext"
 import { motion, AnimatePresence } from "framer-motion"
+import { DEMO_DEPLOYED_KEY } from "@/lib/constants"
 
 interface NeuralDashboardProps {
     onBack: () => void
@@ -42,6 +43,7 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
     const [showNeuralDetails, setShowNeuralDetails] = useState(false)
     const [showRAGDetails, setShowRAGDetails] = useState(false)
     const [showInsightDetails, setShowInsightDetails] = useState(false)
+    const [isOptimized, setIsOptimized] = useState(false) // State to avoid hydration mismatch
     const { theme, setTheme } = useTheme()
 
     const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -63,7 +65,23 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                 })
                 .then(data => {
                     console.log('Neural metrics received:', data);
-                    setLiveMetrics(data);
+
+                    // DEMO MODE OVERRIDE after deployment
+                    const isFlagInStorage = localStorage.getItem(DEMO_DEPLOYED_KEY) === 'true';
+                    console.log('[Dashboard] FetchLiveMetrics - Flag in storage:', isFlagInStorage);
+
+                    if (typeof window !== 'undefined' && isFlagInStorage) {
+                        console.log('[Dashboard] APPLYING GREEN OVERRIDES');
+                        setLiveMetrics({
+                            ...data,
+                            financial_impact: 1250,
+                            risk_score: 8,
+                            neural_score: 99.8,
+                            status: 'live'
+                        });
+                    } else {
+                        setLiveMetrics(data);
+                    }
                 })
                 .catch(err => console.error('Failed to fetch live metrics:', err))
         }
@@ -74,8 +92,24 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
         return () => clearInterval(interval)
     }, [])
 
+    // State sync for optimization flag
+    useEffect(() => {
+        const checkOptimization = () => {
+            const raw = localStorage.getItem(DEMO_DEPLOYED_KEY);
+            const optimized = raw === 'true';
+            console.log('[Dashboard] Sync Effect - Raw storage:', raw, 'isOptimized:', optimized);
+            setIsOptimized(optimized);
+        };
+
+        checkOptimization();
+        // Check every second to be very reactive during the demo
+        const interval = setInterval(checkOptimization, 1000);
+        return () => clearInterval(interval);
+    }, [])
+
+
     return (
-        <div className={`flex-1 overflow-y-auto neural-grid min-h-screen p-6 bg-background text-foreground transition-all duration-700 relative ${isPresentationMode ? 'scale-[1.05] origin-top' : ''}`}>
+        <div className={`flex-1 min-h-screen overflow-y-auto neural-grid p-6 bg-background text-foreground transition-all duration-700 relative ${isPresentationMode ? 'scale-[1.05] origin-top' : ''}`}>
 
             {/* Dashboard Header */}
             <div className="flex items-center justify-between mb-8 z-10 relative max-w-[1800px] mx-auto">
@@ -84,15 +118,39 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                         <motion.div
                             animate={{ opacity: [0.4, 1, 0.4] }}
                             transition={{ duration: 2, repeat: Infinity }}
-                            className={`w-2 h-2 rounded-full ${liveMetrics?.status === 'live' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-amber-500'}`}
+                            className={`w-2 h-2 rounded-full ${isOptimized ? 'bg-emerald-500' : (liveMetrics?.status === 'live' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-amber-500')}`}
                         />
-                        <span className={`text-[8px] font-bold tracking-[0.1em] uppercase ${liveMetrics?.status === 'live' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                            {liveMetrics?.status === 'live' ? 'Live System Feed Established' : 'Fallback Mode: Connection Lost'}
+                        <span className={`text-[8px] font-bold tracking-[0.1em] uppercase ${isOptimized ? 'text-emerald-500' : (liveMetrics?.status === 'live' ? 'text-emerald-500' : 'text-amber-500')}`}>
+                            {isOptimized ? 'Live System Feed: Optimized State' : (liveMetrics?.status === 'live' ? 'Live System Feed Established' : 'Fallback Mode: Connection Lost')}
                         </span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {/* Demo Control Buttons */}
+                    <div className="flex items-center bg-card border border-border rounded-full px-2 py-1 gap-2">
+                        <span className="text-[7px] font-black uppercase tracking-tighter text-muted-foreground ml-1">Demo Ctrl</span>
+                        <button
+                            onClick={() => {
+                                localStorage.setItem(DEMO_DEPLOYED_KEY, 'true');
+                                window.location.reload();
+                            }}
+                            className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase transition-all ${isOptimized ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-muted hover:bg-emerald-500/20 hover:text-emerald-500 border border-transparent'}`}
+                            title="Force Green State"
+                        >
+                            Green
+                        </button>
+                        <button
+                            onClick={() => {
+                                localStorage.removeItem(DEMO_DEPLOYED_KEY);
+                                window.location.reload();
+                            }}
+                            className="px-2 py-0.5 rounded text-[8px] font-bold uppercase bg-muted hover:bg-red-500/20 hover:text-red-500 border border-transparent transition-all"
+                            title="Reset to Initial State"
+                        >
+                            Reset
+                        </button>
+                    </div>
                     <button
                         onClick={onTogglePresentation}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all group"
@@ -135,11 +193,11 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                             icon={DollarSign}
                             priority="high"
                             sparklineData={metricsHistory?.financial_impact}
-                            sparklineColor="rgb(245, 158, 11)"
-                            className={(liveMetrics?.financial_impact || 0) > 10000 ? 'alert-amber' : ''}
+                            sparklineColor={isOptimized ? "rgb(16, 185, 129)" : "rgb(245, 158, 11)"}
+                            className={isOptimized ? 'alert-emerald' : ((liveMetrics?.financial_impact || 0) > 10000 ? 'alert-amber' : '')}
                         >
                             <div className="py-4">
-                                <div className="text-6xl font-black text-amber-500 tracking-tighter group-hover:scale-110 transition-transform origin-left">
+                                <div className={`text-6xl font-black tracking-tighter group-hover:scale-110 transition-transform origin-left ${isOptimized ? 'text-emerald-500' : 'text-amber-500'}`}>
                                     ${liveMetrics?.financial_impact?.toLocaleString() || '14,250'}
                                 </div>
                                 <div className="flex items-center gap-2 mt-3 text-xs font-mono">
@@ -170,19 +228,26 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                             subtitle="AUTO-PREDICT"
                             icon={ShieldAlert}
                             sparklineData={metricsHistory?.risk_score}
-                            sparklineColor="rgb(239, 68, 68)"
-                            className={(liveMetrics?.risk_score || 0) > 70 ? 'alert-red' : ''}
+                            sparklineColor={isOptimized ? "rgb(16, 185, 129)" : "rgb(239, 68, 68)"}
+                            className={isOptimized ? 'alert-emerald' : ((liveMetrics?.risk_score || 0) > 70 ? 'alert-red' : '')}
                         >
                             <div className="space-y-5 py-4">
                                 <div className="flex justify-between items-end">
-                                    <span className="text-2xl font-bold italic">HIGH</span>
-                                    <span className="text-xs font-mono text-muted-foreground">{liveMetrics?.risk_score?.toFixed(0) || '84'}/100</span>
+                                    <span className={`text-2xl font-bold italic ${isOptimized ? 'text-emerald-500' : ''}`}>
+                                        {isOptimized ? 'OPTIMAL' : 'HIGH'}
+                                    </span>
+                                    <span className={`text-xs font-mono ${isOptimized ? 'text-emerald-500/60' : 'text-muted-foreground'}`}>
+                                        {liveMetrics?.risk_score?.toFixed(0) || (isOptimized ? '8' : '84')}/100
+                                    </span>
                                 </div>
                                 <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-red-500" style={{ width: `${liveMetrics?.risk_score || 84}%` }} />
+                                    <div className={`h-full transition-all duration-1000 ${isOptimized ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${liveMetrics?.risk_score || (isOptimized ? 8 : 84)}%` }} />
                                 </div>
                                 <p className="text-[10px] text-muted-foreground leading-relaxed italic border-l border-white/10 pl-3">
-                                    Detected 3 potential deadlocks in production branch within last 15 minutes.
+                                    {isOptimized
+                                        ? "1.4TB of cold data (700+ days) successfully archived to S3 storage tier."
+                                        : "Detected 1.4TB of cold partitions (700 days unaccessed) on premium SSD storage."
+                                    }
                                 </p>
                                 <div className="mt-4 pt-3 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 h-0 group-hover:h-auto overflow-hidden">
                                     <p className="text-[9px] leading-relaxed text-muted-foreground">
@@ -201,8 +266,8 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
 
                 {/* Center Col - The Neural Core */}
                 <div className="col-span-12 lg:col-span-6 flex items-center justify-center relative">
-                    <div className={`absolute inset-0 rounded-full blur-[150px] transition-colors duration-1000 pointer-events-none ${(liveMetrics?.risk_score || 0) > 70 ? 'bg-red-500/20' : 'bg-primary/10'}`} />
-                    <NeuralCore isAlert={(liveMetrics?.risk_score || 0) > 70} />
+                    <div className={`absolute inset-0 rounded-full blur-[150px] transition-colors duration-1000 pointer-events-none ${isOptimized ? 'bg-emerald-500/10' : ((liveMetrics?.risk_score || 0) > 70 ? 'bg-red-500/20' : 'bg-primary/10')}`} />
+                    <NeuralCore isAlert={!isOptimized && (liveMetrics?.risk_score || 0) > 70} isSuccess={isOptimized} />
                 </div>
 
                 {/* Right Col */}
@@ -267,7 +332,10 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                             <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 mt-2">
                                 <h4 className="text-[10px] font-bold text-primary uppercase mb-2">Predictive Action:</h4>
                                 <p className="text-xs text-foreground/90 leading-relaxed italic">
-                                    "I've identified an indexing opportunity on the 'orders' table. Implementing this could reduce total leakage by 14% based on similar historical patterns in the production branch."
+                                    {isOptimized
+                                        ? "Storage optimization complete. 1.4TB moved to S3. Monthly SSD leakage reduced by $13,000."
+                                        : "I've identified 1.4TB of cold partitions (700+ days) on premium storage. Moving this to MariaDB S3 Tiering will reduce leakage by $6,200/mo."
+                                    }
                                 </p>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setShowInsightDetails(true); }}
@@ -281,22 +349,7 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                 </div>
             </div>
 
-            {/* Indicateur Mode Plein Écran */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: isPresentationMode ? 0 : 0.4, y: 0 }}
-                transition={{ duration: 0.5, delay: 1 }}
-                className="fixed bottom-6 right-6 z-40 pointer-events-none select-none"
-            >
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border shadow-lg">
-                    <kbd className="px-2 py-1 text-[10px] font-mono font-bold bg-muted text-foreground rounded border border-border">
-                        F11
-                    </kbd>
-                    <span className="text-[10px] text-muted-foreground font-medium">
-                        Mode Présentation
-                    </span>
-                </div>
-            </motion.div>
+            {/* Redundant presentation mode bottom label removed as it is in the header */}
 
             {/* Footer Branding */}
             {!isPresentationMode && (
@@ -349,13 +402,13 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div className="p-4 rounded-xl border bg-muted/50 border-border">
                                     <div className="text-sm text-muted-foreground mb-1">Monthly Savings</div>
-                                    <div className="text-3xl font-black text-emerald-500">${liveMetrics?.financial_impact?.toLocaleString() || '14,250'}</div>
-                                    <div className="text-xs text-emerald-500/80 font-mono mt-1">+12.5% projected</div>
+                                    <div className="text-3xl font-black text-emerald-500">${isOptimized ? '13,000' : '0'}</div>
+                                    <div className="text-xs text-emerald-500/80 font-mono mt-1">+{isOptimized ? '91%' : '0%'} projected</div>
                                 </div>
                                 <div className="p-4 rounded-xl border bg-muted/50 border-border">
                                     <div className="text-sm text-muted-foreground mb-1">Annual Projection</div>
-                                    <div className="text-3xl font-black text-foreground">$171,000</div>
-                                    <div className="text-xs text-muted-foreground font-mono mt-1">Based on current trajectory</div>
+                                    <div className="text-3xl font-black text-foreground">${isOptimized ? '156,000' : '0'}</div>
+                                    <div className="text-xs text-muted-foreground font-mono mt-1">Based on storage tier ROI</div>
                                 </div>
                             </div>
 
@@ -390,7 +443,7 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
 
                             <div className="p-3 mt-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                                 <p className="text-[10px] text-emerald-500 italic leading-tight">
-                                    "Intelligent Archiving" estimates are based on 1.4TB of unaccessed partitions identified in the `finops_auditor.storage_metrics` table.
+                                    "Intelligent Archiving" estimates are based on 1.4TB of cold partitions (700+ days) identified in the `shop_demo.orders` table.
                                 </p>
                             </div>
 
