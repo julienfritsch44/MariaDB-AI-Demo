@@ -1,5 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 import time
+import deps
 from schemas.risk import PredictRequest, PredictResponse, SimilarIssue
 from error_factory import ErrorFactory
 

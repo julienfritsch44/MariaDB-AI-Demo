@@ -1,7 +1,4 @@
-"""
-Query Cost Attribution Router
-Calculates query financial cost based on cloud pricing (AWS/Azure)
-"""
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from error_factory import ErrorFactory
