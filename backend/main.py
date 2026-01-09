@@ -6,6 +6,8 @@ import os
 import sys
 import io
 import logging
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Configure logging to console and file
 logging.basicConfig(
@@ -62,16 +64,58 @@ from routers import (
     safe_transaction,
     blast_radius,
     vector_optimizer,
-    deploy
+    deploy,
+    query_poller
 )
 
 # Import Timing Middleware
 from middleware.timing_middleware import TimingMiddleware
+from services.query_poller import get_poller
+
+# Global scheduler instance
+scheduler: BackgroundScheduler = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan - startup and shutdown"""
+    global scheduler
+    
+    # Startup: Initialize and start the query poller
+    if os.getenv("ENABLE_QUERY_POLLER", "true").lower() == "true":
+        logger.info("🚀 Starting Background Query Poller...")
+        scheduler = BackgroundScheduler()
+        poller = get_poller()
+        poller.is_running = True
+        
+        # Schedule query execution every 45 seconds
+        interval_seconds = int(os.getenv("QUERY_POLLER_INTERVAL", "45"))
+        scheduler.add_job(
+            poller.execute_slow_query,
+            'interval',
+            seconds=interval_seconds,
+            id='query_poller',
+            name='Background Query Poller'
+        )
+        scheduler.start()
+        logger.info(f"✅ Query Poller started (interval: {interval_seconds}s)")
+    else:
+        logger.info("⏸️  Query Poller disabled (ENABLE_QUERY_POLLER=false)")
+    
+    yield
+    
+    # Shutdown: Stop the scheduler
+    if scheduler:
+        logger.info("🛑 Stopping Background Query Poller...")
+        scheduler.shutdown()
+        poller = get_poller()
+        poller.is_running = False
+        logger.info("✅ Query Poller stopped")
 
 app = FastAPI(
     title="MariaDB FinOps Auditor API",
     description="Analyze slow queries and get AI-powered optimization suggestions",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 # Performance Timing Middleware (must be added before CORS)
@@ -119,6 +163,9 @@ app.include_router(database_branching.router, tags=["Database Branching"])
 app.include_router(safe_transaction.router, tags=["Safe Transaction Mode"])
 app.include_router(blast_radius.router, tags=["Blast Radius Analyzer"])
 app.include_router(vector_optimizer.router, tags=["Vector Optimizer"])
+
+# Background Services
+app.include_router(query_poller.router, tags=["Query Poller"])
 
 if __name__ == "__main__":
     import uvicorn

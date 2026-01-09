@@ -1,14 +1,14 @@
 """
 Database Branching Router
-Clonage copy-on-write de bases de données pour tests DDL sans risque
+Copy-on-write style database cloning for safe DDL and optimization testing.
 """
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
+import hashlib
 from datetime import datetime
 from database import get_db_connection
-from mock_data import MockDataGenerator
 
 router = APIRouter(prefix="/branching", tags=["Database Branching"])
 
@@ -32,53 +32,62 @@ class BranchMergeRequest(BaseModel):
 
 
 class BranchManager:
-    """Gestionnaire de branches de base de données"""
+    """Database branch manager handling cloning and schema diffing"""
     
     @staticmethod
     def generate_branch_id(source_db: str, branch_name: str) -> str:
-        """Génère un ID unique pour une branche"""
+        """Generates a unique branch ID based on name and timestamp"""
         timestamp = datetime.now().isoformat()
         content = f"{source_db}_{branch_name}_{timestamp}"
         return hashlib.sha256(content.encode()).hexdigest()[:12]
     
     @staticmethod
     def create_branch_database(conn, source_db: str, branch_name: str, copy_data: bool = False) -> str:
-        """Crée une nouvelle base de données branche"""
+        """Creates a new isolated branch database by cloning schema and optionally data"""
         cursor = conn.cursor(dictionary=True)
         
         branch_db_name = f"{source_db}_branch_{branch_name}"
         
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {branch_db_name}")
+        # Clean start: Drop existing branch if it exists (atomic retry)
+        cursor.execute(f"DROP DATABASE IF EXISTS `{branch_db_name}`")
+        cursor.execute(f"CREATE DATABASE `{branch_db_name}`")
         
-        cursor.execute(f"SHOW TABLES FROM {source_db}")
+        cursor.execute(f"SHOW TABLES FROM `{source_db}`")
         tables = [list(row.values())[0] for row in cursor.fetchall()]
         
-        for table in tables:
-            cursor.execute(f"SHOW CREATE TABLE {source_db}.{table}")
-            create_table_result = cursor.fetchone()
-            create_table_ddl = create_table_result.get('Create Table', '')
-            
-            cursor.execute(f"USE {branch_db_name}")
-            cursor.execute(create_table_ddl)
-            
-            if copy_data:
-                cursor.execute(f"""
-                    INSERT INTO {branch_db_name}.{table}
-                    SELECT * FROM {source_db}.{table}
-                """)
+        # Disable foreign key checks for the cloning process (session-level)
+        cursor.execute("SET SESSION FOREIGN_KEY_CHECKS = 0")
+        
+        try:
+            for table in tables:
+                cursor.execute(f"SHOW CREATE TABLE `{source_db}`.`{table}`")
+                create_table_result = cursor.fetchone()
+                create_table_ddl = create_table_result.get('Create Table', '')
+                
+                cursor.execute(f"USE `{branch_db_name}`")
+                cursor.execute(create_table_ddl)
+                
+                if copy_data:
+                    cursor.execute(f"""
+                        INSERT INTO `{branch_db_name}`.`{table}`
+                        SELECT * FROM `{source_db}`.`{table}`
+                    """)
+        finally:
+            # Re-enable foreign key checks
+            cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
         
         cursor.close()
         return branch_db_name
     
     @staticmethod
     def get_schema_diff(conn, db1: str, db2: str) -> Dict[str, Any]:
-        """Compare les schémas de deux bases de données"""
+        """Compares schemas between two databases to find DDL differences"""
         cursor = conn.cursor(dictionary=True)
         
-        cursor.execute(f"SHOW TABLES FROM {db1}")
+        cursor.execute(f"SHOW TABLES FROM `{db1}`")
         tables_db1 = set([list(row.values())[0] for row in cursor.fetchall()])
         
-        cursor.execute(f"SHOW TABLES FROM {db2}")
+        cursor.execute(f"SHOW TABLES FROM `{db2}`")
         tables_db2 = set([list(row.values())[0] for row in cursor.fetchall()])
         
         diff = {
@@ -89,10 +98,10 @@ class BranchManager:
         }
         
         for table in diff['common_tables']:
-            cursor.execute(f"SHOW CREATE TABLE {db1}.{table}")
+            cursor.execute(f"SHOW CREATE TABLE `{db1}`.`{table}`")
             ddl1 = cursor.fetchone().get('Create Table', '')
             
-            cursor.execute(f"SHOW CREATE TABLE {db2}.{table}")
+            cursor.execute(f"SHOW CREATE TABLE `{db2}`.`{table}`")
             ddl2 = cursor.fetchone().get('Create Table', '')
             
             if ddl1 != ddl2:
@@ -109,26 +118,10 @@ class BranchManager:
 @router.post("/create")
 async def create_branch(request: BranchCreateRequest):
     """
-    Crée une branche de base de données (copy-on-write simulé)
+    Creates a database branch (simulated copy-on-write)
     """
     try:
         conn = get_db_connection()
-        
-        # Check if in mock mode
-        if isinstance(conn, type(conn)) and conn.__class__.__name__ == 'MockConnection':
-            return {
-                "success": True,
-                "message": "Branch created successfully (MOCK MODE)",
-                "branch": {
-                    "branch_id": "br_mock_001",
-                    "branch_name": request.branch_name,
-                    "branch_database": f"{request.source_database}_branch_{request.branch_name}",
-                    "source_database": request.source_database,
-                    "created_at": datetime.now().isoformat(),
-                    "size_mb": 0.8,
-                    "creation_time_sec": 2.3
-                }
-            }
         
         cursor = conn.cursor(dictionary=True)
         
@@ -212,20 +205,10 @@ async def create_branch(request: BranchCreateRequest):
 @router.get("/list")
 async def list_branches(source_database: Optional[str] = None):
     """
-    Liste toutes les branches actives
+    Lists all active branches
     """
     try:
         conn = get_db_connection()
-        
-        # Check if in mock mode
-        if isinstance(conn, type(conn)) and conn.__class__.__name__ == 'MockConnection':
-            mock_branches = MockDataGenerator.get_database_branches()
-            return {
-                "success": True,
-                "message": "Branches listed (MOCK MODE)",
-                "branches": mock_branches,
-                "total_branches": len(mock_branches)
-            }
         
         cursor = conn.cursor(dictionary=True)
         
@@ -283,7 +266,7 @@ async def list_branches(source_database: Optional[str] = None):
 @router.post("/compare")
 async def compare_branches(request: BranchCompareRequest):
     """
-    Compare le schéma d'une branche avec la source
+    Compares branch schema with source
     """
     try:
         conn = get_db_connection()
@@ -337,7 +320,7 @@ async def compare_branches(request: BranchCompareRequest):
 @router.post("/merge")
 async def merge_branch(request: BranchMergeRequest):
     """
-    Fusionne une branche vers la cible (avec dry-run par défaut)
+    Merges a branch into the target (dry-run by default)
     """
     try:
         if request.dry_run:
@@ -423,7 +406,7 @@ async def merge_branch(request: BranchMergeRequest):
 @router.delete("/{branch_database}")
 async def delete_branch(branch_database: str):
     """
-    Supprime une branche de base de données
+    Deletes a database branch
     """
     try:
         if '_branch_' not in branch_database:

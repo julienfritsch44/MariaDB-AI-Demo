@@ -4,11 +4,11 @@ import sys
 import urllib.parse
 from dotenv import load_dotenv
 
-# Add paths for VectorStore and GeminiService
+# Add paths for VectorStore and EmbeddingService
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 load_dotenv()
 
-from rag.gemini_service import GeminiService
+from rag.embedding_service import EmbeddingService
 from rag.vector_store import VectorStore
 
 def fetch_and_ingest_jira():
@@ -33,7 +33,7 @@ def fetch_and_ingest_jira():
         print(f"Found {len(issues)} candidate tickets.")
         
         # Init Services
-        gemini = GeminiService()
+        embedder = EmbeddingService()
         vs = VectorStore({
             "host": os.getenv("SKYSQL_HOST"),
             "port": int(os.getenv("SKYSQL_PORT", 3306)),
@@ -57,7 +57,7 @@ def fetch_and_ingest_jira():
             
             try:
                 # Get embeddings
-                embedding = gemini.get_embedding(content)
+                embedding = embedder.get_embedding(content)
                 if not embedding:
                     print(f"Failed to get embedding for {key}, skipping.")
                     continue

@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from database import get_db_connection
-from mock_data import MockDataGenerator
 
 router = APIRouter(prefix="/archiving", tags=["Intelligent Archiving"])
 
@@ -235,16 +234,6 @@ async def analyze_archiving_candidates(request: ArchivingAnalyzeRequest):
     """
     try:
         conn = get_db_connection()
-        
-        # Check if in mock mode
-        if isinstance(conn, type(conn)) and conn.__class__.__name__ == 'MockConnection':
-            mock_data = MockDataGenerator.get_archiving_candidates()
-            return {
-                "success": True,
-                "message": "Archiving analysis complete (MOCK MODE)",
-                **mock_data
-            }
-        
         cursor = conn.cursor(dictionary=True)
         
         cursor.execute(f"USE {request.database}")

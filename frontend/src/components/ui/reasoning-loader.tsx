@@ -80,7 +80,7 @@ export function ReasoningLoader({
 
         const timeout = setTimeout(() => {
             setCurrentStepIndex(prev => prev + 1)
-        }, Math.random() * 800 + 600)
+        }, Math.random() * 300 + 200)
 
         return () => clearTimeout(timeout)
     }, [currentStepIndex, steps.length])

@@ -69,9 +69,11 @@ async def test_query_in_sandbox(request: SandboxRequest):
     if is_dangerous:
         return SandboxResponse(
             success=False,
+            mode="sandbox",
             message="Query blocked for safety",
             error=danger_reason,
-            warning="This operation is not allowed even in sandbox mode"
+            warning="This operation is not allowed even in sandbox mode",
+            sql=request.sql
         )
     
     query_type = detect_query_type(request.sql)
@@ -130,7 +132,8 @@ async def test_query_in_sandbox(request: SandboxRequest):
                 execution_time_ms=round(execution_time_ms, 2)
             ),
             query_type=query_type,
-            warning="⚠️ Changes were NOT persisted - this was a safe test" if query_type != "SELECT" else None
+            warning="⚠️ Changes were NOT persisted - this was a safe test" if query_type != "SELECT" else None,
+            sql=request.sql
         )
         
     except Exception as e:
@@ -143,12 +146,24 @@ async def test_query_in_sandbox(request: SandboxRequest):
         
         error_msg = str(e)
         
+        # Smart Diagnostic: If table doesn't exist, check for shop_ prefix
+        if "Table" in error_msg and "doesn't exist" in error_msg:
+            if "order_items" in error_msg and "shop_order_items" not in error_msg:
+                error_msg += " (Smart Suggestion: Did you mean 'shop_order_items'? This environment uses prefixed tables.)"
+            elif "orders" in error_msg and "shop_orders" not in error_msg:
+                error_msg += " (Smart Suggestion: Did you mean 'shop_orders'?)"
+            elif "customers" in error_msg and "shop_customers" not in error_msg:
+                error_msg += " (Smart Suggestion: Did you mean 'shop_customers'?)"
+            elif "products" in error_msg and "shop_products" not in error_msg:
+                error_msg += " (Smart Suggestion: Did you mean 'shop_products'?)"
+        
         return SandboxResponse(
             success=False,
             mode="sandbox",
             message="Query failed in sandbox",
             error=error_msg,
-            query_type=query_type
+            query_type=query_type,
+            sql=request.sql
         )
         
     finally:

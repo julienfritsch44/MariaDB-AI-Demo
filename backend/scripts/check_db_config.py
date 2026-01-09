@@ -1,71 +1,76 @@
-
-import mariadb
 import os
 import sys
+import mariadb
 from dotenv import load_dotenv
 
-load_dotenv()
-
-# Database Config
-DB_USER = os.getenv("SKYSQL_USERNAME")
-DB_PASSWORD = os.getenv("SKYSQL_PASSWORD")
-DB_HOST = os.getenv("SKYSQL_HOST")
-DB_PORT = int(os.getenv("SKYSQL_PORT", 3306))
-DB_DATABASE = "shop_demo"
+# Add parent directory to path to import database config
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from database import get_db_connection
 
 def check_config():
+    print("🔍 Checking MariaDB Configuration for DBA Copilot...\n")
+    
     try:
-        print(f"Connecting to {DB_HOST} as {DB_USER}...")
-        conn = mariadb.connect(
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host=DB_HOST,
-            port=DB_PORT,
-            database=DB_DATABASE,
-            ssl=True
-        )
-        cursor = conn.cursor(dictionary=True)
+        conn = get_db_connection()
+        # The mariadb connector doesn't support 'dictionary=True' in the same way, 
+        # but we can use buffered/dictionary cursor if needed. 
+        # For simplicity, we'll use a regular cursor and fetch results by index or name.
+        cursor = conn.cursor()
         
-        # Check privileges (approximated by trying to set variables)
-        print("\n--- Checking Slow Log Configuration ---")
-        
-        variables = [
+        # 1. Check Global Variables
+        vars_to_check = [
             'slow_query_log',
             'long_query_time',
-            'log_output',
-            'min_examined_row_limit'
+            'performance_schema',
+            'log_slow_verbosity',
+            'log_output'
         ]
         
-        for var in variables:
+        print("--- Global Variables ---")
+        for var in vars_to_check:
             cursor.execute(f"SHOW GLOBAL VARIABLES LIKE '{var}'")
-            row = cursor.fetchone()
-            if row:
-                print(f"{row['Variable_name']}: {row['Value']}")
+            res = cursor.fetchone()
+            if res:
+                name, val = res
+                status = "✅" if val in ['ON', 'FILE', 'TABLE'] or (var == 'long_query_time' and float(val) <= 1.0) else "⚠️"
+                print(f"{status} {var}: {val}")
+            else:
+                print(f"❌ {var}: Not found")
         
-        print("\n--- Trying to Enable Slow Log (Test Permissions) ---")
+        # 2. Check Global Status
+        print("\n--- Global Status ---")
+        cursor.execute("SHOW GLOBAL STATUS LIKE 'slow_queries'")
+        res = cursor.fetchone()
+        if res:
+            print(f"📊 slow_queries: {res[1]}")
+            
+        # 3. Check Current User Privileges
+        print("\n--- Current User Privileges ---")
+        cursor.execute("SELECT USER(), CURRENT_USER()")
+        user_info = cursor.fetchone()
+        print(f"👤 Connected as: {user_info[0]}")
+        print(f"🔑 Effective user: {user_info[1]}")
+        
+        cursor.execute("SHOW GRANTS")
+        grants = cursor.fetchall()
+        print("📜 Active Grants:")
+        for grant in grants:
+            print(f"  - {grant[0]}")
+            
+        # 4. Check system catalog access
+        print("\n--- System Catalog Access ---")
         try:
-            cursor.execute("SET GLOBAL slow_query_log = 'ON'")
-            cursor.execute("SET GLOBAL long_query_time = 0.1") # Very sensitive for demo
-            cursor.execute("SET GLOBAL log_output = 'TABLE'")
-            print("SUCCESS: Changed slow log settings!")
-            print("-> Pointing to mysql.slow_log table")
+            cursor.execute("CREATE DATABASE IF NOT EXISTS sky_sys_catalog_test")
+            cursor.execute("DROP DATABASE sky_sys_catalog_test")
+            print("✅ Permission to CREATE/DROP DATABASE (for sky_sys_catalog)")
         except mariadb.Error as e:
-            print(f"FAILED to change settings: {e}")
-            print("-> User likely lacks SUPER/SYSTEM_VARIABLES_ADMIN privileges")
-
-        # Check if we can read mysql.slow_log
-        print("\n--- Checking Access to mysql.slow_log ---")
-        try:
-            cursor.execute("SELECT count(*) as cnt FROM mysql.slow_log")
-            row = cursor.fetchone()
-            print(f"SUCCESS: Can read mysql.slow_log. Rows: {row['cnt']}")
-        except mariadb.Error as e:
-            print(f"FAILED to read mysql.slow_log: {e}")
-
+            print(f"❌ DATABASE creation denied: {e}")
+            
+        cursor.close()
         conn.close()
-
-    except mariadb.Error as e:
-        print(f"Error connecting to MariaDB: {e}")
+        
+    except Exception as e:
+        print(f"💥 Error: {e}")
 
 if __name__ == "__main__":
     check_config()

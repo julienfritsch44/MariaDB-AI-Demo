@@ -9,12 +9,24 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import json
+
 # Database Config
 DB_USER = os.getenv("SKYSQL_USERNAME")
 DB_PASSWORD = os.getenv("SKYSQL_PASSWORD")
 DB_HOST = os.getenv("SKYSQL_HOST")
 DB_PORT = int(os.getenv("SKYSQL_PORT", 3306))
 DB_DATABASE = "shop_demo"
+
+# Stats Persistence
+STATS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "services", "simulation_stats.json")
+
+def save_stats(stats):
+    try:
+        with open(STATS_FILE, "w") as f:
+            json.dump(stats, f)
+    except Exception as e:
+        print(f"Failed to save stats: {e}")
 
 # SkySQL slow query threshold is 10 seconds
 SKYSQL_SLOW_THRESHOLD = 10.0
@@ -352,6 +364,17 @@ def main():
 
             # Small delay between queries
             time.sleep(random.uniform(1.0, 3.0))
+
+            # Update and save stats
+            stats = {
+                "total_queries": total_query_count,
+                "slow_queries": slow_query_count,
+                "revenue": 124590 + (total_query_count * 5.25), # Base + estimate $5.25 per query
+                "orders": 1402 + (total_query_count // 3), # Estimate 1 order every 3 queries
+                "active_users": 342 + random.randint(-10, 10),
+                "last_update": datetime.now().isoformat()
+            }
+            save_stats(stats)
 
     except KeyboardInterrupt:
         print("\n" + "=" * 70)

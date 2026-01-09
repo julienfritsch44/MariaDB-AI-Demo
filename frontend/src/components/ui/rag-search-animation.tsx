@@ -42,22 +42,22 @@ export function RAGSearchAnimation({
             return
         }
 
-        // Phase 1: Rapid scanning animation (2 seconds)
+        // Phase 1: Rapid scanning animation (800ms)
         const scanInterval = setInterval(() => {
             setCurrentTicketIndex(prev => (prev + 1) % SAMPLE_TICKETS.length)
             setScannedCount(prev => Math.min(prev + Math.floor(Math.random() * 50) + 20, totalTickets))
-        }, 100)
+        }, 50)
 
         // Phase 2: Transition to matching
         const matchTimeout = setTimeout(() => {
             setPhase("matching")
             clearInterval(scanInterval)
-        }, 2000)
+        }, 800)
 
         // Phase 3: Complete
         const completeTimeout = setTimeout(() => {
             setPhase("complete")
-        }, 3500)
+        }, 1500)
 
         return () => {
             clearInterval(scanInterval)

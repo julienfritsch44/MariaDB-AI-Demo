@@ -11,7 +11,7 @@ timeout /t 2 /nobreak >nul
 :: Lancement du Backend
 echo [2/3] Lancement du Backend (MariaDB AI Service)...
 cd backend
-start "MariaDB-Backend" /min cmd /c "venv\Scripts\python.exe main.py"
+start "MariaDB-Backend" /min cmd /c "python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000"
 cd ..
 
 :: Lancement du Frontend

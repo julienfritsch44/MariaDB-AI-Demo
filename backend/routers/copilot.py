@@ -72,14 +72,10 @@ def get_langchain_chain():
         # we can define a "Fallback LLM" or use a conditional one.
         
         # Check for Keys
-        google_key = os.getenv("GOOGLE_API_KEY")
         openai_key = os.getenv("OPENAI_API_KEY")
         
         llm = None
-        if google_key:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=google_key)
-        elif openai_key:
+        if openai_key:
             from langchain_openai import ChatOpenAI
             llm = ChatOpenAI(model="gpt-3.5-turbo", api_key=openai_key)
         else:

@@ -9,7 +9,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from database import get_db_connection
-from mock_data import MockDataGenerator
 
 router = APIRouter()
 
@@ -294,22 +293,6 @@ async def analyze_blast_radius(request: BlastRadiusRequest):
     }
     ```
     """
-    
-    # Check if in mock mode
-    conn = get_db_connection()
-    if isinstance(conn, type(conn)) and conn.__class__.__name__ == 'MockConnection':
-        mock_data = MockDataGenerator.get_blast_radius_analysis(request.sql)
-        return BlastRadiusResponse(
-            success=True,
-            blast_radius_score=mock_data['blast_radius_score'],
-            business_impact=mock_data['severity'],
-            affected_services=[],
-            total_users_affected=mock_data['total_users_affected'],
-            cascade_depth=mock_data['cascade_depth'],
-            lock_impacts=[],
-            execution_time_ms=45.2,
-            recommendations=mock_data['recommendations']
-        )
     
     start_time = time.time()
     

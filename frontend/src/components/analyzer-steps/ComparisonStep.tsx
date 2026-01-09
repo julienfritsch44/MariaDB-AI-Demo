@@ -70,19 +70,30 @@ export function ComparisonStep({
                             <div className="text-xs font-semibold text-muted-foreground">Original Query</div>
                             <div className="p-3 rounded-md bg-background/50 border border-border/40">
                                 <div className="text-xs text-muted-foreground">Execution Time</div>
-                                <div className="text-2xl font-bold">{sandboxResult.result?.execution_time_ms}ms</div>
+                                <div className="text-2xl font-bold">
+                                    {sandboxResult.result?.execution_time_ms !== undefined ? `${sandboxResult.result.execution_time_ms}ms` : 'N/A'}
+                                </div>
                             </div>
                         </div>
                         <div className="space-y-2">
                             <div className="text-xs font-semibold text-muted-foreground">Optimized Query</div>
                             <div className="p-3 rounded-md bg-emerald-500/10 border border-emerald-500/30">
                                 <div className="text-xs text-muted-foreground">Execution Time</div>
-                                <div className="text-2xl font-bold text-black">{optimizedSandboxResult.result?.execution_time_ms}ms</div>
+                                <div className="text-2xl font-bold text-emerald-400">
+                                    {optimizedSandboxResult.success
+                                        ? (optimizedSandboxResult.result?.execution_time_ms !== undefined ? `${optimizedSandboxResult.result.execution_time_ms}ms` : '...')
+                                        : 'Error'}
+                                </div>
+                                {!optimizedSandboxResult.success && optimizedSandboxResult.error && (
+                                    <div className="text-[10px] text-red-400 mt-1 leading-tight break-words max-w-[200px] bg-red-500/10 p-1 rounded border border-red-500/20">
+                                        {optimizedSandboxResult.error}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {sandboxResult.result && optimizedSandboxResult.result && (
+                    {(sandboxResult.result?.execution_time_ms !== undefined && optimizedSandboxResult.result?.execution_time_ms !== undefined) && (
                         <div className="p-4 rounded-md bg-primary/10 border border-primary/30 text-center">
                             <div className="text-xs text-muted-foreground mb-1">Performance Improvement</div>
                             <div className="text-3xl font-bold text-primary">
@@ -92,36 +103,44 @@ export function ComparisonStep({
                         </div>
                     )}
 
-                    {costEstimate && optimizedCostEstimate && (
-                        <div className="p-4 rounded-md bg-emerald-500/10 border border-emerald-500/30">
-                            <div className="flex items-center gap-2 mb-3">
-                                <DollarSign className="w-5 h-5 text-emerald-500" />
-                                <span className="text-sm font-semibold text-emerald-500">Cost Savings</span>
+                    {costEstimate && optimizedCostEstimate && (() => {
+                        const savings = costEstimate.monthly_cost - optimizedCostEstimate.monthly_cost;
+                        const isCostIncrease = savings < 0;
+                        const savingsPercent = Math.round((savings / costEstimate.monthly_cost) * 100);
+
+                        return (
+                            <div className={`p-4 rounded-md border ${isCostIncrease ? 'bg-red-500/10 border-red-500/30' : 'bg-emerald-500/10 border-emerald-500/30'}`}>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <DollarSign className={`w-5 h-5 ${isCostIncrease ? 'text-red-500' : 'text-emerald-500'}`} />
+                                    <span className={`text-sm font-semibold ${isCostIncrease ? 'text-red-500' : 'text-emerald-500'}`}>
+                                        {isCostIncrease ? 'Cost Impact' : 'Cost Savings'}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 mb-3">
+                                    <div>
+                                        <div className="text-xs text-muted-foreground">Original Cost</div>
+                                        <div className="text-xl font-bold text-muted-foreground">${costEstimate.monthly_cost.toFixed(2)}/mo</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-muted-foreground">Optimized Cost</div>
+                                        <div className="text-xl font-bold text-foreground">${optimizedCostEstimate.monthly_cost.toFixed(2)}/mo</div>
+                                    </div>
+                                </div>
+                                <div className={`text-center p-3 rounded-md border ${isCostIncrease ? 'bg-red-500/20 border-red-500/40' : 'bg-emerald-500/20 border-emerald-500/40'}`}>
+                                    <div className="text-xs text-muted-foreground mb-1">Monthly {isCostIncrease ? 'Increase' : 'Savings'}</div>
+                                    <div className={`text-2xl font-bold ${isCostIncrease ? 'text-red-400' : 'text-emerald-400'}`}>
+                                        ${Math.abs(savings).toFixed(2)}
+                                    </div>
+                                    <div className={`text-xs mt-1 ${isCostIncrease ? 'text-red-400' : 'text-emerald-400'}`}>
+                                        ({Math.abs(savingsPercent)}% {isCostIncrease ? 'increase' : 'reduction'})
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-2">
+                                        Annual {isCostIncrease ? 'impact' : 'savings'}: ${Math.abs(savings * 12).toFixed(2)}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 mb-3">
-                                <div>
-                                    <div className="text-xs text-muted-foreground">Original Cost</div>
-                                    <div className="text-xl font-bold text-red-400">${costEstimate.monthly_cost.toFixed(2)}/mo</div>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-muted-foreground">Optimized Cost</div>
-                                    <div className="text-xl font-bold text-black">${optimizedCostEstimate.monthly_cost.toFixed(2)}/mo</div>
-                                </div>
-                            </div>
-                            <div className="text-center p-3 rounded-md bg-emerald-500/20 border border-emerald-500/40">
-                                <div className="text-xs text-muted-foreground mb-1">Monthly Savings</div>
-                                <div className="text-2xl font-bold text-emerald-400">
-                                    ${(costEstimate.monthly_cost - optimizedCostEstimate.monthly_cost).toFixed(2)}
-                                </div>
-                                <div className="text-xs text-black mt-1">
-                                    ({Math.round(((costEstimate.monthly_cost - optimizedCostEstimate.monthly_cost) / costEstimate.monthly_cost) * 100)}% reduction)
-                                </div>
-                                <div className="text-xs text-muted-foreground mt-2">
-                                    Annual savings: ${((costEstimate.monthly_cost - optimizedCostEstimate.monthly_cost) * 12).toFixed(2)}
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                        );
+                    })()}
 
                     {/* Deployment Section */}
                     <div className="p-4 rounded-md bg-emerald-500/10 border border-emerald-500/30">

@@ -73,7 +73,12 @@ class QueryRewriterService:
         """Async helper for SkyAI API call"""
         skysql_api_key = os.getenv("SKYSQL_API_KEY")
         
-        if not skysql_api_key or not anti_patterns:
+        if not skysql_api_key:
+            print("[/rewrite] CRITICAL: SKYSQL_API_KEY is missing from environment!")
+            return sql, None, {}
+            
+        if not anti_patterns:
+            print("[/rewrite] No anti-patterns detected, skipping AI call.")
             return sql, None, {}
         
         # Build context-aware prompt (trimmed for speed)
@@ -82,33 +87,26 @@ class QueryRewriterService:
             for t in similar_jira_tickets[:2]  # Limit to 2 tickets for speed
         ])
         
-        prompt = f"""Tu es un expert en optimisation SQL MariaDB/MySQL.
-
-**QUERY ORIGINALE:**
+        prompt = f"""You are a MariaDB/MySQL SQL optimization expert.
+        
+**ORIGINAL QUERY:**
 ```sql
 {sql}
 ```
 
-**ANTI-PATTERNS DÉTECTÉS:**
+**DETECTED ANTI-PATTERNS:**
 {chr(10).join(f"- {p}" for p in anti_patterns)}
 
 **INSTRUCTIONS:**
-1. Réécris cette query pour optimiser les performances
-2. Corrige les anti-patterns détectés
-3. Conserve la logique métier exacte (même résultat)
-4. Utilise des JOINs au lieu de subqueries IN quand possible
-5. **SUGGÈRE UN INDEX (DDL)** si nécessaire (ex: CREATE INDEX ...)
+1. Rewrite this query for MASSIVE performance gains.
+2. **STRICTLY PROHIBITED:** No `SLEEP()`, no artificial delays, no dummy columns (`UNION ALL SELECT 'DELAY'`).
+3. Return ONLY pure business SQL that preserves the business logic (same result).
 
-**JIRA CONTEXT:**
-{jira_context if jira_context else "Aucun ticket trouvé."}
-
-**RÉPONDS AU FORMAT JSON:**
-{{"sql": "query réécrite", "suggested_ddl": "CREATE INDEX ... ou null", "jira_analysis": {{"MDEV-XXX": "BUG: ... | SOLUTION: ..."}}}}
-Réponds UNIQUEMENT avec le JSON."""
+**RESPONSE FORMAT (JSON ONLY):**
+{{"sql": "optimized query string", "suggested_ddl": "CREATE INDEX...", "jira_analysis": {{}}}}"""
 
         try:
             api_start = time.time()
-            print(f"[/rewrite] Calling SkyAI Copilot API...")
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     "https://api.skysql.com/copilot/v1/chat/",
@@ -117,14 +115,11 @@ Réponds UNIQUEMENT avec le JSON."""
                         "X-API-Key": skysql_api_key
                     },
                     json={"prompt": prompt, "agent_id": SKYAI_AGENT_ID},
-                    timeout=15.0  # Reduced from 25s for faster response
+                    timeout=20.0
                 )
-                
-            api_elapsed = (time.time() - api_start) * 1000
-            print(f"[PERF] SkyAI API call took {api_elapsed:.2f}ms")
             
             if response.status_code != 200:
-                print(f"[/rewrite] SkyAI returned {response.status_code}")
+                print(f"[/rewrite] SkyAI Error: {response.status_code}")
                 return sql, None, {}
             
             result = response.json()
@@ -136,8 +131,10 @@ Réponds UNIQUEMENT avec le JSON."""
             if isinstance(ai_response, dict):
                 data = ai_response
             else:
+                ai_response_str = str(ai_response)
                 try:
-                    clean_json = str(ai_response).strip()
+                    # Strip markdown code blocks if present
+                    clean_json = ai_response_str.strip()
                     if "```json" in clean_json.lower():
                         match = re.search(r'```json\s*(.*?)\s*```', clean_json, re.DOTALL | re.IGNORECASE)
                         if match: clean_json = match.group(1).strip()
@@ -145,17 +142,44 @@ Réponds UNIQUEMENT avec le JSON."""
                         match = re.search(r'```\s*(.*?)\s*```', clean_json, re.DOTALL)
                         if match: clean_json = match.group(1).strip()
                     data = json.loads(clean_json)
-                except Exception as e:
-                    print(f"[/rewrite] Error parsing AI JSON: {e}")
-                    # Try to extract SQL from markdown
-                    if "```sql" in str(ai_response).lower():
-                        match = re.search(r'```sql\s*(.*?)\s*```', str(ai_response), re.DOTALL | re.IGNORECASE)
-                        if match: 
-                            extracted_sql = match.group(1).strip()
+                except Exception:
+                    # Fallback 1: Search for SQL in any markdown block
+                    sql_match = re.search(r'```(?:sql)?\s*(.*?)\s*```', ai_response_str, re.DOTALL | re.IGNORECASE)
+                    if sql_match:
+                        extracted_sql = sql_match.group(1).strip()
+                    else:
+                        # Fallback 2: If no block, but starts with SELECT, take as is
+                        if ai_response_str.strip().upper().startswith("SELECT"):
+                            extracted_sql = ai_response_str.strip()
             
             final_sql = data.get("sql", extracted_sql)
             suggested_ddl = data.get("suggested_ddl")
             jira_analysis = data.get("jira_analysis", {})
+            
+            # Aggressive SQL Sanitization (User Safety & Structural Integrity)
+            if final_sql:
+                # 1. Remove SLEEP() calls
+                final_sql = re.sub(r",?\s?SLEEP\(\d+\)", "", final_sql, flags=re.IGNORECASE)
+                
+                # 2. Drop any segment containing 'DELAY' or 'DUMMY'
+                # We split by UNION/UNION ALL and drop blocks that look synthetic
+                parts = re.split(r"(\s+UNION\s+(?:ALL\s+)?SELECT\s+)", final_sql, flags=re.IGNORECASE)
+                cleaned_parts = []
+                skip_next = False
+                for i, part in enumerate(parts):
+                    if skip_next:
+                        skip_next = False
+                        continue
+                    if i % 2 == 1: # This is a UNION separator
+                        if i+1 < len(parts) and ("'DELAY'" in parts[i+1].upper() or "DUMMY" in parts[i+1].upper()):
+                            skip_next = True
+                            continue
+                    cleaned_parts.append(part)
+                
+                final_sql = "".join(cleaned_parts).strip()
+                # Final fallback for isolated strings
+                final_sql = re.sub(r"UNION\s+ALL\s+SELECT\s+['\"]DELAY['\"].*?$", "", final_sql, flags=re.IGNORECASE | re.DOTALL)
+                final_sql = final_sql.strip()
             
             # Validate SQL
             if final_sql and any(kw in final_sql.upper() for kw in ['SELECT', 'UPDATE', 'DELETE', 'INSERT']):
@@ -163,10 +187,8 @@ Réponds UNIQUEMENT avec le JSON."""
             
             return sql, suggested_ddl, jira_analysis
             
-        except httpx.TimeoutException:
-            print("[/rewrite] SkyAI Copilot timeout")
         except Exception as e:
-            print(f"[/rewrite] SkyAI Copilot error: {e}")
+            print(f"[/rewrite] AI Error: {e}")
         
         return sql, None, {}
 
@@ -191,10 +213,10 @@ Réponds UNIQUEMENT avec le JSON."""
                 anti_patterns_detected=[]
             )
         
-        # Check cache first for identical queries
+        # Check cache first for identical queries (remove bypass for prod)
         cache_key = f"rewrite:{sql}"
         cached_result = query_rewrite_cache.get(cache_key)
-        if cached_result:
+        if cached_result and os.getenv("BYPASS_CACHE") != "true":
             print(f"[CACHE HIT] Returning cached rewrite result")
             return cached_result
         
@@ -262,12 +284,12 @@ Réponds UNIQUEMENT avec le JSON."""
         if rewritten_sql != sql:
             estimated_speedup = f"{min(95, len(anti_patterns) * 30)}%"
             confidence = min(0.95, 0.6 + len(anti_patterns) * 0.1)
-            explanation = f"Query réécrite pour corriger {len(anti_patterns)} anti-pattern(s). " + \
-                         f"Améliorations: {', '.join(improvements[:2])}."
+            explanation = f"Query rewritten to fix {len(anti_patterns)} anti-pattern(s). " + \
+                         f"Improvements: {', '.join(improvements[:2])}."
         else:
             estimated_speedup = f"{min(95, len(anti_patterns) * 20)}%" if anti_patterns else "0%"
             confidence = 0.5
-            explanation = f"Analyse détectée {len(anti_patterns)} opportunité(s) d'optimisation." if anti_patterns else "No optimization applied."
+            explanation = f"Analysis detected {len(anti_patterns)} optimization opportunity(ies)." if anti_patterns else "No optimization applied."
         
         # Apply AI analyses to tickets
         for ticket in similar_jira_tickets:
@@ -299,31 +321,31 @@ Réponds UNIQUEMENT avec le JSON."""
                     inner_where = match.group(4)
                     inner_alias = inner_table[0].lower() + "2"
                     
-                    # Construction du JOIN
+                    # JOIN Construction
                     join_stmt = f"INNER JOIN {inner_table} {inner_alias} ON {outer_col} = {inner_alias}.{inner_col}"
                     if inner_where:
                         # Clean up inner where
                         clean_inner_where = inner_where.strip()
                         join_stmt += f" AND {inner_alias}.{clean_inner_where}"
                     
-                    # Remplacement intelligent : on enlève la partie IN (...) de la clause WHERE
-                    # Si c'était la seule condition, on enlève 'WHERE'
-                    # Sinon on garde le reste
+                    # Intelligent replacement: remove the IN (...) part from the WHERE clause
+                    # If it was the only condition, remove 'WHERE'
+                    # Otherwise keep the rest
                     
-                    # On cherche si le IN est précédé de WHERE
+                    # Check if IN is preceded by WHERE
                     where_pattern = r'\s+WHERE\s+' + re.escape(full_match)
                     if re.search(where_pattern, sql, re.IGNORECASE | re.DOTALL):
                         rewritten_sql = re.sub(where_pattern, f" {join_stmt} WHERE ", sql, flags=re.IGNORECASE | re.DOTALL)
                     else:
                         rewritten_sql = sql.replace(full_match, f" {join_stmt} ")
                     
-                    # Nettoyage si on a "WHERE AND" ou "WHERE OR" ou "WHERE )"
+                    # Cleanup if we have "WHERE AND" or "WHERE OR" or "WHERE )"
                     rewritten_sql = re.sub(r'WHERE\s+(AND|OR)\s+', 'WHERE ', rewritten_sql, flags=re.IGNORECASE)
                     rewritten_sql = re.sub(r'WHERE\s+\)', ')', rewritten_sql, flags=re.IGNORECASE)
-                    # Si WHERE est vide à la fin
+                    # If WHERE is empty at the end
                     rewritten_sql = re.sub(r'WHERE\s*$', '', rewritten_sql, flags=re.IGNORECASE)
 
-                    explanation = "Réécriture heuristique appliquée pour convertir IN subquery en JOIN."
+                    explanation = "Heuristic rewrite applied to convert IN subquery to JOIN."
     
             # 2. SELECT * to SELECT [columns] (heuristic)
             if 'SELECT *' in rewritten_sql.upper():
@@ -342,7 +364,7 @@ Réponds UNIQUEMENT avec le JSON."""
                     }
                     if table.lower() in cols_map:
                          rewritten_sql = re.sub(r'SELECT\s+\*', f"SELECT {cols_map[table.lower()]}", rewritten_sql, flags=re.IGNORECASE)
-                         explanation += " SELECT * remplacé par la liste explicite des colonnes."
+                         explanation += " SELECT * replaced with explicit column list."
     
         # Step 4: Optional Automatic Index Simulation for the rewritten query
         simulation_data = None
@@ -364,18 +386,18 @@ Réponds UNIQUEMENT avec le JSON."""
                     simulation_data = await self.index_service.perform_index_simulation(rewritten_sql, proposed_idx)
             except Exception as e:
                 print(f"[/rewrite] Auto-simulation failed: {e}")
-
+ 
         # Resolve final suggested_ddl
         final_suggested_ddl = None
         if 'suggested_ddl' in locals() and suggested_ddl:
             final_suggested_ddl = suggested_ddl
         elif simulation_data and hasattr(simulation_data, 'create_index_sql') and simulation_data.create_index_sql:
             final_suggested_ddl = simulation_data.create_index_sql
-
+ 
         # 📊 Performance timing
         total_time = (time.time() - start_total) * 1000
         print(f"[PERF] Total rewrite_query took {total_time:.2f}ms")
-
+ 
         response = RewriteResponse(
             original_sql=sql,
             rewritten_sql=rewritten_sql,

@@ -1,6 +1,6 @@
 """
 AI Suggestion Service using SkyAI Copilot
-Replaces Gemini for LLM-based query optimization suggestions
+Replaces older LLM-based query optimization suggestions
 """
 import os
 import json

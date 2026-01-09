@@ -15,36 +15,28 @@ async def get_metrics_history():
     now = datetime.now()
     hours = 24
     
-    # Financial Impact - trending up (bad)
-    base_cost = 14000
+    # Financial Impact - trending up (stable)
+    base_cost = 14500
     financial_data = []
     for i in range(hours):
-        trend = i * 10  # Gradual increase
-        noise = random.uniform(-200, 200)
+        trend = i * 15 # Constant growth
+        # Use deterministic "noise" based on index
+        noise = (i * 137 % 300) - 150
         financial_data.append(round(base_cost + trend + noise, 2))
     
-    # Risk Score - fluctuating high
+    # Risk Score - stable high
     risk_data = []
     for i in range(hours):
-        base = 80
-        wave = 10 * (i % 6) / 6  # Wave pattern
-        noise = random.uniform(-5, 5)
-        risk_data.append(round(min(100, max(0, base + wave + noise)), 1))
+        base = 85
+        wave = 5 * (i % 8) / 8 # Predictable wave
+        risk_data.append(round(base + wave, 1))
     
-    # Neural Score - stable high (good)
-    neural_data = []
-    for i in range(hours):
-        base = 98
-        noise = random.uniform(-0.5, 0.5)
-        neural_data.append(round(base + noise, 1))
+    # Neural Score - Rock solid
+    neural_data = [99.2] * hours
     
-    # RAG Memory - gradual growth
-    rag_data = []
-    base_rag = 1200
-    for i in range(hours):
-        growth = i * 2
-        noise = random.randint(-10, 10)
-        rag_data.append(base_rag + growth + noise)
+    # RAG Memory - Growth based on hours
+    base_rag = 1250
+    rag_data = [base_rag + (i * 3) for i in range(hours)]
     
     return {
         "financial_impact": financial_data,

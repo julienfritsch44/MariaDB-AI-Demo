@@ -57,6 +57,30 @@ async def simulation_status():
     return {"running": False}
 
 
+@router.get("/stats")
+async def get_simulation_stats():
+    """Get the latest real-time stats from the background simulator"""
+    import json
+    backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    stats_path = os.path.join(backend_dir, "services", "simulation_stats.json")
+    
+    if os.path.exists(stats_path):
+        try:
+            with open(stats_path, "r") as f:
+                return json.load(f)
+        except:
+            pass
+            
+    # Mock fallback if file doesn't exist yet but simulation is running
+    return {
+        "revenue": 124590,
+        "orders": 1402,
+        "active_users": 342,
+        "total_queries": 0,
+        "slow_queries": 0
+    }
+
+
 @router.post("/test")
 async def simulation_test():
     """

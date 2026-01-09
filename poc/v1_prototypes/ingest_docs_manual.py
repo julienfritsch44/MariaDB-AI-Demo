@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 load_dotenv()
 
-from rag.gemini_service import GeminiService
+from rag.embedding_service import EmbeddingService
 from rag.vector_store import VectorStore
 
 def ingest_docs_manually():
@@ -27,7 +27,7 @@ def ingest_docs_manually():
         }
     ]
     
-    gemini = GeminiService()
+    embedder = EmbeddingService()
     vs = VectorStore({
         "host": os.getenv("SKYSQL_HOST"),
         "port": int(os.getenv("SKYSQL_PORT", 3306)),
@@ -38,7 +38,7 @@ def ingest_docs_manually():
 
     for doc in docs:
         print(f"Ingesting: {doc['id']}")
-        embedding = gemini.get_embedding(doc['content'])
+        embedding = embedder.get_embedding(doc['content'])
         vs.add_document("documentation", doc['id'], doc['content'], embedding)
         
     print("Manual ingestion complete!")

@@ -33,22 +33,6 @@ async def deploy_to_production(request: DeploymentRequest):
         # 1. Attempt Real Database Connection
         conn = get_db_connection(database=request.database)
         
-        # Check if we got a MockConnection (offline mode)
-        is_mock = hasattr(conn, "mock_mode") or "MockConnection" in str(type(conn))
-        
-        if is_mock:
-            # --- MOCK MODE ---
-            # Simulate processing time
-            time.sleep(1.5)
-            
-            return DeploymentResponse(
-                success=True,
-                message="🚀 Query successfully deployed to production (Simulation)",
-                rows_affected=0,
-                execution_time_ms=1500.0,
-                deployment_id=deployment_id
-            )
-        
         # --- REAL MODE ---
         cursor = conn.cursor()
         

@@ -27,6 +27,31 @@ export interface SandboxResponse {
     warning?: string
 }
 
+export interface ExplainPlan {
+    access_type: string
+    rows_examined: number
+    key: string | null
+    key_len: string | null
+    extra: string | null
+    estimated_time_ms: number
+}
+
+export interface IndexSimulationResponse {
+    current_plan: ExplainPlan
+    with_index_plan: ExplainPlan
+    improvement_percent: number
+    recommendation: string
+    create_index_sql: string
+    ai_analysis: string
+}
+
+export interface SimilarJiraTicket {
+    id: string
+    title: string
+    similarity: number
+    analysis?: string
+}
+
 export interface RewriteResponse {
     original_sql: string
     rewritten_sql: string
@@ -34,12 +59,10 @@ export interface RewriteResponse {
     estimated_speedup: string
     confidence: number
     explanation: string
-    knowledge_source?: {
-        id: string
-        url: string
-        similarity: number
-        description: string
-    }
+    similar_jira_tickets: SimilarJiraTicket[]
+    anti_patterns_detected: string[]
+    suggested_ddl?: string
+    simulation?: IndexSimulationResponse
 }
 
 export interface CostEstimate {

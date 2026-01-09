@@ -1,10 +1,23 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, TrendingDown, DollarSign, Zap, Rocket, X } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import {
+    CheckCircle2,
+    TrendingDown,
+    DollarSign,
+    Zap,
+    Rocket,
+    X,
+    GitPullRequest,
+    ExternalLink,
+    ShieldCheck,
+    Lock
+} from "lucide-react"
 import type { SandboxResponse, CostEstimate } from "./types"
 
 interface DeploymentSuccessModalProps {
     isOpen: boolean
+    deploymentType: "ddl" | "pr"
     sandboxResult: SandboxResponse | null
     optimizedSandboxResult: SandboxResponse | null
     costEstimate: CostEstimate | null
@@ -14,6 +27,7 @@ interface DeploymentSuccessModalProps {
 
 export function DeploymentSuccessModal({
     isOpen,
+    deploymentType,
     sandboxResult,
     optimizedSandboxResult,
     costEstimate,
@@ -39,10 +53,21 @@ export function DeploymentSuccessModal({
                 <DialogHeader>
                     <div className="flex items-center justify-between">
                         <DialogTitle className="flex items-center gap-3 text-2xl">
-                            <div className="p-3 rounded-full bg-emerald-500/20 border-2 border-emerald-500">
-                                <Rocket className="w-8 h-8 text-emerald-500" />
-                            </div>
-                            <span className="text-emerald-500">Deployment Successful!</span>
+                            {deploymentType === "ddl" ? (
+                                <>
+                                    <div className="p-3 rounded-full bg-emerald-500/20 border-2 border-emerald-500">
+                                        <Rocket className="w-8 h-8 text-emerald-500" />
+                                    </div>
+                                    <span className="text-emerald-500">Schema Deployed!</span>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="p-3 rounded-full bg-blue-500/20 border-2 border-blue-500">
+                                        <GitPullRequest className="w-8 h-8 text-blue-500" />
+                                    </div>
+                                    <span className="text-blue-500">Pull Request Created!</span>
+                                </>
+                            )}
                         </DialogTitle>
                         <button
                             onClick={onClose}
@@ -51,19 +76,61 @@ export function DeploymentSuccessModal({
                             <X className="w-5 h-5" />
                         </button>
                     </div>
+                    <DialogDescription className="sr-only">
+                        Detailed summary of the successful query optimization and deployment.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
                     {/* Success Message */}
-                    <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                        <div className="flex items-center gap-2 text-emerald-500 font-semibold mb-2">
-                            <CheckCircle2 className="w-5 h-5" />
-                            <span>Query optimization deployed to production</span>
+                    <div className={`p-4 rounded-lg border ${deploymentType === "ddl" ? "bg-emerald-500/10 border-emerald-500/30" : "bg-blue-500/10 border-blue-500/30"}`}>
+                        <div className={`flex items-center justify-between mb-2`}>
+                            <div className={`flex items-center gap-2 font-semibold ${deploymentType === "ddl" ? "text-emerald-500" : "text-blue-500"}`}>
+                                {deploymentType === "ddl" ? (
+                                    <>
+                                        <CheckCircle2 className="w-5 h-5" />
+                                        <span>Schema optimization applied to production</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <GitPullRequest className="w-5 h-5" />
+                                        <span>Code optimization PR staged</span>
+                                    </>
+                                )}
+                            </div>
+                            <Badge variant="outline" className="text-[10px] uppercase tracking-wider animate-pulse border-amber-500/50 text-amber-500">
+                                Demo Mode
+                            </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Your optimized query is now live and serving production traffic.
+                            {deploymentType === "ddl"
+                                ? "Your index optimization has been successfully executed on the production cluster."
+                                : "The optimized SQL query has been prepared for your application code repository."}
                         </p>
                     </div>
+
+                    {deploymentType === "pr" && (
+                        <div className="p-4 rounded-lg bg-muted/50 border border-border space-y-3 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-1">
+                                <Lock className="w-3 h-3 text-muted-foreground/30" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Badge className="bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/30">Open</Badge>
+                                    <span className="text-sm font-mono text-muted-foreground">#492 - Optimize Query Performance</span>
+                                </div>
+                                <span className="text-[10px] text-muted-foreground font-mono italic">[Simulated]</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs">
+                                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">JD</div>
+                                <span className="text-muted-foreground">maria-bot opened this PR 2 seconds ago</span>
+                            </div>
+                            <Button variant="outline" size="sm" className="w-full gap-2 text-xs border-dashed">
+                                <ExternalLink className="w-3 h-3" />
+                                View on GitHub (Demo Preview)
+                            </Button>
+                        </div>
+                    )}
 
                     {/* Performance Improvement */}
                     <div className="space-y-3">
@@ -146,11 +213,20 @@ export function DeploymentSuccessModal({
                     {/* Close Button */}
                     <Button
                         onClick={onClose}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                        className={`w-full text-white gap-2 ${deploymentType === "ddl" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-blue-600 hover:bg-blue-700"}`}
                         size="lg"
                     >
-                        <CheckCircle2 className="w-5 h-5" />
-                        Done
+                        {deploymentType === "ddl" ? (
+                            <>
+                                <CheckCircle2 className="w-5 h-5" />
+                                Finish Deployment
+                            </>
+                        ) : (
+                            <>
+                                <ShieldCheck className="w-5 h-5" />
+                                Return to Dashboard
+                            </>
+                        )}
                     </Button>
                 </div>
             </DialogContent>

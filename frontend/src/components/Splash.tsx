@@ -56,6 +56,41 @@ export function Splash({ onConnect }: SplashProps) {
         { icon: Brain, name: "Neural Core Rewrite", desc: "Jira-aware SQL optimization" }
     ]
 
+    const [isBackendReady, setIsBackendReady] = useState(false)
+    const [retryCount, setRetryCount] = useState(0)
+
+    // Backend Health Check
+    useEffect(() => {
+        let isMounted = true
+        const checkHealth = async () => {
+            try {
+                const res = await fetch('http://127.0.0.1:8000/health')
+                if (res.ok) {
+                    const data = await res.json()
+                    if (data.status === 'healthy' && isMounted) {
+                        setIsBackendReady(true)
+                        return true
+                    }
+                }
+            } catch (e) {
+                console.log("Waiting for backend...", e)
+            }
+            return false
+        }
+
+        const pollBackend = async () => {
+            const isReady = await checkHealth()
+            if (!isReady && isMounted) {
+                setRetryCount(c => c + 1)
+                setTimeout(pollBackend, 1000)
+            }
+        }
+
+        pollBackend()
+
+        return () => { isMounted = false }
+    }, [])
+
     return (
         <div className="h-screen w-full bg-background text-foreground flex flex-col items-center justify-center relative overflow-hidden font-sans selection:bg-primary/20">
 
@@ -189,16 +224,35 @@ export function Splash({ onConnect }: SplashProps) {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.6, delay: 0.5 }}
-                            className="flex flex-col items-center"
+                            className="flex flex-col items-center gap-3"
                         >
-                            <Button
-                                size="lg"
-                                onClick={onConnect}
-                                className="bg-primary text-white hover:bg-primary/90 hover:scale-105 transition-all duration-300 text-lg px-10 py-6 rounded-xl font-bold shadow-2xl shadow-primary/20"
-                            >
-                                Connect to MariaDB
-                                <ArrowRight className="ml-2 w-5 h-5" />
-                            </Button>
+                            {isBackendReady ? (
+                                <Button
+                                    size="lg"
+                                    onClick={onConnect}
+                                    className="bg-primary text-white hover:bg-primary/90 hover:scale-105 transition-all duration-300 text-lg px-10 py-6 rounded-xl font-bold shadow-2xl shadow-primary/20"
+                                >
+                                    Connect to MariaDB
+                                    <ArrowRight className="ml-2 w-5 h-5" />
+                                </Button>
+                            ) : (
+                                <div className="flex flex-col items-center gap-3">
+                                    <div className="flex items-center gap-2 px-6 py-4 bg-muted/50 rounded-xl border border-primary/20 text-muted-foreground animate-pulse">
+                                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                        <span className="font-mono text-sm">Booting Neural Core... ({retryCount}s)</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!isBackendReady && retryCount > 15 && (
+                                <motion.p
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="text-xs text-amber-500 animate-pulse mt-2"
+                                >
+                                    This is taking longer than usual... Please check console logs.
+                                </motion.p>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>

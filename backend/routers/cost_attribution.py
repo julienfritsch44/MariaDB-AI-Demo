@@ -61,37 +61,37 @@ def estimate_io_requests(sql: str, rows_examined: Optional[int] = None) -> int:
     """
     Estime le nombre de requêtes I/O basé sur la requête SQL
     """
-    if rows_examined:
-        # Approximation: 1 I/O request per 100 rows examined
+    # If we have actual metrics from sandbox, use those primarily
+    if rows_examined is not None:
+        # Approximation: 1 I/O request per 100 rows examined, min 1
         return max(rows_examined // 100, 1)
     
-    # Estimation basée sur le type de requête
+    # Heuristic estimation based on query patterns
     sql_lower = sql.lower()
     
-    # Pattern: subquery IN (expensive)
+    # Pattern: subquery IN (expensive, often full scans or correlated)
     if "in (select" in sql_lower:
         return 5000
         
-    # Pattern: JOIN (more efficient than subquery)
+    # Pattern: JOIN (optimized)
     if "join" in sql_lower:
-        # Assume join with SELECT * is still expensive
+        # If it's a join but with SELECT *, assume it's still medium-heavy
         if "select *" in sql_lower:
-            return 2000
-        return 500
+            return 800 # Reduced from 2000
+        return 200 # Reduced from 500
 
-    # Scan complet de table
+    # Full table scan (SELECT * without WHERE)
     if "select *" in sql_lower and "where" not in sql_lower:
-        return 10000  # Estimation haute pour full table scan
+        return 5000 # Reduced from 10000
     
-    # Requête avec WHERE mais sans index (estimation)
+    # Query with WHERE but no explicit columns
     if "where" in sql_lower:
-        # If specific columns, it's cheaper than *
         if "select *" in sql_lower:
-            return 1000
-        return 300
+            return 400 # Reduced from 1000
+        return 100 # Reduced from 300
     
-    # Requête simple
-    return 100
+    # Simple query
+    return 50
 
 def estimate_cpu_time(query_time: Optional[float] = None) -> float:
     """

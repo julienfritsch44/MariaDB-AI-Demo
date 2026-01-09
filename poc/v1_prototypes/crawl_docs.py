@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 load_dotenv()
 
-from rag.gemini_service import GeminiService
+from rag.embedding_service import EmbeddingService
 from rag.vector_store import VectorStore
 
 def crawl_mariadb_docs():
@@ -22,7 +22,7 @@ def crawl_mariadb_docs():
     ]
     
     # Init Services
-    gemini = GeminiService()
+    embedder = EmbeddingService()
     vs = VectorStore({
         "host": os.getenv("SKYSQL_HOST"),
         "port": int(os.getenv("SKYSQL_PORT", 3306)),
@@ -55,7 +55,7 @@ def crawl_mariadb_docs():
             clean_text = "\n".join(lines[:30]) # Sub-section for embedding
             
             print(f"Generating embedding for {len(clean_text)} chars...")
-            embedding = gemini.get_embedding(clean_text)
+            embedding = embedder.get_embedding(clean_text)
             
             if not embedding:
                 print(f"Failed to generate embedding for {url}")

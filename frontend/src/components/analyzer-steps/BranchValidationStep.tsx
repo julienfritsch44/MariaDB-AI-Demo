@@ -5,6 +5,7 @@ import { GitBranch, Loader2, Activity, CheckCircle2, Rocket } from "lucide-react
 
 interface BranchValidationStepProps {
     isVisible: boolean
+    branchName: string | null
     branchTestResult: any
     isTestingBranch: boolean
     isDeploying: boolean
@@ -16,6 +17,7 @@ interface BranchValidationStepProps {
 
 export function BranchValidationStep({
     isVisible,
+    branchName,
     branchTestResult,
     isTestingBranch,
     isDeploying,
@@ -32,7 +34,7 @@ export function BranchValidationStep({
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-sm font-medium">
                         <GitBranch className="w-4 h-4 text-purple-500" />
-                        Validation Environment: <span className="font-mono text-xs bg-purple-500/10 px-1 rounded">fix-mdev-10663-validator</span>
+                        Validation Environment: <span className="font-mono text-xs bg-purple-500/10 px-1 rounded">{branchName || "detecting..."}</span>
                     </CardTitle>
                     <Badge variant="outline" className="border-purple-500/50 text-purple-500">Active</Badge>
                 </div>
@@ -99,7 +101,7 @@ export function BranchValidationStep({
                                     ) : (
                                         <>
                                             <Rocket className="w-5 h-5" />
-                                            Promote to Production
+                                            Deploy to Production
                                         </>
                                     )}
                                 </Button>

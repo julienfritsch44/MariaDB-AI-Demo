@@ -50,7 +50,6 @@ import type {
     ResourceGroupResponse,
     WorkflowStep
 } from "./analyzer-steps/types"
-import { IS_DEMO_MODE, DEMO_DEPLOYED_KEY } from "@/lib/constants"
 
 const API_BASE = "http://localhost:8000"
 
@@ -99,6 +98,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
     const [isRewriting, setIsRewriting] = useState(false)
     const [isDeploying, setIsDeploying] = useState(false)
     const [isDeployed, setIsDeployed] = useState(false)
+    const [deploymentType, setDeploymentType] = useState<"ddl" | "pr">("pr")
     const [deployStep, setDeployStep] = useState("")
 
     const [riskResult, setRiskResult] = useState<PredictResponse | null>(null)
@@ -114,6 +114,8 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
     const [isBranchModalOpen, setIsBranchModalOpen] = useState(false)
     const [isCreatingBranch, setIsCreatingBranch] = useState(false)
     const [branchCreated, setBranchCreated] = useState(false)
+    const [proposedBranchName, setProposedBranchName] = useState("")
+    const [branchDatabase, setBranchDatabase] = useState<string | null>(null)
     const [branchTestResult, setBranchTestResult] = useState<any>(null)
     const [isTestingBranch, setIsTestingBranch] = useState(false)
 
@@ -155,46 +157,6 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
     }, [sectionsExpanded])
 
     const fetchCostEstimate = async (query: string, isOptimized: boolean = false, metrics?: { query_time?: number, rows_examined?: number }) => {
-        // DEMO MODE OVERRIDE for dramatic effect
-        if (IS_DEMO_MODE && !isOptimized) {
-            setCostEstimate({
-                sql: query,
-                cloud_provider: "mariadb_skysql",
-                io_cost_per_execution: 0.04,
-                cpu_cost_per_execution: 0.01,
-                total_cost_per_execution: 0.05,
-                daily_cost: 15.22,
-                monthly_cost: 456.78,
-                annual_cost: 5481.36,
-                estimated_io_requests: 154000000,
-                execution_frequency: 100,
-                cost_breakdown: {
-                    io_percentage: 90, // Changed from 80 to 90
-                    cpu_percentage: 10 // Changed from 20 to 10
-                }
-            })
-            return
-        }
-
-        if (IS_DEMO_MODE && isOptimized) {
-            setOptimizedCostEstimate({
-                sql: query,
-                cloud_provider: "mariadb_skysql",
-                io_cost_per_execution: 0.001,
-                cpu_cost_per_execution: 0.001,
-                total_cost_per_execution: 0.002,
-                daily_cost: 0.50,
-                monthly_cost: 15.00,
-                annual_cost: 180.00,
-                estimated_io_requests: 500000,
-                execution_frequency: 100,
-                cost_breakdown: {
-                    io_percentage: 50,
-                    cpu_percentage: 50
-                }
-            })
-            return
-        }
 
         try {
             const res = await trackedFetch(`${API_BASE}/cost/estimate`, {
@@ -223,33 +185,6 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
     }
 
     const fetchWaitEvents = async () => {
-        if (IS_DEMO_MODE) {
-            setWaitEvents({
-                success: true,
-                mode: "mock",
-                summary: {
-                    total_wait_events: 105,
-                    total_lock_waits: 1,
-                    total_threads: 50,
-                    threads_waiting_locks: 1,
-                    total_wait_time_ms: 1200
-                },
-                top_wait_events: [
-                    { event_name: "innodb_row_lock", count: 5, total_wait_ms: 800, avg_wait_ms: 160, percentage: 66 },
-                    { event_name: "cpu", count: 100, total_wait_ms: 400, avg_wait_ms: 4, percentage: 33 }
-                ],
-                lock_waits: [{
-                    "blocking_thread_id": 123,
-                    "blocked_thread_id": 456,
-                    "blocking_query": "UPDATE products SET stock = stock - 1 WHERE id = 1",
-                    "blocked_query": "SELECT * FROM products WHERE id = 1 FOR UPDATE",
-                    "wait_duration_ms": 500
-                }],
-                recommendations: ["Investigate long-running transactions.", "Optimize queries involved in lock contention."]
-            })
-            setSectionsExpanded((prev: any) => ({ ...prev, waitEvents: true }))
-            return
-        }
 
         try {
             const res = await trackedFetch(`${API_BASE}/wait-events/analyze`, {
@@ -273,28 +208,6 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
     }
 
     const assignResourceGroup = async (query: string, riskScore: number) => {
-        if (IS_DEMO_MODE) {
-            setResourceGroup({
-                success: true,
-                mode: "mock",
-                assignment: {
-                    sql: query,
-                    risk_score: riskScore,
-                    recommended_group: "low_priority_tasks",
-                    cpu_limit: "10%", // ALIGNED WITH SCRIPT
-                    thread_priority: 10,
-                    reason: "Query identified as high risk (score 85) and assigned to a throttled resource group to prevent performance degradation."
-                },
-                available_groups: [
-                    { name: "high_priority", cpu_limit: "100%", thread_priority: 1 },
-                    { name: "medium_priority", cpu_limit: "50%", thread_priority: 5 },
-                    { name: "low_priority_tasks", cpu_limit: "10%", thread_priority: 10 }
-                ],
-                recommendations: ["Review query for optimization.", "Consider adding indexes.", "Adjust resource group limits if necessary."]
-            })
-            return
-        }
-
         try {
             const res = await trackedFetch(`${API_BASE}/resource-groups/assign`, {
                 method: "POST",
@@ -406,59 +319,16 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
             }
         }, 100)
 
-        // DEMO OVERRIDE FOR RISK
-        if (IS_DEMO_MODE) {
-            await new Promise(r => setTimeout(r, 1500)); // Fake loader
-
-            const demoRisk: PredictResponse = {
-                risk_score: 85, // ALIGNED WITH SCRIPT
-                risk_level: "HIGH",
-                reason: "Detected potential table scan on large table 'orders' during peak hours. Missing index on customer_id.",
-                similar_issues: [
-                    { id: "MDEV-10663", title: "Subquery optimization in IN clause", similarity: 0.95 },
-                    { id: "MDEV-21377", title: "Performance regression in semi-join buffer", similarity: 0.88 },
-                    { id: "MDEV-37723", title: "Optimizer trace deadlock with large WHERE clause", similarity: 0.82 }
-                ],
-                suggested_fix: "Add index on (customer_id)"
-            }
-            setRiskResult(demoRisk)
-
-            const historyItem: AnalysisHistoryItem = {
-                id: Date.now().toString(),
-                sql: sql.trim(),
-                risk_score: 85,
-                risk_level: "HIGH",
-                timestamp: new Date()
-            }
-            setAnalysisHistory(prev => [historyItem, ...prev].slice(0, 10))
-
-            await fetchCostEstimate(sql.trim())
-            await fetchWaitEvents()
-            await assignResourceGroup(sql.trim(), 85) // Pass 85 for demo
-            setIsAnalyzing(false)
-            return
-        }
-
         try {
-            const res = await trackedFetch(`${API_BASE}/predict-risk`, {
+            const res = await trackedFetch(`${API_BASE}/predict`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ query_text: sql.trim() })
+                body: JSON.stringify({ sql: sql.trim() }) // Match PredictRequest schema (sql)
             })
 
             if (res.ok) {
                 const riskData: PredictResponse = await res.json()
                 setRiskResult(riskData)
-
-                // Demo Mode: Mock history item for visuals
-                const historyItem: AnalysisHistoryItem = {
-                    id: Date.now().toString(),
-                    sql: sql.trim(),
-                    risk_score: riskData.risk_score,
-                    risk_level: riskData.risk_level,
-                    timestamp: new Date()
-                }
-                setAnalysisHistory(prev => [historyItem, ...prev].slice(0, 10))
 
                 await fetchCostEstimate(sql.trim())
                 await fetchWaitEvents()
@@ -478,37 +348,20 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
         setStep("sandbox")
 
         try {
-            if (IS_DEMO_MODE) {
-                // Simulate loading delay for realism
-                await new Promise(r => setTimeout(r, 800));
-
-                setSandboxResult({
-                    success: true,
-                    mode: "smart_sandbox",
-                    message: "Transaction simulated and rolled back (0 rows affected actually)",
-                    result: {
-                        columns: ["id", "customer_id", "total"],
-                        rows: [[1, 123, 99.99]],
-                        rows_affected: 0,
-                        execution_time_ms: 2800 // DEMO VALUE: SLOW
-                    }
-                })
-            } else {
-                const res = await trackedFetch(`${API_BASE}/sandbox/test`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ sql: query })
-                })
-                if (!res.ok) throw new Error(`API Error: ${res.status}`)
-                const data: SandboxResponse = await res.json()
-                setSandboxResult(data)
-            }
+            const res = await trackedFetch(`${API_BASE}/sandbox/test`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sql: query })
+            })
+            if (!res.ok) throw new Error(`API Error: ${res.status}`)
+            const data: SandboxResponse = await res.json()
+            setSandboxResult(data)
 
             // Mettre à jour l'estimation du coût avec les métriques réelles du bac à sable
-            if (!IS_DEMO_MODE && sandboxResult?.success && sandboxResult?.result) {
+            if (data.success && data.result) {
                 await fetchCostEstimate(query, false, {
-                    query_time: sandboxResult.result.execution_time_ms / 1000,
-                    rows_examined: sandboxResult.result.rows_affected // Note: rowcount is used as proxy for examined in sandbox
+                    query_time: data.result.execution_time_ms / 1000,
+                    rows_examined: data.result.rows_affected
                 })
             }
 
@@ -543,39 +396,19 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
         setStep("healing")
 
         try {
-            if (IS_DEMO_MODE) {
-                await new Promise(r => setTimeout(r, 1000));
-                const demoRewrite: RewriteResponse = {
-                    original_sql: sql,
-                    rewritten_sql: "SELECT * FROM orders FORCE INDEX (idx_customer_id) WHERE customer_id IN (\n  SELECT id FROM customers WHERE status = 'active'\n) AND total_amount > 1000", /* Simple Force Index */
-                    improvements: ["Added missing index", "Force Index usage"],
-                    estimated_speedup: "95%",
-                    confidence: 0.98,
-                    explanation: "The query was scanning the full table. Adding an index reduces lookup time drastically.",
-                    knowledge_source: {
-                        id: "Jira MDEV-10663",
-                        url: "https://jira.mariadb.org/browse/MDEV-10663",
-                        similarity: 0.95,
-                        description: "Fixed by MariaDB - 95% similarity match (Subquery Optimization)"
-                    }
-                }
-                setHealingResult(demoRewrite)
-                await fetchCostEstimate(demoRewrite.rewritten_sql, true)
-            } else {
-                const res = await trackedFetch(`${API_BASE}/rewrite-query`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ original_sql: sql.trim() })
-                })
+            const res = await trackedFetch(`${API_BASE}/rewrite`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sql: sql.trim() })
+            })
 
-                if (!res.ok) throw new Error(`API Error: ${res.status}`)
+            if (!res.ok) throw new Error(`API Error: ${res.status}`)
 
-                const data: RewriteResponse = await res.json()
-                setHealingResult(data)
+            const data: RewriteResponse = await res.json()
+            setHealingResult(data)
 
-                // Calculer le coût de la requête optimisée
-                await fetchCostEstimate(data.rewritten_sql, true)
-            }
+            // Calculer le coût de la requête optimisée
+            await fetchCostEstimate(data.rewritten_sql, true)
 
             // Collapse Sandbox, expand Healing
             setCardsExpanded(prev => ({
@@ -602,70 +435,37 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
         if (!healingResult) return
 
         setIsTesting(true)
+        setOptimizedSandboxResult(null) // Reset while testing
         setStep("comparison")
 
         try {
-            if (IS_DEMO_MODE) {
-                // Simulate loading delay
-                await new Promise(r => setTimeout(r, 800));
-
-                // If we skipped the first sandbox test, fill it now for comparison
-                if (!sandboxResult) {
-                    setSandboxResult({
-                        success: true,
-                        mode: "smart_sandbox",
-                        message: "Original query baseline established",
-                        result: {
-                            columns: ["id", "customer_id", "total"],
-                            rows: [],
-                            rows_affected: 0,
-                            execution_time_ms: 2800 // DEMO VALUE: SLOW
-                        }
-                    })
-                }
-
-                setOptimizedSandboxResult({
-                    success: true,
-                    mode: "smart_sandbox",
-                    message: "Transaction simulated and rolled back (0 rows affected actually)",
-                    result: {
-                        columns: ["id", "customer_id", "total"],
-                        rows: [[1, 123, 99.99]],
-                        rows_affected: 0,
-                        execution_time_ms: 150 // DEMO VALUE: FAST
-                    }
+            const res = await trackedFetch(`${API_BASE}/sandbox/test`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    sql: healingResult.rewritten_sql,
+                    database: "shop_demo",
+                    timeout_seconds: 20
                 })
-                // Also fetch optimized cost
-                fetchCostEstimate(healingResult.rewritten_sql, true)
-            } else {
-                const res = await trackedFetch(`${API_BASE}/sandbox/test`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        sql: healingResult.rewritten_sql,
-                        database: "shop_demo",
-                        timeout_seconds: 5
-                    })
+            })
+
+            if (!res.ok) throw new Error(`API Error: ${res.status}`)
+
+            const data: SandboxResponse = await res.json()
+            setOptimizedSandboxResult(data)
+
+            // Mettre à jour l'estimation du coût optimisé avec les métriques réelles
+            if (data.success && data.result) {
+                await fetchCostEstimate(healingResult.rewritten_sql, true, {
+                    query_time: data.result.execution_time_ms / 1000,
+                    rows_examined: data.result.rows_affected
                 })
-
-                if (!res.ok) throw new Error(`API Error: ${res.status}`)
-
-                const data: SandboxResponse = await res.json()
-                setOptimizedSandboxResult(data)
-
-                // Mettre à jour l'estimation du coût optimisé avec les métriques réelles
-                if (data.success && data.result) {
-                    await fetchCostEstimate(healingResult.rewritten_sql, true, {
-                        query_time: data.result.execution_time_ms / 1000,
-                        rows_examined: data.result.rows_affected
-                    })
-                }
             }
 
             // Keep Healing expanded to prevent jump, expand Comparison below
             setCardsExpanded(prev => ({
                 ...prev,
-                healing: true, // Keep this TRUE
+                healing: true,
                 comparison: true
             }))
 
@@ -685,9 +485,26 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
 
     const loadDemoQuery = () => {
         setSql(
-            "SELECT * FROM orders WHERE customer_id IN (\n" +
-            "  SELECT id FROM customers WHERE status = 'active'\n" +
-            ") AND total_amount > 1000"
+            "SELECT * FROM (\n" +
+            "    SELECT \n" +
+            "        c.name as customer_name,\n" +
+            "        p.name as product_name,\n" +
+            "        p.category,\n" +
+            "        COUNT(DISTINCT o.id) as order_count,\n" +
+            "        SUM(oi.quantity) as total_quantity,\n" +
+            "        SUM(oi.quantity * oi.unit_price) as revenue\n" +
+            "    FROM shop_order_items oi\n" +
+            "    JOIN shop_orders o ON oi.order_id = o.id\n" +
+            "    JOIN shop_customers c ON o.customer_id = c.id\n" +
+            "    JOIN shop_products p ON oi.product_id = p.id\n" +
+            "    WHERE o.status IN ('delivered', 'shipped')\n" +
+            "    GROUP BY c.name, p.name, p.category\n" +
+            "    HAVING revenue > 100\n" +
+            "    ORDER BY revenue DESC\n" +
+            "    LIMIT 50\n" +
+            ") AS analysis\n" +
+            "UNION ALL\n" +
+            "SELECT 'DELAY', '', '', 0, 0, SLEEP(9)"
         )
     }
 
@@ -712,39 +529,20 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
         setAnalysisHistory([])
     }
 
+    const detectDeploymentType = (sql: string): "ddl" | "pr" => {
+        const ddlKeywords = ["CREATE", "ALTER", "DROP", "TRUNCATE", "RENAME", "INDEX"]
+        const firstWord = sql.trim().split(/\s+/)[0].toUpperCase()
+        return ddlKeywords.includes(firstWord) ? "ddl" : "pr"
+    }
+
 
 
     const handleDeploy = async () => {
         if (!healingResult) return
 
         setIsDeploying(true)
-
-        // DEMO MODE OVERRIDE
-        if (IS_DEMO_MODE) {
-            setDeployStep("Validating Traffic Patterns...")
-            await new Promise(r => setTimeout(r, 800))
-
-            setDeployStep("Applying Optimized Execution Plan...")
-            await new Promise(r => setTimeout(r, 1000))
-
-            setDeployStep("Warming Up Buffer Pool...")
-            await new Promise(r => setTimeout(r, 700))
-
-            setDeployStep("Finalizing Canary Baseline...")
-            await new Promise(r => setTimeout(r, 500))
-
-            // Set flag for Neural Dashboard to turn green
-            console.log('[Analyzer] Setting deployment flag:', DEMO_DEPLOYED_KEY, 'to true');
-            localStorage.setItem(DEMO_DEPLOYED_KEY, 'true')
-
-            setIsDeployed(true)
-            setIsBranchModalOpen(false)
-            setIsDeploying(false)
-            setDeployStep("")
-            // Scroll to top to see the modal clearly
-            window.scrollTo({ top: 0, behavior: 'smooth' })
-            return
-        }
+        const type = detectDeploymentType(healingResult.rewritten_sql)
+        setDeploymentType(type)
 
         try {
             const res = await trackedFetch(`${API_BASE}/deploy/production`, {
@@ -761,10 +559,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
 
             if (data.success) {
                 setIsDeployed(true)
-                // Open success modal after a short delay
-                setTimeout(() => {
-                    setIsBranchModalOpen(false) // Close branch modal if open
-                }, 500)
+                setIsBranchModalOpen(false) // Close branch modal if open
             } else {
                 console.error("Deployment failed:", data.message)
             }
@@ -777,31 +572,91 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
 
     const handleCreateBranch = async () => {
         setIsCreatingBranch(true)
-        await new Promise(r => setTimeout(r, 2000)) // Simulate API call
-        setIsCreatingBranch(false)
-        setIsBranchModalOpen(false)
-        setBranchCreated(true)
+        try {
+            const res = await trackedFetch(`${API_BASE}/branching/create`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    branch_name: proposedBranchName,
+                    source_database: "shop_demo",
+                    copy_data: true
+                })
+            })
 
-        // Open Branch Validation card and scroll to it
-        setCardsExpanded(prev => ({ ...prev, branchValidation: true }))
-        setTimeout(() => {
+            const data = await res.json()
+            if (!res.ok || data.success === false) {
+                throw new Error(data.message || "Failed to create branch")
+            }
+
+            setIsCreatingBranch(false)
+            setIsBranchModalOpen(false)
+            setBranchCreated(true)
+            setBranchDatabase(data.branch.branch_database)
+
+            // Open Branch Validation card
+            setCardsExpanded(prev => ({ ...prev, branchValidation: true }))
+
+            // Auto-trigger the test for a smoother flow
             const element = document.getElementById('card-branch-validation')
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }
-        }, 100)
+            // Automatically run the test on the new branch
+            handleTestBranch(data.branch.branch_database);
+        } catch (err) {
+            console.error("Branch creation failed:", err)
+            setIsCreatingBranch(false)
+        }
     }
 
-    const handleTestBranch = async () => {
+    const handleTestBranch = async (dbName?: string) => {
+        const targetDb = dbName || branchDatabase;
+        if (!targetDb) return;
+
         setIsTestingBranch(true)
-        await new Promise(r => setTimeout(r, 1500)) // Simulate performance test
-        setBranchTestResult({
-            latency: 155,
-            throughput: 1200,
-            status: "PASSED",
-            comparison: "-95% latency vs Prod"
-        })
-        setIsTestingBranch(false)
+
+        try {
+            const res = await trackedFetch(`${API_BASE}/sandbox/test`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    sql: healingResult?.rewritten_sql || sql,
+                    database: targetDb,
+                    timeout_seconds: 30
+                })
+            })
+
+            if (!res.ok) throw new Error("Branch performance test failed")
+
+            const data: SandboxResponse = await res.json()
+
+            if (data.success && data.result) {
+                const originalLatency = sandboxResult?.result?.execution_time_ms || 1;
+                const improvement = ((originalLatency - data.result.execution_time_ms) / originalLatency) * 100;
+
+                setBranchTestResult({
+                    latency: Math.round(data.result.execution_time_ms),
+                    throughput: Math.round(1000 / (data.result.execution_time_ms / 1000 || 1)),
+                    status: "PASSED",
+                    comparison: improvement > 0
+                        ? `-${Math.round(improvement)}% latency vs Prod`
+                        : `+${Math.round(Math.abs(improvement))}% latency vs Prod`
+                })
+            } else {
+                setBranchTestResult({
+                    status: "FAILED",
+                    error: data.error || "Query execution failed on branch"
+                })
+            }
+        } catch (err) {
+            console.error("Branch test failed:", err)
+            setBranchTestResult({
+                status: "ERROR",
+                error: err instanceof Error ? err.message : "Unknown error"
+            })
+        } finally {
+            setIsTestingBranch(false)
+        }
     }
 
     return (
@@ -855,8 +710,13 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                             sandboxResult={sandboxResult}
                             healingResult={healingResult}
                             isRewriting={isRewriting}
+                            isTesting={isTesting}
                             onToggleExpand={() => setCardsExpanded(prev => ({ ...prev, sandbox: !prev.sandbox }))}
                             onGetOptimized={handleGetOptimized}
+                            onRetryWithFix={(fixedSql) => {
+                                setSql(fixedSql);
+                                handleTestInSandbox(fixedSql);
+                            }}
                         />
 
                         {/* Step 4: Self-Healing Results */}
@@ -882,7 +742,10 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                             isDeployed={isDeployed}
                             isDeploying={isDeploying}
                             onToggleExpand={() => setCardsExpanded(prev => ({ ...prev, comparison: !prev.comparison }))}
-                            onOpenBranchModal={() => setIsBranchModalOpen(true)}
+                            onOpenBranchModal={() => {
+                                setProposedBranchName(`fix-mdev-${Math.floor(Math.random() * 10000)}`);
+                                setIsBranchModalOpen(true);
+                            }}
                             onDeploy={handleDeploy}
                             deployStep={deployStep}
                         />
@@ -891,11 +754,12 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                         {/* Step 6: Branch Validation */}
                         <BranchValidationStep
                             isVisible={cardsExpanded.branchValidation}
+                            branchName={branchDatabase}
                             branchTestResult={branchTestResult}
                             isTestingBranch={isTestingBranch}
                             isDeploying={isDeploying}
                             isDeployed={isDeployed}
-                            onTestBranch={handleTestBranch}
+                            onTestBranch={() => handleTestBranch()}
                             onDeploy={handleDeploy}
                             deployStep={deployStep}
                         />
@@ -909,6 +773,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
             <BranchCreationModal
                 isOpen={isBranchModalOpen}
                 isCreating={isCreatingBranch}
+                branchName={proposedBranchName}
                 rewrittenSql={healingResult?.rewritten_sql}
                 onClose={() => setIsBranchModalOpen(false)}
                 onCreate={handleCreateBranch}
@@ -917,6 +782,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
             {/* Deployment Success Modal */}
             <DeploymentSuccessModal
                 isOpen={isDeployed}
+                deploymentType={deploymentType}
                 sandboxResult={sandboxResult}
                 optimizedSandboxResult={optimizedSandboxResult}
                 costEstimate={costEstimate}
@@ -926,3 +792,4 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
         </div >
     )
 }
+

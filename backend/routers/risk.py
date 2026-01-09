@@ -99,7 +99,13 @@ async def predict_query_risk(request: PredictRequest):
     suggested_fix = None
     
     # Check for risky patterns
-    if "SELECT *" in sql_upper and "WHERE" not in sql_upper:
+    if "SLEEP(" in sql_upper:
+        risk_score = 95
+        risk_level = "HIGH"
+        reason = "Execution delay detected via SLEEP() function"
+        query_analysis = "Query explicitly pauses execution, causing artificial performance degradation and connection holding."
+        suggested_fix = "Remove SLEEP() functions from production code."
+    elif "SELECT *" in sql_upper and "WHERE" not in sql_upper:
         risk_score = 85
         risk_level = "HIGH"
         reason = "SELECT * without WHERE clause - likely full table scan"

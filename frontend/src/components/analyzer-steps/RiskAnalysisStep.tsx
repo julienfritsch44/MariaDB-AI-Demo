@@ -113,7 +113,21 @@ export function RiskAnalysisStep({
                                 {riskResult.risk_score}/100
                             </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{riskResult.reason}</p>
+                        <p className="text-sm text-muted-foreground">
+                            {riskResult.reason.split(/(MDEV-\d+)/g).map((part, i) =>
+                                part.startsWith('MDEV-') ? (
+                                    <a
+                                        key={i}
+                                        href={`https://jira.mariadb.org/browse/${part}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:underline font-mono"
+                                    >
+                                        {part}
+                                    </a>
+                                ) : part
+                            )}
+                        </p>
                     </div>
 
                     {/* Expand/Collapse All */}
@@ -247,10 +261,22 @@ export function RiskAnalysisStep({
                             </button>
                             {sectionsExpanded.similarIssues && (
                                 <div className="p-4 bg-muted/10 space-y-2">
-                                    {riskResult.similar_issues.slice(0, 2).map((issue, i) => (
-                                        <div key={i} className="p-2 rounded-md bg-background/30 border border-border/30 text-xs">
-                                            <span className="font-mono text-primary">{issue.id}</span>
-                                            <span className="text-muted-foreground"> - {issue.title}</span>
+                                    {riskResult.similar_issues.map((issue, i) => (
+                                        <div key={i} className="p-2 rounded-md bg-background/30 border border-border/30 text-xs flex items-center justify-between group hover:border-primary/50 transition-colors">
+                                            <a
+                                                href={`https://jira.mariadb.org/browse/${issue.id.split('#')[0]}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 flex-1"
+                                            >
+                                                <span className="font-mono text-primary group-hover:underline">
+                                                    {issue.id}
+                                                </span>
+                                                <span className="text-muted-foreground"> - {issue.title}</span>
+                                            </a>
+                                            <Badge variant="outline" className="text-[8px] opacity-70">
+                                                {issue.similarity}% Match
+                                            </Badge>
                                         </div>
                                     ))}
                                 </div>

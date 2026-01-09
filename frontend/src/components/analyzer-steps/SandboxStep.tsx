@@ -19,8 +19,10 @@ interface SandboxStepProps {
     sandboxResult: SandboxResponse | null
     healingResult: RewriteResponse | null
     isRewriting: boolean
+    isTesting?: boolean
     onToggleExpand: () => void
     onGetOptimized: () => void
+    onRetryWithFix?: (fixedSql: string) => void
 }
 
 export function SandboxStep({
@@ -29,10 +31,26 @@ export function SandboxStep({
     sandboxResult,
     healingResult,
     isRewriting,
+    isTesting,
     onToggleExpand,
-    onGetOptimized
+    onGetOptimized,
+    onRetryWithFix
 }: SandboxStepProps) {
     if (!isVisible || !sandboxResult) return null
+
+    // Extract Smart Suggestion if present
+    const suggestionMatch = sandboxResult.error?.match(/Did you mean '(.*?)'/);
+    const suggestedTable = suggestionMatch ? suggestionMatch[1] : null;
+    const originalTable = suggestedTable?.replace('shop_', '');
+
+    const handleApplyFix = () => {
+        if (onRetryWithFix && suggestedTable && originalTable) {
+            // Very simple replacement for demo purposes
+            const fixedSql = sandboxResult.sql?.replace(new RegExp(originalTable, 'g'), suggestedTable)
+                || ""; // Note: we need to pass the SQL back or have it in the result
+            onRetryWithFix(fixedSql);
+        }
+    };
 
     return (
         <Card id="card-sandbox" className={`border-2 ${sandboxResult.success ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}`}>
@@ -47,6 +65,7 @@ export function SandboxStep({
                         {!isExpanded && (
                             <Badge variant="outline" className="text-xs ml-2">Collapsed</Badge>
                         )}
+                        {isTesting && <Loader2 className="w-3 h-3 animate-spin ml-2" />}
                     </CardTitle>
                     {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
@@ -54,7 +73,27 @@ export function SandboxStep({
             {isExpanded && (
                 <CardContent className="space-y-4">
                     <div className={`p-3 rounded-md border ${sandboxResult.success ? 'border-green-500/30 bg-green-500/10' : 'border-red-500/30 bg-red-500/10'}`}>
-                        <p className="text-sm">{sandboxResult.message}</p>
+                        <p className="text-sm font-semibold">{sandboxResult.message}</p>
+                        {sandboxResult.error && (
+                            <div className="space-y-2">
+                                <p className="text-xs text-red-400 mt-1 font-mono bg-black/40 p-2 rounded border border-red-500/20">
+                                    {sandboxResult.error}
+                                </p>
+
+                                {suggestedTable && onRetryWithFix && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="w-full text-xs gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                                        onClick={handleApplyFix}
+                                        disabled={isTesting}
+                                    >
+                                        <Wand2 className="w-3 h-3" />
+                                        Apply Smart Fix: Use '{suggestedTable}' & Retry
+                                    </Button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {sandboxResult.warning && (

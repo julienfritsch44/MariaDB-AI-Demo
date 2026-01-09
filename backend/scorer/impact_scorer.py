@@ -12,9 +12,9 @@ class ImpactScorer:
         }
         
         # Baseline limits for normalization
-        self.max_query_time = 30.0  # seconds
-        self.max_rows = 10_000_000
-        self.max_scan_ratio = 10_000
+        self.max_query_time = 12.0  # seconds (closer to our 10s hybrid queries)
+        self.max_rows = 2_000_000   # 2M is a lot for a demo
+        self.max_scan_ratio = 5_000 # 5K rows examined per sent is definitely slow
 
     def calculate_score(self, query_time: float, rows_examined: int, rows_sent: int) -> int:
         """

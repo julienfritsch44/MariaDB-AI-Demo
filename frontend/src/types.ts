@@ -11,6 +11,8 @@ export interface SlowQuery {
     user_host?: string;
     db?: string;
     estimated_cost_usd?: number;
+    explain?: string;
+    query_plan?: string;
 }
 
 export interface QueryAnalysis {

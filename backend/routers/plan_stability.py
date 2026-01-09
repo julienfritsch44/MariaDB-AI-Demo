@@ -9,7 +9,6 @@ from typing import Optional, List, Dict, Any
 import json
 from datetime import datetime
 from database import get_db_connection
-from mock_data import MockDataGenerator
 
 router = APIRouter(prefix="/plan/baseline", tags=["Plan Stability"])
 
@@ -129,15 +128,6 @@ async def create_baseline(request: BaselineCreateRequest):
     try:
         conn = get_db_connection()
         
-        # Check if in mock mode
-        if isinstance(conn, type(conn)) and conn.__class__.__name__ == 'MockConnection':
-            mock_data = MockDataGenerator.get_plan_stability_baseline()
-            return {
-                "success": True,
-                "message": "Baseline created successfully (MOCK MODE)",
-                "baseline": mock_data
-            }
-        
         cursor = conn.cursor(dictionary=True)
         
         fingerprint = request.fingerprint or generate_fingerprint(request.sql)
@@ -218,15 +208,6 @@ async def compare_with_baseline(request: BaselineCompareRequest):
     """
     try:
         conn = get_db_connection()
-        
-        # Check if in mock mode
-        if isinstance(conn, type(conn)) and conn.__class__.__name__ == 'MockConnection':
-            mock_data = MockDataGenerator.get_plan_flip_detected()
-            return {
-                "success": True,
-                "message": "Plan flip analysis complete (MOCK MODE)",
-                **mock_data
-            }
         
         cursor = conn.cursor(dictionary=True)
         
@@ -330,26 +311,6 @@ async def list_baselines(limit: int = 50):
     """
     try:
         conn = get_db_connection()
-        
-        # Check if in mock mode
-        if isinstance(conn, type(conn)) and conn.__class__.__name__ == 'MockConnection':
-            mock_baseline = MockDataGenerator.get_plan_stability_baseline()
-            # Wrap in a list for the 'list' endpoint
-            return {
-                "success": True,
-                "count": 1,
-                "baselines": [
-                    {
-                        "fingerprint": mock_baseline['fingerprint'],
-                        "query_preview": "SELECT * FROM orders WHERE customer_id = ?",
-                        "best_execution_time_ms": mock_baseline['best_execution_time_ms'],
-                        "best_cost": float(mock_baseline['best_cost']),
-                        "created_at": mock_baseline['created_at'],
-                        "last_validated": mock_baseline['last_validated']
-                    }
-                ]
-            }
-            
         cursor = conn.cursor(dictionary=True)
         
         cursor.execute("""

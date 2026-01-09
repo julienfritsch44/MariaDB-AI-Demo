@@ -149,7 +149,7 @@ class FixResponse(BaseModel):
 class SandboxRequest(BaseModel):
     sql: str
     database: Optional[str] = "shop_demo"
-    timeout_seconds: Optional[int] = 5
+    timeout_seconds: Optional[int] = 20
 
 
 class SandboxResult(BaseModel):
@@ -167,6 +167,7 @@ class SandboxResponse(BaseModel):
     error: Optional[str] = None
     query_type: Optional[str] = None  # SELECT, UPDATE, DELETE, etc.
     warning: Optional[str] = None
+    sql: Optional[str] = None # Return the SQL that was tested for easy autofix
 
 
 # =============================================================================

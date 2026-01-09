@@ -1,6 +1,6 @@
 """
-Local Embedding Service using Sentence Transformers
-Replaces Google Gemini API for vector embeddings
+# Local Embedding Service using Sentence Transformers
+# Replaces external API for vector embeddings
 """
 from typing import List
 from sentence_transformers import SentenceTransformer

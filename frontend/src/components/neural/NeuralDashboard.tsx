@@ -7,7 +7,6 @@ import { DetailModal } from "./DetailModal"
 import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, Sun, Moon, X, Check, Archive, Database, Server, ArrowRight, AlertTriangle, Target, BookOpen } from "lucide-react"
 import { useTheme } from "@/context/ThemeContext"
 import { motion, AnimatePresence } from "framer-motion"
-import { DEMO_DEPLOYED_KEY } from "@/lib/constants"
 
 interface NeuralDashboardProps {
     onBack: () => void
@@ -33,6 +32,28 @@ interface LiveMetrics {
     high_risk_count: number
     avg_query_time: number
     status: string
+    neural_breakdown?: {
+        query_optimization: number
+        resource_utilization: number
+        incident_prevention: number
+        knowledge_coverage: number
+    }
+    avg_similarity?: number
+    similarity_trend?: number
+    knowledge_sources?: {
+        jira: number
+        docs: number
+        forums: number
+    }
+    financial_breakdown?: {
+        archiving: number
+        optimization: number
+        incidents: number
+    }
+    insights?: Array<{
+        type: string
+        message: string
+    }>
 }
 
 export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMode = false, onTogglePresentation }: NeuralDashboardProps) {
@@ -65,23 +86,7 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                 })
                 .then(data => {
                     console.log('Neural metrics received:', data);
-
-                    // DEMO MODE OVERRIDE after deployment
-                    const isFlagInStorage = localStorage.getItem(DEMO_DEPLOYED_KEY) === 'true';
-                    console.log('[Dashboard] FetchLiveMetrics - Flag in storage:', isFlagInStorage);
-
-                    if (typeof window !== 'undefined' && isFlagInStorage) {
-                        console.log('[Dashboard] APPLYING GREEN OVERRIDES');
-                        setLiveMetrics({
-                            ...data,
-                            financial_impact: 1250,
-                            risk_score: 8,
-                            neural_score: 99.8,
-                            status: 'live'
-                        });
-                    } else {
-                        setLiveMetrics(data);
-                    }
+                    setLiveMetrics(data);
                 })
                 .catch(err => console.error('Failed to fetch live metrics:', err))
         }
@@ -92,20 +97,6 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
         return () => clearInterval(interval)
     }, [])
 
-    // State sync for optimization flag
-    useEffect(() => {
-        const checkOptimization = () => {
-            const raw = localStorage.getItem(DEMO_DEPLOYED_KEY);
-            const optimized = raw === 'true';
-            console.log('[Dashboard] Sync Effect - Raw storage:', raw, 'isOptimized:', optimized);
-            setIsOptimized(optimized);
-        };
-
-        checkOptimization();
-        // Check every second to be very reactive during the demo
-        const interval = setInterval(checkOptimization, 1000);
-        return () => clearInterval(interval);
-    }, [])
 
 
     return (
@@ -127,30 +118,6 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Demo Control Buttons */}
-                    <div className="flex items-center bg-card border border-border rounded-full px-2 py-1 gap-2">
-                        <span className="text-[7px] font-black uppercase tracking-tighter text-muted-foreground ml-1">Demo Ctrl</span>
-                        <button
-                            onClick={() => {
-                                localStorage.setItem(DEMO_DEPLOYED_KEY, 'true');
-                                window.location.reload();
-                            }}
-                            className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase transition-all ${isOptimized ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-muted hover:bg-emerald-500/20 hover:text-emerald-500 border border-transparent'}`}
-                            title="Force Green State"
-                        >
-                            Green
-                        </button>
-                        <button
-                            onClick={() => {
-                                localStorage.removeItem(DEMO_DEPLOYED_KEY);
-                                window.location.reload();
-                            }}
-                            className="px-2 py-0.5 rounded text-[8px] font-bold uppercase bg-muted hover:bg-red-500/20 hover:text-red-500 border border-transparent transition-all"
-                            title="Reset to Initial State"
-                        >
-                            Reset
-                        </button>
-                    </div>
                     <button
                         onClick={onTogglePresentation}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all group"
@@ -245,8 +212,8 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                                 </div>
                                 <p className="text-[10px] text-muted-foreground leading-relaxed italic border-l border-white/10 pl-3">
                                     {isOptimized
-                                        ? "1.4TB of cold data (700+ days) successfully archived to S3 storage tier."
-                                        : "Detected 1.4TB of cold partitions (700 days unaccessed) on premium SSD storage."
+                                        ? "Optimization complete. Cold data successfully archived to S3 storage tier."
+                                        : "Detected unaccessed partitions on premium SSD storage suitable for archiving."
                                     }
                                 </p>
                                 <div className="mt-4 pt-3 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 h-0 group-hover:h-auto overflow-hidden">
@@ -332,9 +299,12 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                             <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 mt-2">
                                 <h4 className="text-[10px] font-bold text-primary uppercase mb-2">Predictive Action:</h4>
                                 <p className="text-xs text-foreground/90 leading-relaxed italic">
-                                    {isOptimized
-                                        ? "Storage optimization complete. 1.4TB moved to S3. Monthly SSD leakage reduced by $13,000."
-                                        : "I've identified 1.4TB of cold partitions (700+ days) on premium storage. Moving this to MariaDB S3 Tiering will reduce leakage by $6,200/mo."
+                                    {(liveMetrics?.insights && liveMetrics.insights.length > 0)
+                                        ? liveMetrics.insights[0].message
+                                        : (isOptimized
+                                            ? `Storage optimization complete. Monthly SSD leakage reduced by $${(liveMetrics?.financial_impact ?? 0).toLocaleString()}.`
+                                            : `I've identified cold partitions on premium storage. Moving this to MariaDB S3 Tiering will reduce leakage by $${(liveMetrics?.financial_breakdown?.archiving ?? 0).toLocaleString()}/mo.`
+                                        )
                                     }
                                 </p>
                                 <button
@@ -402,21 +372,21 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div className="p-4 rounded-xl border bg-muted/50 border-border">
                                     <div className="text-sm text-muted-foreground mb-1">Monthly Savings</div>
-                                    <div className="text-3xl font-black text-emerald-500">${isOptimized ? '13,000' : '0'}</div>
-                                    <div className="text-xs text-emerald-500/80 font-mono mt-1">+{isOptimized ? '91%' : '0%'} projected</div>
+                                    <div className="text-3xl font-black text-emerald-500">${(liveMetrics?.financial_impact ?? 0).toLocaleString()}</div>
+                                    <div className="text-xs text-emerald-500/80 font-mono mt-1">+{isOptimized ? '100%' : '0%'} projected</div>
                                 </div>
                                 <div className="p-4 rounded-xl border bg-muted/50 border-border">
                                     <div className="text-sm text-muted-foreground mb-1">Annual Projection</div>
-                                    <div className="text-3xl font-black text-foreground">${isOptimized ? '156,000' : '0'}</div>
+                                    <div className="text-3xl font-black text-foreground">${((liveMetrics?.financial_impact ?? 0) * 12).toLocaleString()}</div>
                                     <div className="text-xs text-muted-foreground font-mono mt-1">Based on storage tier ROI</div>
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 {[
-                                    { icon: Archive, label: "Intelligent Archiving", desc: "Auto-move cold data to S3", gain: "$6,200/mo", percent: "-60% storage" },
-                                    { icon: Database, label: "Query Optimization", desc: "AI-driven index pruning", gain: "$4,800/mo", percent: "+67% speed" },
-                                    { icon: ShieldAlert, label: "Incident Avoidance", desc: "Predictive deadlock prevention", gain: "$3,250/mo", percent: "18.5h saved" },
+                                    { icon: Archive, label: "Intelligent Archiving", desc: "Auto-move cold data to S3", gain: `$${(liveMetrics?.financial_breakdown?.archiving ?? 0).toLocaleString()}/mo`, percent: "-60% storage" },
+                                    { icon: Database, label: "Query Optimization", desc: "AI-driven index pruning", gain: `$${(liveMetrics?.financial_breakdown?.optimization ?? 0).toLocaleString()}/mo`, percent: "+67% speed" },
+                                    { icon: ShieldAlert, label: "Incident Avoidance", desc: "Predictive deadlock prevention", gain: `$${(liveMetrics?.financial_breakdown?.incidents ?? 0).toLocaleString()}/mo`, percent: "18.5h saved" },
                                     { icon: Server, label: "Resource Right-sizing", desc: "CPU/RAM allocation audit", gain: "Pending", percent: "Analysis..." }
                                 ].map((item, idx) => (
                                     <div key={idx} className="flex items-center justify-between p-3 rounded-lg border bg-muted/50 border-border hover:border-primary/30 transition-colors group relative">
@@ -443,7 +413,7 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
 
                             <div className="p-3 mt-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                                 <p className="text-[10px] text-emerald-500 italic leading-tight">
-                                    "Intelligent Archiving" estimates are based on 1.4TB of cold partitions (700+ days) identified in the `shop_demo.orders` table.
+                                    "Intelligent Archiving" estimates are based on unaccessed partitions identified in the database tables.
                                 </p>
                             </div>
 
@@ -501,32 +471,51 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                         </div>
                     </div>
 
+
                     <div className="space-y-2">
                         <h3 className="text-sm font-bold mb-3">Detected Issues</h3>
-                        {[
-                            { icon: AlertTriangle, title: "Potential Deadlock #1", severity: "CRITICAL", desc: "Query on `orders` table holding lock for 2.3s", time: "2 mins ago" },
-                            { icon: AlertTriangle, title: "Potential Deadlock #2", severity: "HIGH", desc: "Concurrent UPDATE on `inventory` detected", time: "8 mins ago" },
-                            { icon: AlertTriangle, title: "Potential Deadlock #3", severity: "MEDIUM", desc: "Long-running transaction on `customers`", time: "15 mins ago" }
-                        ].map((issue, idx) => (
-                            <div key={idx} className="p-3 rounded-lg border bg-muted/50 border-border">
-                                <div className="flex items-start gap-3">
-                                    <div className="p-2 rounded-lg bg-red-500/10 text-red-500">
-                                        <issue.icon className="w-4 h-4" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className="text-sm font-bold">{issue.title}</span>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${issue.severity === 'CRITICAL' ? 'bg-red-500 text-white' :
-                                                issue.severity === 'HIGH' ? 'bg-orange-500 text-white' :
-                                                    'bg-amber-500 text-white'
-                                                }`}>{issue.severity}</span>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">{issue.desc}</p>
-                                        <span className="text-[10px] text-muted-foreground italic">{issue.time}</span>
-                                    </div>
+                        {(liveMetrics?.high_risk_count ?? 0) > 0 ? (
+                            <div className="p-4 rounded-lg border border-red-500/20 bg-red-500/5">
+                                <div className="flex items-center gap-2 text-red-500 mb-2">
+                                    <AlertTriangle className="w-5 h-5" />
+                                    <span className="text-sm font-bold uppercase tracking-tight">Critical Bottleneck</span>
                                 </div>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    Detected {liveMetrics?.high_risk_count} query causing significant contention.
+                                    High rows examination vs sent ratio indicates missing index or inefficient scan.
+                                </p>
+                                <button
+                                    onClick={() => onNavigate?.('unified')}
+                                    className="mt-4 w-full py-2 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase rounded-lg hover:bg-red-500/20 transition-all flex items-center justify-center gap-2"
+                                >
+                                    View in Query Analyzer
+                                    <ArrowRight className="w-3 h-3" />
+                                </button>
                             </div>
-                        ))}
+                        ) : (liveMetrics?.query_count ?? 0) > 0 ? (
+                            <div className="p-4 rounded-lg border border-amber-500/20 bg-amber-500/5">
+                                <div className="flex items-center gap-2 text-amber-500 mb-2">
+                                    <Activity className="w-5 h-5" />
+                                    <span className="text-sm font-bold uppercase tracking-tight">Slow Queries Detected</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    System detected {liveMetrics?.query_count} slow queries. While not yet critical, these contribute to overall performance leakage.
+                                </p>
+                                <button
+                                    onClick={() => onNavigate?.('unified')}
+                                    className="mt-4 w-full py-2 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase rounded-lg hover:bg-amber-500/20 transition-all flex items-center justify-center gap-2"
+                                >
+                                    Analyze Impact
+                                    <ArrowRight className="w-3 h-3" />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="p-4 rounded-lg border bg-emerald-500/5 border-emerald-500/20 text-center">
+                                <Check className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
+                                <p className="text-sm font-medium text-emerald-500">System Healthy</p>
+                                <p className="text-xs text-muted-foreground mt-1">No performance bottlenecks detected in current session.</p>
+                            </div>
+                        )}
                     </div>
 
                     <button
@@ -565,10 +554,10 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
 
                     <div className="grid grid-cols-2 gap-3">
                         {[
-                            { label: "Query Optimization", score: 99, icon: Target },
-                            { label: "Resource Utilization", score: 97, icon: Zap },
-                            { label: "Incident Prevention", score: 98, icon: ShieldAlert },
-                            { label: "Knowledge Coverage", score: 99, icon: BookOpen }
+                            { label: "Query Optimization", score: liveMetrics?.neural_breakdown?.query_optimization ?? 0, icon: Target },
+                            { label: "Resource Utilization", score: liveMetrics?.neural_breakdown?.resource_utilization ?? 0, icon: Zap },
+                            { label: "Incident Prevention", score: liveMetrics?.neural_breakdown?.incident_prevention ?? 0, icon: ShieldAlert },
+                            { label: "Knowledge Coverage", score: liveMetrics?.neural_breakdown?.knowledge_coverage ?? 0, icon: BookOpen }
                         ].map((metric, idx) => (
                             <div key={idx} className="p-3 rounded-lg border bg-muted/50 border-border">
                                 <div className="flex items-center gap-2 mb-2">
@@ -611,45 +600,45 @@ export function NeuralDashboard({ onBack, analysis, onNavigate, isPresentationMo
                         </div>
                         <div className="p-4 rounded-xl border bg-muted/50 border-border">
                             <div className="text-sm text-muted-foreground mb-1">Avg Similarity</div>
-                            <div className="text-3xl font-black text-foreground">94.2%</div>
-                            <div className="text-xs text-emerald-500 font-mono mt-1">+2.1% vs last week</div>
+                            <div className="text-3xl font-black text-foreground">{liveMetrics?.avg_similarity?.toFixed(1) || '94.2'}%</div>
+                            <div className="text-xs text-emerald-500 font-mono mt-1">+{liveMetrics?.similarity_trend || '2.1'}% vs last week</div>
                         </div>
                     </div>
 
                     <div className="space-y-2">
                         <h3 className="text-sm font-bold mb-2">Knowledge Sources</h3>
                         {[
-                            { source: "MariaDB Jira Issues", count: "8,420", coverage: 85, color: "text-red-500", url: "https://jira.mariadb.org", isSimulated: false },
-                            { source: "Official Documentation", count: "3,127", coverage: 95, color: "text-blue-500", url: "https://mariadb.com/kb", isSimulated: true },
-                            { source: "Community Forums", count: "1,300", coverage: 72, color: "text-amber-500", url: "https://mariadb.com/community", isSimulated: true }
-                        ].map((item, idx) => (
-                            <a
-                                key={idx}
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block p-3 rounded-lg border bg-muted/50 border-border hover:border-primary/50 transition-all hover:translate-x-1 group"
-                            >
-                                <div className="flex items-center justify-between mb-2">
-                                    <div>
-                                        <div className="text-sm font-bold group-hover:text-primary transition-colors flex items-center gap-2">
-                                            {item.source}
-                                            {item.isSimulated && (
-                                                <span className="text-[7px] font-black bg-amber-500/10 text-amber-500/80 px-1 py-0.5 rounded border border-amber-500/20">DEMO</span>
-                                            )}
-                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <ArrowRight className="w-3 h-3" />
+                            { source: "MariaDB Jira Issues", count: liveMetrics?.knowledge_sources?.jira ?? 0, target: 2000, color: "text-red-500", url: "https://jira.mariadb.org" },
+                            { source: "Official Documentation", count: liveMetrics?.knowledge_sources?.docs ?? 0, target: 500, color: "text-blue-500", url: "https://mariadb.com/kb" },
+                            { source: "Community Forums", count: liveMetrics?.knowledge_sources?.forums ?? 0, target: 1000, color: "text-amber-500", url: "https://mariadb.com/community" }
+                        ].map((item, idx) => {
+                            const coverage = Math.min(100, Math.round((item.count / item.target) * 100));
+                            return (
+                                <a
+                                    key={idx}
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block p-3 rounded-lg border bg-muted/50 border-border hover:border-primary/50 transition-all hover:translate-x-1 group"
+                                >
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div>
+                                            <div className="text-sm font-bold group-hover:text-primary transition-colors flex items-center gap-2">
+                                                {item.source}
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <ArrowRight className="w-3 h-3" />
+                                                </div>
                                             </div>
+                                            <div className="text-xs text-muted-foreground font-mono">{item.count.toLocaleString()} embeddings</div>
                                         </div>
-                                        <div className="text-xs text-muted-foreground font-mono">{item.count} embeddings</div>
+                                        <div className={`text-lg font-black ${item.color}`}>{coverage}%</div>
                                     </div>
-                                    <div className={`text-lg font-black ${item.color}`}>{item.coverage}%</div>
-                                </div>
-                                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                    <div className={`h-full ${item.color.replace('text-', 'bg-')}`} style={{ width: `${item.coverage}%` }} />
-                                </div>
-                            </a>
-                        ))}
+                                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div className={`h-full ${item.color.replace('text-', 'bg-')}`} style={{ width: `${coverage}%` }} />
+                                    </div>
+                                </a>
+                            );
+                        })}
                     </div>
 
                     <div className="p-4 rounded-lg border bg-primary/5 border-primary/20">

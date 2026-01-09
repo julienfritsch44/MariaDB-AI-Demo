@@ -70,17 +70,28 @@ export function ShopDemo() {
         }
     }
 
-    // Fake live updates when simulating
+    // Real stats fetching when simulating
     useEffect(() => {
         if (!isSimulating) return
 
-        const interval = setInterval(() => {
-            setStats(prev => ({
-                revenue: prev.revenue + Math.random() * 100,
-                orders: prev.orders + 1,
-                activeUsers: Math.max(10, prev.activeUsers + Math.floor(Math.random() * 10) - 5)
-            }))
-        }, 800)
+        const fetchStats = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/simulation/stats`)
+                const data = await res.json()
+                if (data.revenue) {
+                    setStats({
+                        revenue: data.revenue,
+                        orders: data.orders,
+                        activeUsers: data.active_users
+                    })
+                }
+            } catch (err) {
+                console.error("Failed to fetch simulation stats", err)
+            }
+        }
+
+        fetchStats()
+        const interval = setInterval(fetchStats, 2000)
 
         return () => clearInterval(interval)
     }, [isSimulating])

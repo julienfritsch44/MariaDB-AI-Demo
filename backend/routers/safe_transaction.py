@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from datetime import datetime
 from database import get_db_connection
-from mock_data import MockDataGenerator
 
 router = APIRouter()
 
@@ -181,16 +180,6 @@ async def get_safe_transaction_status():
     
     Returns current configuration and statistics
     """
-    
-    # Check if in mock mode
-    conn = get_db_connection()
-    if isinstance(conn, type(conn)) and conn.__class__.__name__ == 'MockConnection':
-        mock_data = MockDataGenerator.get_safe_transaction_status()
-        return TransactionModeResponse(
-            success=True,
-            message="Safe Transaction Mode status (MOCK MODE)",
-            status=TransactionModeStatus(**mock_data)
-        )
     
     status = TransactionModeStatus(
         enabled=_transaction_mode_state["enabled"],

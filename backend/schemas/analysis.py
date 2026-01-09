@@ -14,6 +14,8 @@ class SlowQuery(BaseModel):
     user_host: Optional[str] = None
     db: Optional[str] = None
     estimated_cost_usd: Optional[float] = 0.0
+    explain: Optional[str] = None
+    query_plan: Optional[str] = None
 
 
 class QueryAnalysis(BaseModel):

@@ -24,8 +24,7 @@ For a deep dive into the architecture and optimizations, see [Technical Walkthro
                               │
                               ▼
                         ┌─────────────────┐
-                        │   Gemini LLM    │
-                        │   + Copilot API │
+                        │   Copilot API   │
                         └─────────────────┘
 ```
 
@@ -107,7 +106,6 @@ This project is built for the **MariaDB AI Demo Competition** (Deadline: Jan 9, 
 **Technologies used:**
 - ✅ MariaDB Cloud (Vector Search)
 - ✅ SkyAI Copilot API
-- ✅ AI Framework (Gemini 2.0 Flash)
 
 ## License
 

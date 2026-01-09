@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import re
 from database import get_db_connection
-from mock_data import MockDataGenerator
 
 router = APIRouter(prefix="/drift", tags=["Schema Drift"])
 
@@ -239,16 +238,6 @@ async def detect_drift(request: DriftDetectRequest):
     """
     try:
         conn = get_db_connection()
-        
-        # Check if in mock mode
-        if isinstance(conn, type(conn)) and conn.__class__.__name__ == 'MockConnection':
-            mock_data = MockDataGenerator.get_schema_drift_report()
-            return {
-                "success": True,
-                "message": "Schema drift analysis complete (MOCK MODE)",
-                **mock_data
-            }
-        
         cursor = conn.cursor(dictionary=True)
         
         cursor.execute(f"USE {request.database}")

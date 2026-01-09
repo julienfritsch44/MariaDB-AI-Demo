@@ -43,7 +43,7 @@ class MariaDBVectorStore(VectorStore):
         
     def _get_connection(self):
         # Use centralized connection factory (supports Mock/Offline)
-        return get_db_connection()
+        return get_db_connection(database=self.database)
 
     def add_texts(
         self,

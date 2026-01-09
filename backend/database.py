@@ -6,77 +6,27 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv(override=True)
 
-# Mock Classes for Demo Mode
-class MockCursor:
-    def __init__(self):
-        self.lastrowid = 1
-        self.last_query = ""
-        self.rowcount = 0
-    
-    def execute(self, query, params=None):
-        self.last_query = query.lower()
-        print(f"[MOCK DB] Executing: {query[:50]}...")
-        
-        # Set rowcount based on query type
-        if any(keyword in self.last_query for keyword in ['insert', 'update', 'delete']):
-            self.rowcount = 1  # Simulate successful modification
-        else:
-            self.rowcount = 0  # SELECT or other queries
-        
-    def fetchone(self):
-        # Return appropriate mock data based on query type
-        if "count(*)" in self.last_query or "count(1)" in self.last_query:
-            # For COUNT queries, return integer 0
-            return [0]
-        elif "version()" in self.last_query:
-            # For VERSION queries, return version string
-            return ["10.11.5-MariaDB-Mock"]
-        else:
-            # Default: return None
-            return [None]
-        
-    def fetchall(self):
-        # Mock Vector Search Results for LangChain
-        if "doc_embeddings" in self.last_query:
-            return [
-                {
-                    "content": "Ticket: MDEV-30820\nSummary: Optimizer fails to use index on large IN() clauses.\nResolution: Rewrite as JOIN or use materialize subquery.",
-                    "source_type": "jira",
-                    "source_id": "MDEV-30820",
-                    "distance": 0.12
-                },
-                {
-                    "content": "Ticket: MDEV-12832\nSummary: Slow query on orders table due to missing composite index.\nFix: ALTER TABLE orders ADD INDEX(customer_id, status);",
-                    "source_type": "jira", 
-                    "source_id": "MDEV-12832",
-                    "distance": 0.15
-                }
-            ]
-        return []
 
-    def close(self):
-        pass
+import os
+import mariadb
+import logging
+from dotenv import load_dotenv
 
-class MockConnection:
-    def cursor(self, dictionary=False):
-        return MockCursor()
-        
-    def commit(self):
-        pass
-        
-    def close(self):
-        pass
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Load environment variables
+load_dotenv(override=True)
 
 def get_db_connection(database: str = None):
     """
     Get MariaDB connection from environment variables.
-    Returns a mariadb.connection object or a MockConnection if failed.
+    Returns a mariadb.connection object.
+    Throws an exception if connection fails.
     """
     try:
-        if os.getenv("DEMO_MODE", "false").lower() == "true":
-             raise Exception("Forcing Demo Mode")
-
-        return mariadb.connect(
+        conn = mariadb.connect(
             host=os.getenv("SKYSQL_HOST"),
             port=int(os.getenv("SKYSQL_PORT", 3306)),
             user=os.getenv("SKYSQL_USERNAME"),
@@ -84,11 +34,11 @@ def get_db_connection(database: str = None):
             database=database,
             ssl=True,
             ssl_verify_cert=False,
-            connect_timeout=3
+            connect_timeout=10
         )
+        logger.info(f"Successfully connected to MariaDB/SkySQL (db={database})")
+        return conn
     except Exception as e:
-        print(f"\n{'='*50}")
-        print(f"⚠️  DB CONNECTION FAILED (db={database}): {e}")
-        print(f"⚠️  SWITCHING TO OFFLINE MOCK MODE for Demo")
-        print(f"{'='*50}\n")
-        return MockConnection()
+        logger.error(f"FATAL: DB CONNECTION FAILED (db={database}): {e}")
+        logger.error("Please verify SKYSQL_HOST, SKYSQL_USERNAME, SKYSQL_PASSWORD and network access.")
+        raise e

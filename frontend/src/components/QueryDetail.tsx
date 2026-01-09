@@ -60,7 +60,9 @@ export function QueryDetail({
         confidence: false,
         sources: false,
         costAnalysis: false,
-        comparison: false
+        comparison: false,
+        explain: false,
+        queryPlan: false
     })
 
     const toggleSection = (section: keyof typeof sectionsOpen) => {
@@ -446,6 +448,64 @@ export function QueryDetail({
                                         >
                                             <div className="p-4 pt-0 text-sm text-foreground leading-relaxed border-t border-border">
                                                 <div className="pt-3">{suggestion.actionable_insights}</div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        )}
+
+                        {/* MariaDB Query Plan (New DBA Copilot Feature) */}
+                        {query.query_plan && (
+                            <div className="border border-border rounded-md overflow-hidden bg-purple-500/5 h-fit">
+                                <button
+                                    onClick={() => toggleSection('queryPlan')}
+                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-purple-500/10 transition-colors"
+                                >
+                                    <span className="text-sm font-semibold flex items-center gap-2 text-purple-400">
+                                        <Database className="w-4 h-4" /> MariaDB Query Plan
+                                    </span>
+                                    {sectionsOpen.queryPlan ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                                </button>
+                                <AnimatePresence>
+                                    {sectionsOpen.queryPlan && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="p-4 pt-0 text-xs font-mono text-foreground leading-relaxed border-t border-border/50">
+                                                <div className="pt-3 whitespace-pre-wrap bg-black/20 p-2 rounded">{query.query_plan}</div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        )}
+
+                        {/* EXPLAIN Output (New DBA Copilot Feature) */}
+                        {query.explain && (
+                            <div className="border border-border rounded-md overflow-hidden bg-blue-500/5 h-fit">
+                                <button
+                                    onClick={() => toggleSection('explain')}
+                                    className="w-full flex items-center justify-between p-3 px-4 hover:bg-blue-500/10 transition-colors"
+                                >
+                                    <span className="text-sm font-semibold flex items-center gap-2 text-blue-400">
+                                        <Info className="w-4 h-4" /> EXPLAIN Output
+                                    </span>
+                                    {sectionsOpen.explain ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                                </button>
+                                <AnimatePresence>
+                                    {sectionsOpen.explain && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="p-4 pt-0 text-xs font-mono text-foreground leading-relaxed border-t border-border/50">
+                                                <div className="pt-3 whitespace-pre-wrap bg-black/20 p-2 rounded">{query.explain}</div>
                                             </div>
                                         </motion.div>
                                     )}
