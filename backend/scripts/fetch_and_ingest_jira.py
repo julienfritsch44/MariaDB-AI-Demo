@@ -1,5 +1,5 @@
 """
-Jira Fetcher and Ingester for MariaDB FinOps Auditor
+Jira Fetcher and Ingester for MariaDB Local Pilot
 Fetches optimizer-related bugs from MariaDB Jira and ingests into vector store
 """
 

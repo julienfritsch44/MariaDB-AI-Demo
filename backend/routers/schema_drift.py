@@ -1,3 +1,4 @@
+"""
 Detect schema drifts between Git (source of truth) and Production
 """
 
@@ -6,6 +7,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import re
 from database import get_db_connection
+from error_factory import ErrorFactory
 
 router = APIRouter(prefix="/drift", tags=["Schema Drift"])
 
@@ -301,10 +303,15 @@ async def detect_drift(request: DriftDetectRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Drift Detection",
+            f"Failed to detect schema drift for database {request.database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to detect drift: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -382,10 +389,15 @@ async def get_drift_report(database: str = "shop_demo"):
         }
         
     except Exception as e:
+        service_error = ErrorFactory.service_error(
+            "Drift Report",
+            f"Failed to generate drift report for database {database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to generate drift report: {str(e)}"
+            "message": str(service_error)
         }
 
 
@@ -426,10 +438,15 @@ async def generate_fix_script(request: DriftGenerateFixRequest):
         }
         
     except Exception as e:
+        service_error = ErrorFactory.service_error(
+            "Drift Fix Generation",
+            f"Failed to generate fix script for database {request.database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to generate fix script: {str(e)}"
+            "message": str(service_error)
         }
 
 
@@ -487,8 +504,13 @@ async def apply_fix_script(request: DriftApplyFixRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Drift Fix Application",
+            f"Failed to apply fix script for database {request.database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to apply fix script: {str(e)}"
+            "message": str(db_error)
         }

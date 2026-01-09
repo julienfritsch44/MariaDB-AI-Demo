@@ -2,9 +2,9 @@
 Query Cost Attribution Router
 Calculates query financial cost based on cloud pricing (AWS/Azure)
 """
-from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
+from error_factory import ErrorFactory
 import re
 
 router = APIRouter(prefix="/cost", tags=["cost"])
@@ -111,9 +111,13 @@ async def estimate_query_cost(request: CostEstimateRequest):
     try:
         # Validation du provider
         if request.cloud_provider not in CLOUD_PRICING:
+            validation_error = ErrorFactory.validation_error(
+                "Cost Attribution",
+                f"Unknown cloud provider '{request.cloud_provider}'. Available: {list(CLOUD_PRICING.keys())}"
+            )
             raise HTTPException(
                 status_code=400,
-                detail=f"Unknown cloud provider. Available: {list(CLOUD_PRICING.keys())}"
+                detail=str(validation_error)
             )
         
         pricing = CLOUD_PRICING[request.cloud_provider]
@@ -160,7 +164,12 @@ async def estimate_query_cost(request: CostEstimateRequest):
         )
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Cost estimation failed: {str(e)}")
+        service_error = ErrorFactory.service_error(
+            "Cost Estimation",
+            "Failed to calculate estimated query cost",
+            original_error=e
+        )
+        raise HTTPException(status_code=500, detail=str(service_error))
 
 @router.post("/compare")
 async def compare_query_costs(
@@ -210,7 +219,12 @@ async def compare_query_costs(
         }
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Cost comparison failed: {str(e)}")
+        service_error = ErrorFactory.service_error(
+            "Cost Comparison",
+            "Failed to compare query costs between original and optimized versions",
+            original_error=e
+        )
+        raise HTTPException(status_code=500, detail=str(service_error))
 
 @router.get("/pricing")
 async def get_pricing_info():

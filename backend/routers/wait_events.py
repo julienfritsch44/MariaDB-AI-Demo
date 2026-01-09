@@ -7,6 +7,7 @@ from typing import Optional, List, Dict, Any
 import mariadb
 import os
 from dotenv import load_dotenv
+from error_factory import ErrorFactory
 
 load_dotenv()
 
@@ -275,7 +276,12 @@ async def analyze_wait_events(request: WaitEventsRequest):
         )
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Wait events analysis failed: {str(e)}")
+        service_error = ErrorFactory.service_error(
+            "Wait Events Analyzer",
+            "Failed to analyze wait events and lock waits",
+            original_error=e
+        )
+        raise HTTPException(status_code=500, detail=str(service_error))
 
 @router.get("/health")
 async def wait_events_health():
@@ -308,8 +314,13 @@ async def wait_events_health():
         }
     
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Wait Events Health Check",
+            "Failed to verify Performance Schema status",
+            original_error=e
+        )
         return {
             "performance_schema_enabled": False,
             "mode": "mock",
-            "message": f"Health check failed: {str(e)}"
+            "message": str(db_error)
         }

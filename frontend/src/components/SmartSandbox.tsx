@@ -21,22 +21,7 @@ import { trackedFetch } from "@/lib/usePerformance"
 
 const API_BASE = "http://localhost:8000"
 
-interface SandboxResult {
-    columns: string[]
-    rows: any[][]
-    rows_affected: number
-    execution_time_ms: number
-}
-
-interface SandboxResponse {
-    success: boolean
-    mode: string
-    message: string
-    result?: SandboxResult
-    error?: string
-    query_type?: string
-    warning?: string
-}
+import { SandboxResponse } from "./analyzer-steps/types"
 
 export function SmartSandbox({ initialQuery }: { initialQuery?: string }) {
     const [sql, setSql] = useState(initialQuery || "")

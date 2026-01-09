@@ -62,9 +62,10 @@ export function ShopDemo() {
             } else {
                 setStatusMessage(`Unknown status: ${data.status}`)
             }
-        } catch (err: any) {
-            addLog(`ERROR: ${err.message}`)
-            setStatusMessage(`Failed: ${err.message}`)
+        } catch (err: unknown) {
+            const error = err as Error;
+            addLog(`ERROR: ${error.message}`)
+            setStatusMessage(`Failed: ${error.message}`)
         } finally {
             setIsLoading(false)
         }
@@ -138,7 +139,7 @@ export function ShopDemo() {
                         <div>
                             <h2 className="text-xl font-bold text-white mb-1">Traffic Simulation</h2>
                             <p className="text-indigo-200/80 text-sm max-w-md">
-                                Generate realistic database traffic including slow queries for the FinOps Auditor to analyze.
+                                Generate realistic database traffic including slow queries for the Local Pilot to analyze.
                             </p>
                         </div>
                         <div className="flex gap-3">
@@ -155,7 +156,8 @@ export function ShopDemo() {
                                         } else {
                                             setStatusMessage("Database not ready - run setup first")
                                         }
-                                    } catch (e: any) {
+                                    } catch (err: unknown) {
+                                        const e = err as Error;
                                         addLog(`Test failed: ${e.message}`)
                                     }
                                 }}

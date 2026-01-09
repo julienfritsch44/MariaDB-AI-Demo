@@ -1,3 +1,4 @@
+"""
 Automatic assignment of queries to Resource Groups based on Risk Score
 """
 from fastapi import APIRouter, HTTPException
@@ -6,6 +7,7 @@ from typing import Optional, List, Dict, Any
 import mariadb
 import os
 from dotenv import load_dotenv
+from error_factory import ErrorFactory
 
 load_dotenv()
 
@@ -75,7 +77,12 @@ def get_db_connection():
             connect_timeout=3
         )
     except Exception as e:
-        print(f"[Resource Groups] DB connection failed: {e}")
+        db_error = ErrorFactory.database_error(
+            "Resource Groups Connection",
+            "Failed to connect to MariaDB for resource group management",
+            original_error=e
+        )
+        print(f"[Resource Groups] {db_error}")
         return None
 
 def assign_resource_group(sql: str, risk_score: int) -> ResourceGroupAssignment:
@@ -132,7 +139,12 @@ def create_resource_groups_if_needed(conn) -> bool:
         return True
     
     except Exception as e:
-        print(f"[Resource Groups] Creation failed: {e}")
+        service_error = ErrorFactory.service_error(
+            "Resource Groups Creation",
+            "Failed to create missing resource groups",
+            original_error=e
+        )
+        print(f"[Resource Groups] {service_error}")
         return False
 
 def apply_resource_group(conn, group_name: str) -> bool:
@@ -145,7 +157,12 @@ def apply_resource_group(conn, group_name: str) -> bool:
         cursor.close()
         return True
     except Exception as e:
-        print(f"[Resource Groups] Assignment failed: {e}")
+        service_error = ErrorFactory.service_error(
+            "Resource Group Assignment",
+            f"Failed to apply resource group {group_name} to connection",
+            original_error=e
+        )
+        print(f"[Resource Groups] {service_error}")
         return False
 
 def generate_recommendations(assignment: ResourceGroupAssignment) -> List[str]:
@@ -218,7 +235,12 @@ async def assign_resource_group_endpoint(request: ResourceGroupRequest):
                 
                 conn.close()
             except Exception as e:
-                print(f"[Resource Groups] Live mode failed: {e}")
+                service_error = ErrorFactory.service_error(
+                    "Resource Group Live Operation",
+                    "Failed to complete live assignment operation",
+                    original_error=e
+                )
+                print(f"[Resource Groups] {service_error}")
                 mode = "mock"
         
         # Prepare the list of available groups
@@ -244,7 +266,12 @@ async def assign_resource_group_endpoint(request: ResourceGroupRequest):
         )
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Resource group assignment failed: {str(e)}")
+        service_error = ErrorFactory.service_error(
+            "Resource Group Endpoint",
+            "Resource group assignment request failed",
+            original_error=e
+        )
+        raise HTTPException(status_code=500, detail=str(service_error))
 
 @router.get("/list")
 async def list_resource_groups():
@@ -278,7 +305,12 @@ async def list_resource_groups():
                     "configured_groups": RESOURCE_GROUPS_CONFIG
                 }
             except Exception as e:
-                print(f"[Resource Groups] Query failed: {e}")
+                db_error = ErrorFactory.database_error(
+                    "Resource Group List",
+                    "Failed to query information_schema for resource groups",
+                    original_error=e
+                )
+                print(f"[Resource Groups] {db_error}")
         
         # Fallback: return configuration
         return {
@@ -290,7 +322,12 @@ async def list_resource_groups():
         }
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list resource groups: {str(e)}")
+        service_error = ErrorFactory.service_error(
+            "Resource Group List Endpoint",
+            "Failed to retrieve resource group listing",
+            original_error=e
+        )
+        raise HTTPException(status_code=500, detail=str(service_error))
 
 @router.get("/health")
 async def resource_groups_health():
@@ -328,8 +365,13 @@ async def resource_groups_health():
         }
     
     except Exception as e:
+        service_error = ErrorFactory.service_error(
+            "Resource Group Health",
+            "Health check operation failed",
+            original_error=e
+        )
         return {
             "supported": False,
             "mode": "mock",
-            "message": f"Health check failed: {str(e)}"
+            "message": str(service_error)
         }

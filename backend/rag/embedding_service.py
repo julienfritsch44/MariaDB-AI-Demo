@@ -4,6 +4,7 @@
 """
 from typing import List
 from sentence_transformers import SentenceTransformer
+from error_factory import ErrorFactory, ServiceError
 
 
 class EmbeddingService:
@@ -27,9 +28,18 @@ class EmbeddingService:
     
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         if EmbeddingService._model is None:
-            print(f"[EmbeddingService] Loading model '{model_name}'...")
-            EmbeddingService._model = SentenceTransformer(model_name)
-            print(f"[EmbeddingService] Model loaded successfully!")
+            try:
+                print(f"[EmbeddingService] Loading model '{model_name}'...")
+                EmbeddingService._model = SentenceTransformer(model_name)
+                print(f"[EmbeddingService] Model loaded successfully!")
+            except Exception as e:
+                config_error = ErrorFactory.configuration_error(
+                    f"Embedding Model: {model_name}",
+                    "Failed to load sentence transformer model",
+                    original_error=e
+                )
+                print(f"[EmbeddingService] {config_error}")
+                raise config_error
         self.model = EmbeddingService._model
         self.dimension = 384
         self.model_name = model_name
@@ -60,7 +70,13 @@ class EmbeddingService:
             print(f"[PERF] Embedding generation took {elapsed:.2f}ms")
             return embedding.tolist()
         except Exception as e:
-            print(f"[EmbeddingService] Error generating embedding: {e}")
+            # Use ErrorFactory for structured error handling
+            service_error = ErrorFactory.service_error(
+                "Embedding Generation",
+                "Failed to generate embedding",
+                original_error=e
+            )
+            print(f"[EmbeddingService] {service_error}")
             return []
     
     def get_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
@@ -90,7 +106,12 @@ class EmbeddingService:
             )
             return [e.tolist() for e in embeddings]
         except Exception as e:
-            print(f"[EmbeddingService] Error generating batch embeddings: {e}")
+            service_error = ErrorFactory.service_error(
+                "Embedding Batch Generation",
+                f"Failed to generate embeddings for {len(valid_texts)} texts",
+                original_error=e
+            )
+            print(f"[EmbeddingService] {service_error}")
             return []
     
     def get_info(self) -> dict:

@@ -1,5 +1,5 @@
 """
-MariaDB FinOps Auditor - Backend API
+MariaDB Local Pilot - Backend API
 """
 
 import os
@@ -112,7 +112,7 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Query Poller stopped")
 
 app = FastAPI(
-    title="MariaDB FinOps Auditor API",
+    title="MariaDB Local Pilot API",
     description="Analyze slow queries and get AI-powered optimization suggestions",
     version="0.1.0",
     lifespan=lifespan
@@ -131,6 +131,7 @@ app.add_middleware(
 )
 
 # Include Routers
+# Include Routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(metrics.router, tags=["Metrics"])
 app.include_router(metrics_history.router, tags=["Metrics History"])
@@ -139,27 +140,23 @@ app.include_router(simulation.router, prefix="/simulation", tags=["Traffic Simul
 app.include_router(risk.router, tags=["Risk Predictor"])
 app.include_router(index.router, tags=["Index Simulator"])
 app.include_router(healing.router, tags=["Self-Healing SQL"])
-app.include_router(sandbox.router, tags=["Smart Sandboxing"])
+app.include_router(sandbox.router, prefix="/sandbox", tags=["Smart Sandboxing"])
 app.include_router(copilot.router, prefix="/copilot", tags=["Copilot"])
-app.include_router(sandbox.router, prefix="/sandbox", tags=["Sandbox"])
 app.include_router(cost_attribution.router, tags=["Cost Attribution"])
 app.include_router(wait_events.router, tags=["Wait Events"])
 app.include_router(resource_groups.router, tags=["Resource Groups"])
 app.include_router(diagnostics.router, tags=["Diagnostics"])
 app.include_router(analysis.router, tags=["Analysis"])
-app.include_router(copilot.router, tags=["Copilot"])
 app.include_router(brain.router, prefix="/brain", tags=["MariaDB Brain"])
 app.include_router(mcp.router, prefix="/mcp", tags=["MCP"])
 app.include_router(deploy.router, tags=["Deployment"])
 
-# New Strategic Features (90% → 100% Graal)
+# Strategic Features
 app.include_router(plan_stability.router, tags=["Plan Stability"])
 app.include_router(data_masking.router, tags=["Data Masking"])
 app.include_router(schema_drift.router, tags=["Schema Drift"])
 app.include_router(intelligent_archiving.router, tags=["Intelligent Archiving"])
 app.include_router(database_branching.router, tags=["Database Branching"])
-
-# Advanced Strategic Features (100% → 120% Graal+)
 app.include_router(safe_transaction.router, tags=["Safe Transaction Mode"])
 app.include_router(blast_radius.router, tags=["Blast Radius Analyzer"])
 app.include_router(vector_optimizer.router, tags=["Vector Optimizer"])

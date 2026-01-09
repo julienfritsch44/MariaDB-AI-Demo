@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from database import get_db_connection
+from error_factory import ErrorFactory, DatabaseError
 
 router = APIRouter()
 
@@ -426,9 +427,15 @@ async def simulate_service_topology(database: str):
         }
         
     except Exception as e:
+        # Use ErrorFactory for service errors
+        service_error = ErrorFactory.service_error(
+            "Service Topology Simulation",
+            f"Failed to simulate topology for database {database}",
+            original_error=e
+        )
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to simulate topology: {str(e)}"
+            detail=str(service_error)
         )
 
 

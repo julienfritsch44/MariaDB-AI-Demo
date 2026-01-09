@@ -6,6 +6,7 @@ import httpx
 import logging
 from database import get_db_connection
 from config import SKYAI_AGENT_ID
+from error_factory import ErrorFactory, DatabaseError, ServiceError, APIError
 
 logger = logging.getLogger("uvicorn")
 
@@ -44,8 +45,13 @@ class DiagnosticService:
                 "latency_ms": round((time.time() - start) * 1000, 2)
             }
         except Exception as e:
+            # Use ErrorFactory for structured error handling
+            db_error = ErrorFactory.database_error(
+                "MariaDB connection check failed",
+                original_error=e,
+                service="MariaDB Connection"
+            )
             error_msg = str(e)
-            logger.error(f"MariaDB check failed: {e}")
             
             # Detect specific SkySQL quota exhaustion
             if "Connection killed by MaxScale" in error_msg or "Lost connection" in error_msg:
@@ -82,7 +88,12 @@ class DiagnosticService:
                 "info": info
             }
         except Exception as e:
-            logger.error(f"Embeddings check failed: {e}")
+            # Use ErrorFactory for structured error handling
+            service_error = ErrorFactory.service_error(
+                "Local Embeddings",
+                "Embeddings service check failed",
+                original_error=e
+            )
             return {
                 "service": "Local Embeddings",
                 "status": "offline",
@@ -123,8 +134,13 @@ class DiagnosticService:
                 "error": "Timeout: Vector store check took too long (>5s)"
             }
         except Exception as e:
+            # Use ErrorFactory for structured error handling
+            service_error = ErrorFactory.service_error(
+                "Jira Knowledge Base",
+                "Vector store check failed",
+                original_error=e
+            )
             error_msg = str(e)
-            logger.error(f"Jira check failed: {e}")
             
             # Detect specific SkySQL quota exhaustion
             if "Connection killed by MaxScale" in error_msg or "Lost connection" in error_msg:
@@ -180,7 +196,13 @@ class DiagnosticService:
                     "error": res_prov.text[:100]
                 })
         except Exception as e:
-            logger.error(f"SkyAI Auth check failed: {e}")
+            # Use ErrorFactory for structured error handling
+            api_error = ErrorFactory.api_error(
+                "SkyAI authentication check failed",
+                status_code=500,
+                original_error=e,
+                endpoint=service_url
+            )
             results.append({
                 "service": "MariaDB Cloud API Auth",
                 "status": "offline",
@@ -235,6 +257,13 @@ class DiagnosticService:
                     else:
                         last_error = response.text[:100]
             except Exception as e:
+                # Use ErrorFactory for structured error handling
+                api_error = ErrorFactory.api_error(
+                    "SkyAI Copilot API check failed",
+                    status_code=500,
+                    original_error=e,
+                    endpoint=url
+                )
                 last_error = str(e)
         
         if not success:

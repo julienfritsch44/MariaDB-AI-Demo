@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MariaDB FinOps Auditor",
+  title: "MariaDB Local Pilot",
   description: "Analyze slow queries and get AI-powered optimization suggestions",
 };
 

@@ -1,3 +1,4 @@
+"""
 Detect plan flips and force optimal plans using hints
 """
 
@@ -7,6 +8,7 @@ from typing import Optional, List, Dict, Any
 import json
 from datetime import datetime
 from database import get_db_connection
+from error_factory import ErrorFactory
 
 router = APIRouter(prefix="/plan/baseline", tags=["Plan Stability"])
 
@@ -192,10 +194,15 @@ async def create_baseline(request: BaselineCreateRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Plan Stability Baseline",
+            "Failed to create query plan baseline",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to create baseline: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -295,10 +302,15 @@ async def compare_with_baseline(request: BaselineCompareRequest):
         return result
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Plan Stability Comparison",
+            f"Failed to compare query plan with baseline for fingerprint {fingerprint}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to compare with baseline: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -346,10 +358,15 @@ async def list_baselines(limit: int = 50):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Plan Stability List",
+            "Failed to list plan baselines",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to list baselines: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -414,10 +431,15 @@ async def force_baseline_plan(request: BaselineForceRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Plan Stability Force",
+            f"Failed to force plan for fingerprint {request.fingerprint}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to force plan: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -453,8 +475,13 @@ async def delete_baseline(fingerprint: str):
             }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Plan Stability Deletion",
+            f"Failed to delete plan baseline {fingerprint}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to delete baseline: {str(e)}"
+            "message": str(db_error)
         }

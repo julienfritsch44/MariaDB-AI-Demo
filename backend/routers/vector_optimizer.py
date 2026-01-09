@@ -9,6 +9,7 @@ from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from database import get_db_connection
+from error_factory import ErrorFactory
 
 router = APIRouter()
 
@@ -375,9 +376,14 @@ async def optimize_vector_search(request: VectorSearchRequest):
         )
         
     except Exception as e:
+        service_error = ErrorFactory.service_error(
+            "Vector Search Optimizer",
+            f"Failed to execute optimized vector search on database {request.database}",
+            original_error=e
+        )
         raise HTTPException(
             status_code=500,
-            detail=f"Vector search failed: {str(e)}"
+            detail=str(service_error)
         )
 
 
@@ -479,9 +485,14 @@ async def analyze_vector_distribution(request: VectorDistributionRequest):
         )
         
     except Exception as e:
+        service_error = ErrorFactory.service_error(
+            "Vector Distribution Analyzer",
+            f"Failed to analyze vector distribution for database {request.database}",
+            original_error=e
+        )
         raise HTTPException(
             status_code=500,
-            detail=f"Distribution analysis failed: {str(e)}"
+            detail=str(service_error)
         )
 
 

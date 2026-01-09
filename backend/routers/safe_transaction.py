@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from datetime import datetime
 from database import get_db_connection
+from error_factory import ErrorFactory
 
 router = APIRouter()
 
@@ -365,7 +366,12 @@ async def test_database_connection(database: Optional[str] = None):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Transaction Safety Connection Test",
+            f"Failed to test database connection for {database or 'default'}",
+            original_error=e
+        )
         raise HTTPException(
             status_code=500,
-            detail=f"Database connection test failed: {str(e)}"
+            detail=str(db_error)
         )

@@ -9,6 +9,7 @@ from typing import List, Optional, Tuple
 from models import RewriteRequest, RewriteResponse, SimilarJiraTicket, IndexSimulationResponse
 from parser.query_parser import SlowQueryParser
 from config import SKYAI_AGENT_ID
+from error_factory import ErrorFactory, ServiceError, APIError, DatabaseError
 
 from services.index import IndexSimulationService
 from services.cache import query_rewrite_cache
@@ -65,7 +66,14 @@ class QueryRewriterService:
             
             print(f"[PERF] RAG search took {(time.time() - rag_start) * 1000:.2f}ms")
         except Exception as e:
-            print(f"[/rewrite] RAG search failed: {e}")
+            # Use ErrorFactory for structured error handling
+            service_error = ErrorFactory.service_error(
+                "RAG Vector Search",
+                "Failed to search similar JIRA tickets",
+                original_error=e,
+                query_fingerprint=fingerprint if 'fingerprint' in locals() else None
+            )
+            print(f"[/rewrite] RAG search failed: {service_error}")
         
         return similar_jira_tickets, similar_docs
 
@@ -142,7 +150,13 @@ class QueryRewriterService:
                         match = re.search(r'```\s*(.*?)\s*```', clean_json, re.DOTALL)
                         if match: clean_json = match.group(1).strip()
                     data = json.loads(clean_json)
-                except Exception:
+                except Exception as parse_error:
+                    # Use ErrorFactory for JSON parsing errors
+                    validation_error = ErrorFactory.validation_error(
+                        "Failed to parse SkyAI JSON response",
+                        field="ai_response",
+                        original_error=parse_error
+                    )
                     # Fallback 1: Search for SQL in any markdown block
                     sql_match = re.search(r'```(?:sql)?\s*(.*?)\s*```', ai_response_str, re.DOTALL | re.IGNORECASE)
                     if sql_match:
@@ -188,7 +202,14 @@ class QueryRewriterService:
             return sql, suggested_ddl, jira_analysis
             
         except Exception as e:
-            print(f"[/rewrite] AI Error: {e}")
+            # Use ErrorFactory for API errors
+            api_error = ErrorFactory.api_error(
+                "SkyAI Copilot API call failed",
+                status_code=500,
+                original_error=e,
+                endpoint="https://api.skysql.com/copilot/v1/chat/"
+            )
+            print(f"[/rewrite] AI Error: {api_error}")
         
         return sql, None, {}
 
@@ -385,7 +406,14 @@ class QueryRewriterService:
                 if proposed_idx and self.index_service:
                     simulation_data = await self.index_service.perform_index_simulation(rewritten_sql, proposed_idx)
             except Exception as e:
-                print(f"[/rewrite] Auto-simulation failed: {e}")
+                # Use ErrorFactory for simulation errors
+                service_error = ErrorFactory.service_error(
+                    "Index Simulation",
+                    "Automatic index simulation failed",
+                    original_error=e,
+                    proposed_index=proposed_idx if 'proposed_idx' in locals() else None
+                )
+                print(f"[/rewrite] Auto-simulation failed: {service_error}")
  
         # Resolve final suggested_ddl
         final_suggested_ddl = None
@@ -455,5 +483,12 @@ class QueryRewriterService:
             conn.close()
             return {"success": True, "message": f"Fix executed successfully on {database}"}
         except Exception as e:
-            print(f"[/execute-fix] Error: {e}")
+            # Use ErrorFactory for database execution errors
+            db_error = ErrorFactory.database_error(
+                "Failed to execute DDL fix",
+                original_error=e,
+                database=database,
+                sql=sql[:100]  # Truncate for logging
+            )
+            print(f"[/execute-fix] Error: {db_error}")
             return {"success": False, "message": "Execution failed", "error": str(e)}

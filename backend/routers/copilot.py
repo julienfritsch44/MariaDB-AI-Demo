@@ -4,6 +4,7 @@ from typing import Optional, List, Dict, Any
 import os
 import json
 import logging
+from error_factory import ErrorFactory
 
 # Dependencies
 import deps
@@ -103,7 +104,12 @@ def get_langchain_chain():
         return _chain
         
     except Exception as e:
-        logger.error(f"Failed to init LangChain: {e}")
+        configs_error = ErrorFactory.configuration_error(
+            "LangChain Initialization",
+            "Failed to initialize RAG chain components",
+            original_error=e
+        )
+        logger.error(configs_error)
         return None
 
 # --- Endpoints ---
@@ -137,5 +143,10 @@ async def chat(request: ChatRequest):
         return ChatResponse(answer=response)
         
     except Exception as e:
-        logger.error(f"Chain execution failed: {e}")
-        return ChatResponse(answer=f"I encountered an error processing your request: {str(e)}")
+        service_error = ErrorFactory.service_error(
+            "Copilot Chain",
+            "Chain execution failed during chat processing",
+            original_error=e
+        )
+        logger.error(service_error)
+        return ChatResponse(answer=f"I encountered an error processing your request: {str(service_error)}")

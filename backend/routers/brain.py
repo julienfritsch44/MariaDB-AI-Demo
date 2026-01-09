@@ -4,6 +4,7 @@ import time
 import requests
 import deps
 from schemas.brain import BrainChatRequest, BrainChatResponse, BrainSource, ChatRequest
+from error_factory import ErrorFactory, APIError, ServiceError, DatabaseError
 
 router = APIRouter()
 
@@ -54,7 +55,13 @@ async def brain_chat(request: BrainChatRequest):
         context = "\n\n".join(context_parts)
         
     except Exception as e:
-        print(f"[/brain/chat] Vector search failed: {e}")
+        # Use ErrorFactory for service errors
+        service_error = ErrorFactory.service_error(
+            "Vector Store Search",
+            "Brain chat vector search failed",
+            original_error=e
+        )
+        print(f"[/brain/chat] Vector search failed: {service_error}")
         context = ""
         sources = []
     
@@ -99,7 +106,14 @@ Respond with a helpful answer:"""
             raise Exception(f"SkyAI returned {response.status_code}")
         
     except Exception as e:
-        print(f"[/brain/chat] AI generation failed: {e}")
+        # Use ErrorFactory for API errors
+        api_error = ErrorFactory.api_error(
+            "SkyAI Brain chat generation failed",
+            status_code=500,
+            original_error=e,
+            endpoint="/copilot/v1/chat"
+        )
+        print(f"[/brain/chat] AI generation failed: {api_error}")
         # Provide context-based response when AI is unavailable
         if sources:
             answer = f"Based on the knowledge base, I found {len(sources)} relevant sources:\n\n"
@@ -136,7 +150,13 @@ async def brain_stats():
         kb_count = deps.vector_store.get_document_count()
         return {"kb_count": kb_count, "status": "online"}
     except Exception as e:
-        return {"kb_count": 0, "status": "error", "error": str(e)}
+        # Use ErrorFactory for service errors
+        service_error = ErrorFactory.service_error(
+            "Vector Store Status",
+            "Failed to get brain stats",
+            original_error=e
+        )
+        return {"kb_count": 0, "status": "error", "error": str(service_error)}
 
 # Copilot Chat Endpoint (Moved here as it relates to AI Chat)
 @router.post("/copilot/chat")

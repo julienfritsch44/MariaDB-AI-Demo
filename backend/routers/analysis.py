@@ -3,6 +3,7 @@ import os
 import time
 import requests
 import math
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 
@@ -10,7 +11,9 @@ from database import get_db_connection
 import deps
 from schemas.analysis import SlowQuery, QueryAnalysis, Suggestion
 from services.cache import document_count_cache
+from error_factory import ErrorFactory, APIError, DatabaseError, ServiceError
 
+logger = logging.getLogger("uvicorn")
 router = APIRouter()
 
 # Helper Functions (Internal)
@@ -79,7 +82,14 @@ async def analyze_slow_queries(limit: int = 10):
                 if parsed:
                     rows.append(parsed)
         except Exception as e:
-            logger.error(f"[/analyze] SkySQL API failed: {e}")
+            # Use ErrorFactory for API errors
+            api_error = ErrorFactory.api_error(
+                "SkySQL Observability API call failed",
+                status_code=500,
+                original_error=e,
+                endpoint="SkySQL Observability"
+            )
+            logger.error(f"[/analyze] SkySQL API failed: {api_error}")
     
     # === Strategy 2: Direct database access (mysql.slow_log) ===
     if not rows:
@@ -102,7 +112,13 @@ async def analyze_slow_queries(limit: int = 10):
             
             conn.close()
         except Exception as e:
-            logger.warning(f"[/analyze] mysql.slow_log access failed: {e}")
+            # Use ErrorFactory for database errors
+            db_error = ErrorFactory.database_error(
+                "Failed to access mysql.slow_log",
+                original_error=e,
+                table="mysql.slow_log"
+            )
+            logger.warning(f"[/analyze] mysql.slow_log access failed: {db_error}")
     
     # Process records into SlowQuery objects
     processed_queries = []
@@ -121,7 +137,13 @@ async def analyze_slow_queries(limit: int = 10):
                 kb_count = deps.vector_store.get_document_count()
                 document_count_cache.set("kb_count", kb_count)
     except Exception as e:
-        logger.warning(f"[/analyze] Failed to get KB count: {e}")
+        # Use ErrorFactory for service errors
+        service_error = ErrorFactory.service_error(
+            "Vector Store",
+            "Failed to get knowledge base document count",
+            original_error=e
+        )
+        logger.warning(f"[/analyze] Failed to get KB count: {service_error}")
 
     return QueryAnalysis(
         total_queries=len(processed_queries),
@@ -178,7 +200,14 @@ async def get_suggestion(query_id: int, sql_text: str = None):
         sources = [f"{doc['source_type']}:{doc['source_id']}" for doc in similar_docs]
         
     except Exception as e:
-        logger.error(f"[/suggest] Vector search failed: {e}")
+        # Use ErrorFactory for service errors
+        service_error = ErrorFactory.service_error(
+            "RAG Vector Search",
+            "Vector search for similar documents failed",
+            original_error=e,
+            query_fingerprint=fingerprint[:100] if 'fingerprint' in locals() else None
+        )
+        logger.error(f"[/suggest] Vector search failed: {service_error}")
         context = "No historical context available."
         sources = []
 

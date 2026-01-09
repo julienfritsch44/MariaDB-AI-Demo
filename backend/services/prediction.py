@@ -4,6 +4,7 @@ import logging
 
 from models import PredictRequest, PredictResponse, SimilarIssue
 from parser.query_parser import SlowQueryParser
+from error_factory import ErrorFactory, ServiceError
 
 logger = logging.getLogger("uvicorn")
 
@@ -68,7 +69,14 @@ class PredictionService:
             print(f"[/predict] Found {len(similar_docs)} unique tickets (after base ID dedup)")
             
         except Exception as e:
-            print(f"[/predict] Vector search failed: {e}")
+            # Use ErrorFactory for structured error handling
+            service_error = ErrorFactory.service_error(
+                "RAG Vector Search",
+                "Prediction vector search failed",
+                original_error=e,
+                query_fingerprint=fingerprint if 'fingerprint' in locals() else None
+            )
+            print(f"[/predict] Vector search failed: {service_error}")
             similar_docs = []
         
         # 3. Build context from similar issues

@@ -1,13 +1,9 @@
-"""
-SkySQL Observability API Integration
-Fetches real slow query logs from SkySQL Cloud API
-"""
-
 import os
 import httpx
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
+from error_factory import ErrorFactory, APIError
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +49,14 @@ class SkySQL_ObservabilityService:
                 logger.warning(f"Failed to get log types: {response.status_code}")
                 return []
         except Exception as e:
-            logger.error(f"Error fetching log types: {e}")
+            # Use ErrorFactory for API errors
+            api_error = ErrorFactory.api_error(
+                "Failed to fetch log types from SkySQL",
+                status_code=500,
+                original_error=e,
+                endpoint="/logs/types"
+            )
+            logger.error(f"Error fetching log types: {api_error}")
             return []
     
     async def get_slow_query_logs(
@@ -140,7 +143,14 @@ class SkySQL_ObservabilityService:
                 return []
                 
         except Exception as e:
-            logger.error(f"Error fetching slow query logs: {e}")
+            # Use ErrorFactory for API errors
+            api_error = ErrorFactory.api_error(
+                "Failed to fetch slow query logs from SkySQL",
+                status_code=500,
+                original_error=e,
+                endpoint="/logs/query"
+            )
+            logger.error(f"Error fetching slow query logs: {api_error}")
             return []
     
     def parse_slow_query_log(self, log_entry: Dict) -> Optional[Dict]:
@@ -166,7 +176,13 @@ class SkySQL_ObservabilityService:
                 'query_plan': log_entry.get('query_plan', None)
             }
         except Exception as e:
-            logger.warning(f"Failed to parse log entry: {e}")
+            # Use ErrorFactory for validation/parsing errors
+            validation_error = ErrorFactory.validation_error(
+                "Failed to parse SkySQL log entry",
+                field="log_entry",
+                original_error=e
+            )
+            logger.warning(f"Failed to parse log entry: {validation_error}")
             return None
 
 # Global instance

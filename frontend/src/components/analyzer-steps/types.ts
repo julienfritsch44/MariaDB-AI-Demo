@@ -16,9 +16,10 @@ export interface SandboxResponse {
     success: boolean
     mode: string
     message: string
+    sql?: string
     result?: {
         columns: string[]
-        rows: any[][]
+        rows: (string | number | null)[][]
         rows_affected: number
         execution_time_ms: number
     }
@@ -63,6 +64,10 @@ export interface RewriteResponse {
     anti_patterns_detected: string[]
     suggested_ddl?: string
     simulation?: IndexSimulationResponse
+    knowledge_source?: {
+        id: string;
+        description: string;
+    }
 }
 
 export interface CostEstimate {
@@ -101,8 +106,16 @@ export interface WaitEventsResponse {
         total_wait_time_ms: number
     }
     top_wait_events: WaitEventDetail[]
-    lock_waits: any[]
+    lock_waits: LockWait[]
     recommendations: string[]
+}
+
+// Lock Wait Detail
+export interface LockWait {
+    blocking_query: string
+    waiting_query: string
+    lock_type: string
+    duration_ms: number
 }
 
 export interface ResourceGroupAssignment {
@@ -118,7 +131,7 @@ export interface ResourceGroupResponse {
     success: boolean
     mode: string
     assignment: ResourceGroupAssignment
-    available_groups: any[]
+    available_groups: string[]
     recommendations: string[]
 }
 

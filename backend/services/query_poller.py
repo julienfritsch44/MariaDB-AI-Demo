@@ -1,13 +1,9 @@
-"""
-Background Query Poller Service
-Continuously generates slow queries to populate the demo dashboard with realistic data.
-"""
-
 import logging
 import random
 import time
 from typing import Optional
 from database import get_db_connection
+from error_factory import ErrorFactory, DatabaseError
 
 logger = logging.getLogger("query_poller")
 
@@ -122,8 +118,14 @@ class QueryPoller:
             logger.info(f"✅ {pattern['name']} completed in {elapsed:.2f}s")
             
         except Exception as e:
+            # Use ErrorFactory for database errors
+            db_error = ErrorFactory.database_error(
+                "Background query poller execution failed",
+                original_error=e,
+                database="shop_demo"
+            )
             self.error_count += 1
-            logger.error(f"❌ Query execution failed: {e}")
+            logger.error(f"❌ Query execution failed: {db_error}")
     
     def get_status(self) -> dict:
         """Get current poller status"""

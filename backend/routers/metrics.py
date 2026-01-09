@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from middleware.timing_middleware import get_performance_metrics
 
 from routers.analysis import analyze_slow_queries
+from error_factory import ErrorFactory
 
 router = APIRouter()
 
@@ -42,11 +43,17 @@ async def get_executive_summary():
             "status": "active"
         }
     except Exception as e:
+        service_error = ErrorFactory.service_error(
+            "Executive Summary",
+            "Failed to calculate executive summary metrics",
+            original_error=e
+        )
         return {
             "financial_savings": 0.0,
             "incidents_prevented": 0,
             "optimizations_applied": 0,
             "compliance_status": "Unknown",
             "system_health": 0,
-            "status": "error"
+            "status": "error",
+            "message": str(service_error)
         }

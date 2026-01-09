@@ -36,7 +36,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { CodeContainer } from "@/components/ui/code-container"
 import { CopilotChat, CopilotInput } from "@/components/ui/copilot"
 import { ComparisonPanel } from "@/components/ui/comparison-panel"
-import { trackedFetch } from "@/lib/usePerformance"
+import { apiFetch } from "@/lib/api-client"
 
 interface QueryDetailProps {
     suggestion: Suggestion | null
@@ -76,15 +76,13 @@ export function QueryDetail({
 
         setIsApplyingFix(true)
         try {
-            const res = await trackedFetch("http://localhost:8000/execute-fix", {
+            const data = await apiFetch<{ success: boolean; error?: string }>("/execute-fix", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     sql: suggestion.sql_fix,
                     database: query?.db || "shop_demo"
                 })
             })
-            const data = await res.json()
             if (data.success) {
                 toast.success("Optimization applied successfully!", {
                     description: "The database has been updated with the suggested fix.",
@@ -294,7 +292,7 @@ export function QueryDetail({
                             className="w-full flex items-center justify-between p-3 px-4 hover:bg-muted/50 transition-colors"
                         >
                             <span className="text-sm font-semibold flex items-center gap-2 text-primary">
-                                <Sparkles className="w-4 h-4" /> Why FinOps Auditor?
+                                <Sparkles className="w-4 h-4" /> Why Local Pilot?
                             </span>
                             {sectionsOpen.comparison ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                         </button>

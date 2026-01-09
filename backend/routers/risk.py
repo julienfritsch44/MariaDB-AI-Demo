@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 import time
-import deps
 from schemas.risk import PredictRequest, PredictResponse, SimilarIssue
+from error_factory import ErrorFactory
 
 router = APIRouter()
 
@@ -62,7 +62,12 @@ async def predict_query_risk(request: PredictRequest):
         print(f"[/predict] Found {len(similar_docs)} unique tickets (after base ID dedup)")
         
     except Exception as e:
-        print(f"[/predict] Vector search failed: {e}")
+        service_error = ErrorFactory.service_error(
+            "Query Risk Vector Search",
+            "Failed to find similar historical issues in Jira KB",
+            original_error=e
+        )
+        print(f"[/predict] Error: {service_error}")
         similar_docs = []
     
     # 3. Build context from similar issues

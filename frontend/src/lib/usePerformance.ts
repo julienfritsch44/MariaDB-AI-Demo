@@ -99,8 +99,8 @@ export async function trackedFetch(
 
     try {
         response = await fetch(url, options)
-    } catch (err: any) {
-        error = err.message
+    } catch (err: unknown) {
+        const errorMsg = (err as Error).message
         const entry: PerformanceEntry = {
             id,
             endpoint: new URL(url, window.location.origin).pathname,
@@ -108,7 +108,7 @@ export async function trackedFetch(
             duration: Math.round(performance.now() - start),
             status: 0,
             timestamp: new Date(),
-            error
+            error: errorMsg
         }
         addPerformanceEntry(entry)
         throw err

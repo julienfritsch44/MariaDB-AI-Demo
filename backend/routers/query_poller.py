@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from services.query_poller import get_poller
 import logging
+from error_factory import ErrorFactory
 
 logger = logging.getLogger("query_poller_router")
 
@@ -33,8 +34,13 @@ async def execute_query_now():
             "stats": poller.get_status()
         }
     except Exception as e:
-        logger.error(f"Manual execution failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        db_error = ErrorFactory.database_error(
+            "Query Poller Manual Execution",
+            "Failed to manually trigger background slow query",
+            original_error=e
+        )
+        logger.error(db_error)
+        raise HTTPException(status_code=500, detail=str(db_error))
 
 @router.post("/stop")
 async def stop_poller():

@@ -1,3 +1,4 @@
+"""
 ML-based predictive archiving to optimize storage costs
 """
 
@@ -6,6 +7,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from database import get_db_connection
+from error_factory import ErrorFactory
 
 router = APIRouter(prefix="/archiving", tags=["Intelligent Archiving"])
 
@@ -135,13 +137,18 @@ class AccessPatternAnalyzer:
             }
             
         except Exception as e:
+            db_error = ErrorFactory.database_error(
+                "Access Pattern Analysis",
+                f"Failed to analyze access patterns for table {database}.{table}",
+                original_error=e
+            )
             return {
                 'read_count': 0,
                 'write_count': 0,
                 'total_read_time_sec': 0,
                 'total_write_time_sec': 0,
                 'access_frequency': 'unknown',
-                'error': str(e)
+                'error': str(db_error)
             }
         finally:
             cursor.close()
@@ -157,6 +164,7 @@ class ArchivingPredictor:
         age_days: int,
         growth_rate: float
     ) -> Dict[str, Any]:
+        """
         Predicts archiving score (0-100)
         A higher score indicates a stronger archiving candidate
         """
@@ -343,10 +351,15 @@ async def analyze_archiving_candidates(request: ArchivingAnalyzeRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Archiving Analysis",
+            f"Failed to analyze archiving candidates for database {request.database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to analyze archiving candidates: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -373,10 +386,15 @@ async def get_archiving_candidates(
         }
         
     except Exception as e:
+        service_error = ErrorFactory.service_error(
+            "Archiving Candidates",
+            f"Failed to get archiving candidates for database {database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to get archiving candidates: {str(e)}"
+            "message": str(service_error)
         }
 
 
@@ -477,10 +495,15 @@ async def simulate_archiving(request: ArchivingSimulateRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Archiving Simulation",
+            f"Failed to simulate archiving for table {request.database}.{request.table}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to simulate archiving: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -550,8 +573,13 @@ async def execute_archiving(request: ArchivingExecuteRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Archiving Execution",
+            f"Failed to execute archiving for table {request.database}.{request.table}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to execute archiving: {str(e)}"
+            "message": str(db_error)
         }

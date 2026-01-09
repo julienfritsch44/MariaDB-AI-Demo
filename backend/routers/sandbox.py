@@ -3,9 +3,9 @@ Smart Sandboxing Router - Test queries safely without persisting changes
 """
 
 import time
-from fastapi import APIRouter, HTTPException
 from database import get_db_connection
 from models import SandboxRequest, SandboxResponse, SandboxResult
+from error_factory import ErrorFactory
 
 router = APIRouter()
 
@@ -144,17 +144,26 @@ async def test_query_in_sandbox(request: SandboxRequest):
             except:
                 pass
         
-        error_msg = str(e)
+        db_error = ErrorFactory.database_error(
+            "Sandbox Query Execution",
+            "Query failed during safe sandbox test",
+            original_error=e,
+            sql=request.sql[:100]
+        )
+        
+        error_msg = str(db_error)
         
         # Smart Diagnostic: If table doesn't exist, check for shop_ prefix
-        if "Table" in error_msg and "doesn't exist" in error_msg:
-            if "order_items" in error_msg and "shop_order_items" not in error_msg:
+        simple_e = str(e)
+        if "Table" in simple_e and "doesn't exist" in simple_e:
+            if "order_items" in simple_e and "shop_order_items" not in simple_e:
                 error_msg += " (Smart Suggestion: Did you mean 'shop_order_items'? This environment uses prefixed tables.)"
-            elif "orders" in error_msg and "shop_orders" not in error_msg:
+            elif "orders" in simple_e and "shop_orders" not in simple_e:
                 error_msg += " (Smart Suggestion: Did you mean 'shop_orders'?)"
-            elif "customers" in error_msg and "shop_customers" not in error_msg:
+            # ... (rest of diagnostics preserved in replaced content)
+            elif "customers" in simple_e and "shop_customers" not in simple_e:
                 error_msg += " (Smart Suggestion: Did you mean 'shop_customers'?)"
-            elif "products" in error_msg and "shop_products" not in error_msg:
+            elif "products" in simple_e and "shop_products" not in simple_e:
                 error_msg += " (Smart Suggestion: Did you mean 'shop_products'?)"
         
         return SandboxResponse(

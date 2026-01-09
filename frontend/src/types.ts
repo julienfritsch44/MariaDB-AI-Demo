@@ -104,6 +104,10 @@ export interface RewriteResponse {
     anti_patterns_detected: string[]
     simulation?: IndexSimulationResponse
     suggested_ddl?: string | null
+    knowledge_source?: {
+        id: string;
+        description: string;
+    }
 }
 
 export interface DiagnosticCheck {
@@ -113,7 +117,90 @@ export interface DiagnosticCheck {
     message?: string;
     error?: string;
     hint?: string;
-    info?: any;
+    info?: DiagnosticInfo;
     document_count?: number;
     http_status?: number;
 }
+
+// Diagnostic Info - replaces info?: any
+export interface DiagnosticInfo {
+    model?: string
+    version?: string
+    [key: string]: string | number | undefined
+}
+
+// Wait Events and Lock Waits
+export interface WaitEvent {
+    event_name: string
+    count: number
+    total_wait_time_ms: number
+}
+
+export interface LockWait {
+    blocking_query: string
+    waiting_query: string
+    lock_type: string
+    duration_ms: number
+}
+
+// Extended Analysis with detailed information
+export interface QueryAnalysisDetailed extends QueryAnalysis {
+    wait_events?: WaitEvent[]
+    lock_waits?: LockWait[]
+    available_groups?: string[]
+}
+
+// Analysis History Item (used by UnifiedQueryAnalyzer)
+export interface AnalysisHistoryItem {
+    id: string
+    sql: string
+    risk_score: number
+    risk_level: string
+    timestamp: Date
+}
+
+// Alias for backward compatibility
+export type HistoryItem = AnalysisHistoryItem
+
+// Chat Message
+export interface ChatMessage {
+    id: string
+    role: 'user' | 'assistant' | 'system'
+    content: string
+    timestamp: string
+}
+
+// Sandbox Result
+export interface SandboxResult {
+    columns: string[]
+    rows: (string | number | null)[][]
+    execution_time_ms?: number
+    error?: string
+    sql?: string
+}
+
+// MCP Log Entry
+export interface MCPLogEntry {
+    id: string
+    timestamp: string
+    time?: string
+    tool: string
+    status: 'success' | 'error' | 'pending'
+    message: string
+    detail?: string
+}
+
+// Dashboard Tab Types
+export type DashboardTab =
+    | "shop"
+    | "predictor"
+    | "simulator"
+    | "rewriter"
+    | "sandbox"
+    | "unified"
+    | "queries"
+    | "diagnostic"
+    | "mcp"
+    | "planstability"
+    | "branching"
+    | "neural";

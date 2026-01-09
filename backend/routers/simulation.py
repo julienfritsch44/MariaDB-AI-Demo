@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 import subprocess
 import os
 from database import get_db_connection
+from error_factory import ErrorFactory
 
 router = APIRouter()
 
@@ -27,8 +28,13 @@ async def start_simulation():
         simulation_process = subprocess.Popen(["python", script_path])
         return {"status": "started", "pid": simulation_process.pid}
     except Exception as e:
-        print(f"Failed to start simulator: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to start simulator: {str(e)}")
+        service_error = ErrorFactory.service_error(
+            "Traffic Simulator",
+            "Failed to start background simulation process",
+            original_error=e
+        )
+        print(f"Failed to start simulator: {service_error}")
+        raise HTTPException(status_code=500, detail=str(service_error))
 
 @router.post("/stop")
 async def stop_simulation():
@@ -117,8 +123,13 @@ async def simulation_test():
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Simulation Test Query",
+            "Failed to execute diagnostic simulation test against shop_demo",
+            original_error=e
+        )
         return {
             "status": "error",
-            "message": str(e),
+            "message": str(db_error),
             "ready": False
         }

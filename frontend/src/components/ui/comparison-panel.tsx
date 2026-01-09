@@ -60,7 +60,7 @@ export function ComparisonPanel({
                 </div>
             </motion.div>
 
-            {/* Right: FinOps Auditor Response */}
+            {/* Right: Local Pilot Response */}
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -76,7 +76,7 @@ export function ComparisonPanel({
                         <Database className="w-4 h-4 text-primary" />
                     </div>
                     <div className="flex-1">
-                        <h4 className="text-sm font-semibold text-emerald-300">FinOps Auditor</h4>
+                        <h4 className="text-sm font-semibold text-emerald-300">Local Pilot</h4>
                         <p className="text-[10px] text-primary/70">Powered by your Jira knowledge base</p>
                     </div>
                     <span className="text-[9px] px-2 py-0.5 bg-primary/20 text-primary rounded-full font-bold uppercase">
@@ -168,7 +168,7 @@ export function CopilotVsFinOps() {
                 {/* Title */}
                 <div className="text-center mb-8">
                     <h2 className="text-2xl font-bold text-foreground mb-2">
-                        Why FinOps Auditor?
+                        Why Local Pilot?
                     </h2>
                     <p className="text-muted-foreground">
                         See the difference between generic AI and knowledge-grounded AI

@@ -9,6 +9,7 @@ from typing import List, Dict, Any, Optional
 import hashlib
 from datetime import datetime
 from database import get_db_connection
+from error_factory import ErrorFactory
 
 router = APIRouter(prefix="/branching", tags=["Database Branching"])
 
@@ -195,10 +196,15 @@ async def create_branch(request: BranchCreateRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Database Branching",
+            f"Failed to create branch database for {request.source_database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to create branch: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -256,10 +262,15 @@ async def list_branches(source_database: Optional[str] = None):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Database Branching List",
+            "Failed to list active database branches",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to list branches: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -310,10 +321,15 @@ async def compare_branches(request: BranchCompareRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Database Branching Comparison",
+            f"Failed to compare source {request.source_database} and branch {request.branch_database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to compare branches: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -396,10 +412,15 @@ async def merge_branch(request: BranchMergeRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Database Branching Merge",
+            f"Failed to merge branch {request.branch_database} into {request.target_database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to merge branch: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -431,8 +452,13 @@ async def delete_branch(branch_database: str):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "Database Branching Deletion",
+            f"Failed to delete branch database {branch_database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to delete branch: {str(e)}"
+            "message": str(db_error)
         }

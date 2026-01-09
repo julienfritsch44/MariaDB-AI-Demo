@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Terminal, CheckCircle2, Search, Database, Wand2 } from "lucide-react"
+import { MCPLogEntry } from "@/types"
 
 export function MCPProof() {
-    const [logs, setLogs] = useState<any[]>([])
+    const [logs, setLogs] = useState<MCPLogEntry[]>([])
 
     const fetchHistory = async () => {
         try {

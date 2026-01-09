@@ -8,9 +8,11 @@ import { TrendingUp, Activity, ShieldAlert, Zap, DollarSign, Brain, Sun, Moon, X
 import { useTheme } from "@/context/ThemeContext"
 import { motion, AnimatePresence } from "framer-motion"
 
+import { QueryAnalysis } from "@/types"
+
 interface NeuralDashboardProps {
     onBack: () => void
-    analysis: any
+    analysis: QueryAnalysis | null
     onNavigate?: (tab: "shop" | "predictor" | "simulator" | "rewriter" | "sandbox" | "unified" | "queries" | "diagnostic" | "mcp" | "planstability" | "branching" | "neural") => void
     isPresentationMode?: boolean
     onTogglePresentation?: () => void

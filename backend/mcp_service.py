@@ -1,5 +1,5 @@
 """
-MCP (Model Context Protocol) Service for MariaDB FinOps Auditor
+MCP (Model Context Protocol) Service for MariaDB Local Pilot
 
 This module provides MCP-compatible tools for LLMs to interact with the database
 and our RAG knowledge base.
@@ -21,6 +21,7 @@ if parent_dir not in sys.path:
 from typing import List, Dict, Any, Optional
 import mariadb
 from dotenv import load_dotenv
+from error_factory import ErrorFactory, DatabaseError, APIError, ValidationError, ServiceError
 from mcp.server.stdio import stdio_server
 from mcp.server import Server, NotificationOptions
 from mcp.server.models import InitializationOptions
@@ -87,7 +88,15 @@ class MCPService:
             else:
                 result = {"error": f"Unknown tool: {tool_name}"}
         except Exception as e:
-            result = {"error": str(e)}
+            # Use ErrorFactory for safe error messaging and structured logging
+            safe_msg = ErrorFactory.safe_error_message(e)
+            result = {"error": safe_msg}
+            # Log as service error since it occurred during tool execution dispatch
+            ErrorFactory.service_error(
+                "MCP Tool Execution",
+                f"Failed to execute tool {tool_name}",
+                original_error=e
+            )
         
         # Record for real-time dashboard
         status = "success" if "error" not in result else "error"
@@ -108,7 +117,7 @@ class MCPService:
         return {
             "name": "finops-auditor-mcp",
             "version": "1.0.0",
-            "description": "MariaDB FinOps Auditor - AI-powered query optimization with private Jira knowledge base",
+            "description": "MariaDB Local Pilot - AI-powered query optimization with private Jira knowledge base",
             "tools": [
                 {
                     "name": "query_database",
@@ -238,7 +247,12 @@ class MCPService:
                 "row_count": len(results)
             }
         except Exception as e:
-            return {"error": str(e)}
+            db_error = ErrorFactory.database_error(
+                "MCP Database Query failed",
+                original_error=e,
+                sql=sql[:100]
+            )
+            return {"error": db_error.message}
     
     def _search_knowledge_base(self, query: str, limit: int = 5) -> Dict[str, Any]:
         """Search the Jira knowledge base using vector similarity."""
@@ -279,7 +293,12 @@ class MCPService:
                 "total_documents_in_kb": self.vector_store.get_document_count() if self.vector_store else 0
             }
         except Exception as e:
-            return {"error": str(e)}
+            service_error = ErrorFactory.service_error(
+                "MCP Knowledge Base Search",
+                "Failed to search KB via MCP",
+                original_error=e
+            )
+            return {"error": service_error.message}
     
     def _analyze_query(self, sql: str) -> Dict[str, Any]:
         """Analyze a SQL query for optimization opportunities."""
@@ -364,15 +383,7 @@ class MCPService:
         return result
 
 
-# Singleton instance
-_mcp_service = None
 
-def get_mcp_service(vector_store=None, embedding_service=None) -> MCPService:
-    """Get or create MCP service singleton."""
-    global _mcp_service
-    if _mcp_service is None:
-        _mcp_service = MCPService(vector_store, embedding_service)
-    return _mcp_service
 
 
 # --- MCP Server Runner ---

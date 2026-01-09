@@ -2,6 +2,7 @@ from typing import Optional
 import re
 from models import IndexSimulationResponse, ExplainPlan
 from database import get_db_connection
+from error_factory import ErrorFactory, DatabaseError
 
 class IndexSimulationService:
     async def perform_index_simulation(
@@ -60,7 +61,14 @@ class IndexSimulationService:
                     extra=explain_result.get('Extra'),
                     estimated_time_ms=round(estimated_time, 2)
                 )
-        except Exception:
+        except Exception as e:
+            # Use ErrorFactory for database errors
+            db_error = ErrorFactory.database_error(
+                "Failed to get EXPLAIN plan for simulation",
+                original_error=e,
+                sql=sql[:100]
+            )
+            print(f"[/simulate] DB Error: {db_error}")
             current_plan = ExplainPlan(
                 access_type="ALL", rows_examined=10000, key=None, extra="Using where", estimated_time_ms=500.0
             )

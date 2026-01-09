@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import re
 from database import get_db_connection
+from error_factory import ErrorFactory
 
 router = APIRouter(prefix="/masking", tags=["Data Masking"])
 
@@ -287,10 +288,15 @@ async def analyze_pii_columns(request: MaskingAnalyzeRequest):
         }
         
     except Exception as e:
+        db_error = ErrorFactory.database_error(
+            "PII Analysis",
+            f"Failed to analyze PII columns in database {request.database}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to analyze PII columns: {str(e)}"
+            "message": str(db_error)
         }
 
 
@@ -353,10 +359,15 @@ async def apply_masking(request: MaskingApplyRequest):
         }
         
     except Exception as e:
+        service_error = ErrorFactory.service_error(
+            "Data Masking",
+            "Failed to apply masking to query results",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to apply masking: {str(e)}"
+            "message": str(service_error)
         }
 
 
@@ -405,10 +416,15 @@ async def get_masking_rules(role: str = "dba"):
         }
         
     except Exception as e:
+        service_error = ErrorFactory.service_error(
+            "Masking Rules",
+            f"Failed to retrieve masking rules for role {role}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to get masking rules: {str(e)}"
+            "message": str(service_error)
         }
 
 
@@ -435,8 +451,13 @@ async def configure_masking_rules(request: MaskingConfigureRequest):
         }
         
     except Exception as e:
+        validation_error = ErrorFactory.validation_error(
+            "Masking Configuration",
+            f"Failed to configure masking rules for role {request.role}",
+            original_error=e
+        )
         return {
             "success": False,
             "mode": "error",
-            "message": f"Failed to configure masking rules: {str(e)}"
+            "message": str(validation_error)
         }

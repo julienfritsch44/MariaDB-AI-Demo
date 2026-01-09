@@ -38,6 +38,7 @@ import { HealingStep } from "./analyzer-steps/HealingStep"
 import { ComparisonStep } from "./analyzer-steps/ComparisonStep"
 import { BranchValidationStep } from "./analyzer-steps/BranchValidationStep"
 import { BranchCreationModal } from "./analyzer-steps/BranchCreationModal"
+import { QueryAnalysis, AnalysisHistoryItem } from "@/types"
 import { DeploymentSuccessModal } from "./analyzer-steps/DeploymentSuccessModal"
 import { AnalyzerHeader } from "./analyzer-steps/AnalyzerHeader"
 import { ProgressBar } from "./analyzer-steps/ProgressBar"
@@ -74,20 +75,12 @@ const riskStyles = {
     }
 }
 
-export interface AnalysisHistoryItem {
-    id: string
-    sql: string
-    risk_score: number
-    risk_level: string
-    timestamp: Date
-}
-
 interface UnifiedQueryAnalyzerCleanProps {
     analysisHistory: AnalysisHistoryItem[]
     setAnalysisHistory: React.Dispatch<React.SetStateAction<AnalysisHistoryItem[]>>
     onLoadFromHistory?: (item: AnalysisHistoryItem) => void
     selectedHistoryItem?: AnalysisHistoryItem | null
-    analysis?: any
+    analysis?: QueryAnalysis | null
 }
 
 export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory, onLoadFromHistory, selectedHistoryItem, analysis }: UnifiedQueryAnalyzerCleanProps) {
@@ -116,7 +109,13 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
     const [branchCreated, setBranchCreated] = useState(false)
     const [proposedBranchName, setProposedBranchName] = useState("")
     const [branchDatabase, setBranchDatabase] = useState<string | null>(null)
-    const [branchTestResult, setBranchTestResult] = useState<any>(null)
+    const [branchTestResult, setBranchTestResult] = useState<{
+        status: string;
+        latency?: number;
+        throughput?: number;
+        comparison?: string;
+        error?: string;
+    } | null>(null)
     const [isTestingBranch, setIsTestingBranch] = useState(false)
 
     // Main cards expansion state (workflow accordion)
@@ -130,7 +129,18 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
     })
 
     // Accordion states for Step 2 (with localStorage persistence)
-    const [sectionsExpanded, setSectionsExpanded] = useState(() => {
+    const [sectionsExpanded, setSectionsExpanded] = useState<{
+        cost: boolean;
+        waitEvents: boolean;
+        resourceGroup: boolean;
+        similarIssues: boolean;
+    }>(() => {
+        const defaultState = {
+            cost: true,
+            waitEvents: false,
+            resourceGroup: false,
+            similarIssues: false
+        }
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('unifiedAnalyzerSections')
             if (saved) {
@@ -141,12 +151,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                 }
             }
         }
-        return {
-            cost: true,
-            waitEvents: false,
-            resourceGroup: false,
-            similarIssues: false
-        }
+        return defaultState
     })
 
     // Save preferences to localStorage
@@ -200,7 +205,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
 
             // Auto-expand Wait Events if locks are detected
             if (data.summary.total_lock_waits > 0) {
-                setSectionsExpanded((prev: any) => ({ ...prev, waitEvents: true }))
+                setSectionsExpanded(prev => ({ ...prev, waitEvents: true }))
             }
         } catch (err) {
             console.error("Wait events analysis failed:", err)
@@ -230,7 +235,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
 
     const toggleSection = (section: keyof typeof sectionsExpanded) => {
         // Auto-collapse other sections and scroll to the one opening
-        setSectionsExpanded((prev: any) => {
+        setSectionsExpanded(prev => {
             const newState = {
                 cost: false,
                 waitEvents: false,
@@ -676,7 +681,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                             isExpanded={cardsExpanded.input}
                             sql={sql}
                             isAnalyzing={isAnalyzing}
-                            analysis={analysis}
+                            analysis={analysis || undefined}
                             onToggleExpand={() => setCardsExpanded(prev => ({ ...prev, input: !prev.input }))}
                             onSqlChange={setSql}
                             onAnalyze={handleAnalyze}

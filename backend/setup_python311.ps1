@@ -1,4 +1,4 @@
-# Script de configuration Python 3.11 pour le backend MariaDB FinOps Auditor
+# Script de configuration Python 3.11 pour le backend MariaDB Local Pilot
 
 Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host "Configuration Python 3.11 - Backend Setup" -ForegroundColor Cyan

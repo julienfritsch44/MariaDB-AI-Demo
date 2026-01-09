@@ -14,6 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rag.vector_store import VectorStore
 from rag.embedding_service import EmbeddingService
 from dotenv import load_dotenv
+from error_factory import ErrorFactory, DatabaseError, ValidationError
 
 # Load env variables
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
@@ -59,7 +60,13 @@ def process_jira_json(file_path: str) -> List[Dict]:
         return tickets
         
     except Exception as e:
-        print(f"Error reading JSON: {e}")
+        # Use ErrorFactory for validation/parsing errors
+        validation_error = ErrorFactory.validation_error(
+            "Failed to parse Jira JSON",
+            field="file_path",
+            original_error=e
+        )
+        print(f"Error reading JSON: {validation_error}")
         return []
 
 def main():
@@ -71,7 +78,12 @@ def main():
         store.init_schema()
         print("Vector Store schema initialized.")
     except Exception as e:
-        print(f"Failed to connect/init DB: {e}")
+        db_error = ErrorFactory.database_error(
+            "Ingester Initialization",
+            "Failed to connect or initialize vector store schema",
+            original_error=e
+        )
+        print(f"FAILED: {db_error}")
         return
 
     embedding_service = EmbeddingService()
@@ -95,7 +107,12 @@ def main():
                     embedding=embedding
                 )
             except Exception as e:
-                print(f"Error storing {doc['source_id']}: {e}")
+                db_error = ErrorFactory.database_error(
+                    "Ingester Insertion",
+                    f"Failed to store document {doc['source_id']} in vector store",
+                    original_error=e
+                )
+                print(f"ERROR: {db_error}")
         else:
             print(f"Skipping {doc['source_id']} (no embedding generated)")
             

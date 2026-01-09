@@ -6,6 +6,7 @@ import os
 import json
 import httpx
 from typing import Optional
+from error_factory import ErrorFactory, APIError, ServiceError
 
 
 class SuggestionService:
@@ -57,7 +58,12 @@ Return ONLY valid JSON, no markdown."""
             try:
                 return self._call_skyai(prompt)
             except Exception as e:
-                print(f"[SuggestionService] SkyAI failed: {e}")
+                service_error = ErrorFactory.service_error(
+                    "AI Suggestion generation",
+                    "Failed to generate optimization suggestion via SkyAI",
+                    original_error=e
+                )
+                print(f"[SuggestionService] {service_error}")
         
         # Fallback to heuristic-based suggestion
         return self._heuristic_suggestion(query_fingerprint)
@@ -77,7 +83,13 @@ Return ONLY valid JSON, no markdown."""
         )
         
         if response.status_code != 200:
-            raise Exception(f"SkyAI returned {response.status_code}: {response.text}")
+            api_error = ErrorFactory.api_error(
+                "SkyAI Copilot Suggestion",
+                status_code=response.status_code,
+                original_error=Exception(response.text[:100]),
+                endpoint=self.api_url
+            )
+            raise api_error
         
         result = response.json()
         answer = result.get("answer", "{}")

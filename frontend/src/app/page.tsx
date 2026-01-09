@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { QueryAnalysis, SlowQuery, Suggestion, Message, PredictResponse, IndexSimulationResponse } from "@/types"
+import { QueryAnalysis, SlowQuery, Suggestion, Message, PredictResponse, IndexSimulationResponse, RewriteResponse, HistoryItem, DashboardTab } from "@/types"
 import { SlowQueryTable } from "@/components/SlowQueryTable"
 import { QueryDetail } from "@/components/QueryDetail"
 import { QueryPredictorInput, PredictorResultPanel } from "@/components/QueryPredictor"
@@ -17,11 +17,14 @@ import { useTheme } from "@/context/ThemeContext"
 import { DiagnosticStatus } from "@/components/DiagnosticStatus"
 import { MCPProof } from "@/components/MCPProof"
 import { PerformanceMonitor } from "@/components/ui/PerformanceMonitor"
-import { trackedFetch } from "@/lib/usePerformance"
+import { apiFetch } from "@/lib/api-client"
 import { Splash } from "@/components/Splash"
 import { UnifiedCopilot } from "@/components/UnifiedCopilot"
 
 import { NeuralDashboard } from "@/components/neural/NeuralDashboard"
+import { SidebarContent } from "@/components/dashboard/SidebarContent"
+import { CopilotSidebar } from "@/components/dashboard/CopilotSidebar"
+import { MainContent } from "@/components/dashboard/MainContent"
 
 export default function Dashboard() {
   const { theme, setTheme } = useTheme()
@@ -31,15 +34,15 @@ export default function Dashboard() {
   const [selectedSuggestion, setSelectedSuggestion] = useState<Suggestion | null>(null)
   const [selectedQuery, setSelectedQuery] = useState<SlowQuery | null>(null)
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false)
-  const [activeTab, setActiveTab] = useState<"shop" | "predictor" | "simulator" | "rewriter" | "sandbox" | "unified" | "queries" | "diagnostic" | "mcp" | "planstability" | "branching" | "neural">("neural")
-  const [unifiedHistory, setUnifiedHistory] = useState<any[]>([])
-  const [selectedHistoryItem, setSelectedHistoryItem] = useState<any | null>(null)
+  const [activeTab, setActiveTab] = useState<DashboardTab>("neural")
+  const [unifiedHistory, setUnifiedHistory] = useState<HistoryItem[]>([])
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryItem | null>(null)
   const [isCopilotOpen, setIsCopilotOpen] = useState(true)
   const [showPowerTools, setShowPowerTools] = useState(false)
   const [isImmersiveMode, setIsImmersiveMode] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  // Predictor state (lifted from QueryPredictor component)
+  // Predictor state
   const [predictorResult, setPredictorResult] = useState<PredictResponse | null>(null)
   const [isPredicting, setIsPredicting] = useState(false)
 
@@ -48,11 +51,10 @@ export default function Dashboard() {
   const [isSimulating, setIsSimulating] = useState(false)
 
   // Query Rewriter state
-  const [rewriterResult, setRewriterResult] = useState<any | null>(null)
+  const [rewriterResult, setRewriterResult] = useState<RewriteResponse | null>(null)
   const [isRewriting, setIsRewriting] = useState(false)
 
-  // -- Chat State --
-
+  // Chat State
   const [chatMessages, setChatMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -62,13 +64,11 @@ export default function Dashboard() {
   ])
   const [chatInput, setChatInput] = useState("")
   const [isChatLoading, setIsChatLoading] = useState(false)
-  // ----------------
 
   // Fetch initial analysis
   useEffect(() => {
     if (isStarted) {
-      trackedFetch("http://127.0.0.1:8000/analyze?limit=10")
-        .then(res => res.json())
+      apiFetch<QueryAnalysis>("/analyze?limit=10")
         .then(data => setAnalysis(data))
         .catch(err => console.error("Failed to fetch analysis", err))
     }
@@ -79,9 +79,6 @@ export default function Dashboard() {
     setSelectedQuery(query)
     setIsLoadingSuggestion(true)
     setSelectedSuggestion(null)
-
-    // Reset chat on new query selection? Optional. 
-    // Maybe keep history or clear it. Let's clear for context switch.
     setChatMessages([{
       id: "welcome",
       role: "assistant",
@@ -90,8 +87,7 @@ export default function Dashboard() {
 
     try {
       console.log("[Frontend] Fetching suggestion for query:", id)
-      const res = await trackedFetch(`http://127.0.0.1:8000/suggest/${id}`)
-      const data = await res.json()
+      const data = await apiFetch<Suggestion>(`/suggest/${id}`)
       setSelectedSuggestion(data)
     } catch (error) {
       console.error("[Frontend] Failed to get suggestion", error)
@@ -108,82 +104,29 @@ export default function Dashboard() {
     setChatInput("")
     setIsChatLoading(true)
 
-    // Construct context based on ACTIVE TAB
     let contextStr = ""
-
     if (activeTab === "queries" && selectedQuery) {
-      contextStr = `Current Query ID: ${selectedQuery.id}
-SQL: ${selectedQuery.sql_text}
-Execution Time: ${selectedQuery.query_time}s
-Rows Sent: ${selectedQuery.rows_sent}
-Rows Examined: ${selectedQuery.rows_examined}
-`
+      contextStr = `SQL: ${selectedQuery.sql_text}\nExecution Time: ${selectedQuery.query_time}s\nRows Sent: ${selectedQuery.rows_sent}\nRows Examined: ${selectedQuery.rows_examined}`
       if (selectedSuggestion) {
-        contextStr += `
-PREVIOUS ANALYSIS:
-Explanation: ${selectedSuggestion.query_explanation}
-Performance Assessment: ${selectedSuggestion.performance_assessment}
-Actionable Insights: ${selectedSuggestion.actionable_insights}
-Risks: ${selectedSuggestion.risks?.join(", ")}
-Sources/Knowledge Base: ${selectedSuggestion.sources?.join(", ")}
-`
+        contextStr += `\nPREVIOUS ANALYSIS: ${selectedSuggestion.query_explanation}\nInsights: ${selectedSuggestion.actionable_insights}`
       }
     } else if (activeTab === "predictor" && predictorResult) {
-      contextStr = `
-CONTEXT: SQL Risk Prediction
-Risk Level: ${predictorResult.risk_level}
-Risk Score: ${predictorResult.risk_score}
-Reason: ${predictorResult.reason}
-Analysis: ${predictorResult.query_analysis}
-Suggested Fix: ${predictorResult.suggested_fix}
-`
+      contextStr = `CONTEXT: SQL Risk Prediction\nRisk Level: ${predictorResult.risk_level}\nReason: ${predictorResult.reason}`
     } else if (activeTab === "simulator" && simulatorResult) {
-      contextStr = `
-CONTEXT: Index Simulation
-Recommendation: ${simulatorResult.recommendation}
-Improvement: ${simulatorResult.improvement_percent}%
-Current Plan Cost: ${simulatorResult.current_plan.estimated_time_ms}ms
-With Index Cost: ${simulatorResult.with_index_plan.estimated_time_ms}ms
-Created Index SQL: ${simulatorResult.create_index_sql}
-`
+      contextStr = `CONTEXT: Index Simulation\nRecommendation: ${simulatorResult.recommendation}\nImprovement: ${simulatorResult.improvement_percent}%`
     } else if (activeTab === "rewriter" && rewriterResult) {
-      contextStr = `
-CONTEXT: Self-Healing SQL / Query Rewriting
-Original SQL: ${rewriterResult.original_sql}
-Rewritten SQL: ${rewriterResult.rewritten_sql}
-Improvements: ${rewriterResult.improvements?.join(", ")}
-Speedup: ${rewriterResult.estimated_speedup}
-Confidence: ${rewriterResult.confidence}
-`
+      contextStr = `CONTEXT: Self-Healing SQL\nOriginal: ${rewriterResult.original_sql}\nRewritten: ${rewriterResult.rewritten_sql}`
     }
 
     try {
-      const response = await trackedFetch("http://127.0.0.1:8000/copilot/chat", {
+      const data = await apiFetch<{ answer: string }>("/copilot/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: text,
-          context: contextStr
-        })
+        body: JSON.stringify({ prompt: text, context: contextStr })
       })
-
-      if (!response.ok) throw new Error("API Error")
-
-      const data = await response.json()
-      const answer = data.answer || data.message || data.result || JSON.stringify(data)
-
-      setChatMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        text: answer
-      }])
-
+      const answer = data.answer || JSON.stringify(data)
+      setChatMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", text: answer }])
     } catch (error) {
-      setChatMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        text: "Sorry, I couldn't reach the Copilot service. Please check your API Key configuration."
-      }])
+      setChatMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", text: "Error communicating with Copilot." }])
     } finally {
       setIsChatLoading(false)
     }
@@ -205,7 +148,6 @@ Confidence: ${rewriterResult.confidence}
     }
   }
 
-  // Handle Global F11 for Presentation Mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F11') {
@@ -213,20 +155,14 @@ Confidence: ${rewriterResult.confidence}
         togglePresentation()
       }
     }
-
     const handleFullscreenChange = () => {
       const isCurrentlyFullscreen = !!document.fullscreenElement
       setIsFullscreen(isCurrentlyFullscreen)
-      if (isCurrentlyFullscreen) {
-        setIsImmersiveMode(true)
-      } else {
-        setIsImmersiveMode(false)
-      }
+      if (isCurrentlyFullscreen) setIsImmersiveMode(true)
+      else setIsImmersiveMode(false)
     }
-
     window.addEventListener('keydown', handleKeyDown)
     document.addEventListener('fullscreenchange', handleFullscreenChange)
-
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       document.removeEventListener('fullscreenchange', handleFullscreenChange)
@@ -241,10 +177,7 @@ Confidence: ${rewriterResult.confidence}
     }])
   }
 
-  // --- RENDER ---
-  if (!isStarted) {
-    return <Splash onConnect={() => setIsStarted(true)} />
-  }
+  if (!isStarted) return <Splash onConnect={() => setIsStarted(true)} />
 
   return (
     <div className="min-h-screen bg-background">
@@ -254,16 +187,14 @@ Confidence: ${rewriterResult.confidence}
           analysis={analysis}
           onBack={() => {
             setIsImmersiveMode(false)
-            if (document.fullscreenElement) {
-              document.exitFullscreen()
-            }
+            if (document.fullscreenElement) document.exitFullscreen()
           }}
           isPresentationMode={isFullscreen}
           onTogglePresentation={togglePresentation}
         />
       ) : (
         <main className="h-screen bg-background text-foreground overflow-hidden flex font-sans selection:bg-primary/20">
-          {/* 1. LEFT NARROW NAV (SkySQL Style) */}
+          {/* Navigation */}
           <nav className="w-16 border-r border-border bg-card flex flex-col items-center py-4 gap-4 shrink-0 z-50 shadow-sm">
             <div className="p-2 mb-4">
               <Zap className="w-6 h-6 text-primary fill-primary" />
@@ -284,40 +215,24 @@ Confidence: ${rewriterResult.confidence}
                     if (activeTab !== tab.id) handleChatClear()
                   }}
                   title={tab.label}
-                  className={`relative p-3 rounded-lg transition-all group ${isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
+                  className={`relative p-3 rounded-lg transition-all group ${isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
                 >
                   <Icon className="w-6 h-6" />
-                  {isActive && (
-                    <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full" />
-                  )}
-                  {/* Tooltip */}
-                  <div className="absolute left-full ml-3 px-2 py-1 bg-card border border-border text-foreground text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-opacity shadow-md">
-                    {tab.label}
-                  </div>
+                  {isActive && <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full" />}
                 </button>
               )
             })}
 
-            {/* Power User Tools Dropdown */}
             <div className="relative group">
               <button
                 onClick={() => setShowPowerTools(!showPowerTools)}
                 title="Power User Tools"
-                className={`relative p-3 rounded-lg transition-all ${showPowerTools
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                className={`relative p-3 rounded-lg transition-all ${showPowerTools ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
               >
                 <Zap className="w-6 h-6" />
                 {showPowerTools && (
                   <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full" />
                 )}
-                <div className="absolute left-full ml-3 px-2 py-1 bg-card border border-border text-foreground text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-opacity shadow-md">
-                  Power User Tools
-                </div>
               </button>
 
               {showPowerTools && (
@@ -338,10 +253,7 @@ Confidence: ${rewriterResult.confidence}
                           setShowPowerTools(false)
                           handleChatClear()
                         }}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${activeTab === tool.id
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground hover:bg-muted"
-                          }`}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${activeTab === tool.id ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"}`}
                       >
                         <Icon className="w-4 h-4" />
                         <span>{tool.label}</span>
@@ -353,7 +265,6 @@ Confidence: ${rewriterResult.confidence}
             </div>
 
             <div className="mt-auto flex flex-col items-center gap-4">
-              {/* Theme Toggle */}
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
@@ -361,25 +272,18 @@ Confidence: ${rewriterResult.confidence}
               >
                 {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-              {/* Diagnostic Icon moved to bottom */}
               <button
                 onClick={() => {
                   setActiveTab("diagnostic")
                   handleChatClear()
                 }}
                 title="System Health"
-                className={`relative p-3 rounded-lg transition-all group ${activeTab === "diagnostic"
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                className={`relative p-3 rounded-lg transition-all group ${activeTab === "diagnostic" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
               >
                 <HeartPulse className="w-6 h-6" />
                 {activeTab === "diagnostic" && (
                   <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-r-full" />
                 )}
-                <div className="absolute left-full ml-3 px-2 py-1 bg-card border border-border text-foreground text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-opacity shadow-md">
-                  System Health
-                </div>
               </button>
 
               <div className="relative group">
@@ -400,408 +304,73 @@ Confidence: ${rewriterResult.confidence}
                 </div>
               </div>
 
-              {/* COPILOT TOGGLE */}
               <button
                 onClick={() => setIsCopilotOpen(!isCopilotOpen)}
                 title={isCopilotOpen ? "Hide Copilot" : "Show Copilot"}
-                className={`p-3 rounded-lg transition-all group relative ${isCopilotOpen
-                  ? "bg-primary/10 text-primary border border-primary/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                className={`p-3 rounded-lg transition-all group relative ${isCopilotOpen ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
               >
                 <MessageSquare className="w-6 h-6" />
-                <div className="absolute left-full ml-3 px-2 py-1 bg-card border border-border text-foreground text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] transition-opacity shadow-md">
-                  {isCopilotOpen ? "Hide Copilot" : "Show Copilot"}
-                </div>
               </button>
-
-
             </div>
           </nav>
 
-          {/* 2. SIDEBAR CONTENT (400px fixed) */}
+          {/* Extracted Sidebar */}
           {activeTab !== "neural" && (
-            <div className="w-[380px] border-r border-border flex flex-col bg-muted shrink-0 overflow-hidden">
-              {/* Header of Sidebar */}
-              <div className="h-12 border-b border-border flex items-center px-4 justify-between bg-card/50 dark:bg-muted/20">
-                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  {activeTab === "shop" ? "DEMO APP" :
-                    activeTab === "queries" ? "QUERY LOGS" :
-                      activeTab === "unified" ? "UNIFIED ANALYZER" :
-                        activeTab === "predictor" ? "RISK ANALYSIS" :
-                          activeTab === "simulator" ? "INDEX LAB" :
-                            activeTab === "sandbox" ? "SMART SANDBOX" :
-                              activeTab === "planstability" ? "PLAN STABILITY" :
-                                activeTab === "branching" ? "DB BRANCHING" :
-                                  activeTab === "diagnostic" ? "DIAGNOSTICS" :
-                                    activeTab === "mcp" ? "AI COPILOT" : "SELF-HEALING"}
-                </span>
-                <span className="text-[10px] font-mono text-muted-foreground/60">v11.4.2</span>
-              </div>
-
-              <div className="flex-1 overflow-y-auto scrollbar-thin">
-                {activeTab === "shop" ? (
-                  <div className="p-8 text-center text-zinc-500 space-y-4">
-                    <div className="mx-auto w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center">
-                      <ShoppingCart className="w-6 h-6 text-zinc-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-zinc-300">Application Dashboard</h3>
-                      <p className="text-xs mt-2 leading-relaxed">
-                        Interact with the application in the right panel to generate real-time database traffic and slow query logs.
-                      </p>
-                    </div>
-                  </div>
-                ) : ["predictor", "rewriter", "sandbox", "simulator"].includes(activeTab) ? (
-                  <div className="p-0">
-                    <div className="p-4 border-b border-border bg-card/30">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                        <List className="w-3 h-3" />
-                        Select Query to Analyze
-                      </div>
-                    </div>
-                    {analysis ? (
-                      <SlowQueryTable
-                        queries={analysis.top_queries}
-                        onAnalyze={(id) => {
-                          handleAnalyze(id);
-                        }}
-                        activeQueryId={selectedQuery?.id}
-                      />
-                    ) : (
-                      <div className="p-8 text-center text-xs text-muted-foreground">Loading queries...</div>
-                    )}
-                  </div>
-                ) : activeTab === "unified" ? (
-                  <div className="p-4 space-y-4">
-                    <div className="text-xs font-semibold text-muted-foreground mb-3">Analysis History</div>
-                    {unifiedHistory.length === 0 ? (
-                      <div className="text-xs text-muted-foreground/60 text-center py-8">
-                        No queries analyzed yet
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {unifiedHistory.map((item) => (
-                          <button
-                            key={item.id}
-                            onClick={() => setSelectedHistoryItem(item)}
-                            className="w-full p-3 rounded-md bg-muted/50 hover:bg-muted border border-border/40 hover:border-primary/50 transition-all text-left group"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className={`text-xs font-bold ${item.risk_level === 'HIGH' ? 'text-red-400' :
-                                item.risk_level === 'MEDIUM' ? 'text-amber-400' :
-                                  'text-emerald-400'
-                                }`}>
-                                {item.risk_level} ({item.risk_score})
-                              </span>
-                              <span className="text-[10px] text-muted-foreground">
-                                {new Date(item.timestamp).toLocaleTimeString()}
-                              </span>
-                            </div>
-                            <div className="text-xs font-mono text-foreground/80 truncate group-hover:text-primary transition-colors">
-                              {item.sql}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {unifiedHistory.length > 0 && (
-                      <button
-                        onClick={() => setUnifiedHistory([])}
-                        className="w-full mt-4 p-2 text-xs text-muted-foreground hover:text-foreground border border-border/40 rounded-md hover:bg-muted/50 transition-colors"
-                      >
-                        Clear History
-                      </button>
-                    )}
-                  </div>
-                ) : activeTab === "planstability" ? (
-                  <div className="p-4 space-y-4">
-                    <div className="text-xs text-muted-foreground">
-                      Manage query plan baselines to prevent performance regressions
-                    </div>
-                  </div>
-                ) : activeTab === "branching" ? (
-                  <div className="p-4 space-y-4">
-                    <div className="text-xs text-muted-foreground">
-                      Create and manage database branches for safe testing
-                    </div>
-                  </div>
-                ) : activeTab === "diagnostic" ? (
-                  <div className="p-4 space-y-4">
-                    <DiagnosticStatus />
-                  </div>
-                ) : analysis ? (
-                  <div className="p-2">
-                    <SlowQueryTable
-                      queries={analysis.top_queries}
-                      onAnalyze={handleAnalyze}
-                      activeQueryId={selectedQuery?.id}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center py-20 text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      <span className="text-xs">Connecting...</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Sidebar Footer Metrics */}
-              <div className="p-4 border-t border-border bg-card/50 space-y-3">
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-tighter">
-                  <span className="text-muted-foreground">Global Score</span>
-                  <span className="text-primary font-bold">{analysis?.global_score ?? 0}</span>
-                </div>
-                <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary" style={{ width: `${analysis?.global_score ?? 0}%` }} />
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    <span>SkySQL Active</span>
-                  </div>
-                  <span>{analysis?.total_queries ?? 0} Samples</span>
-                </div>
-
-                {/* NEURAL CORE COUNTER */}
-                <div className="pt-2 mt-2 border-t border-border/50">
-                  <div className="flex items-center justify-between group">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
-                        <Brain className="w-3 h-3 text-primary animate-pulse" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Neural Core</span>
-                    </div>
-                    <span className="text-[10px] font-mono text-primary font-bold">
-                      {analysis?.kb_count ? analysis.kb_count.toLocaleString() : "1,350"} Incidents
-                    </span>
-                  </div>
-                  <p className="text-[8px] text-muted-foreground/60 mt-1 leading-tight italic">
-                    Proactive RAG grounded in MariaDB Jira history.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <SidebarContent
+              activeTab={activeTab}
+              analysis={analysis}
+              selectedQuery={selectedQuery}
+              handleAnalyze={handleAnalyze}
+              unifiedHistory={unifiedHistory}
+              setUnifiedHistory={setUnifiedHistory}
+              setSelectedHistoryItem={setSelectedHistoryItem}
+            />
           )}
 
+          {/* Extracted Main Content */}
+          <MainContent
+            activeTab={activeTab}
+            analysis={analysis}
+            selectedQuery={selectedQuery}
+            selectedSuggestion={selectedSuggestion}
+            isLoadingSuggestion={isLoadingSuggestion}
+            isFullscreen={isFullscreen}
+            togglePresentation={togglePresentation}
+            setActiveTab={setActiveTab}
+            predictorResult={predictorResult}
+            setPredictorResult={setPredictorResult}
+            isPredicting={isPredicting}
+            setIsPredicting={setIsPredicting}
+            simulatorResult={simulatorResult}
+            setSimulatorResult={setSimulatorResult}
+            isSimulating={isSimulating}
+            setIsSimulating={setIsSimulating}
+            rewriterResult={rewriterResult}
+            setRewriterResult={setRewriterResult}
+            isRewriting={isRewriting}
+            setIsRewriting={setIsRewriting}
+            unifiedHistory={unifiedHistory}
+            setUnifiedHistory={setUnifiedHistory}
+            selectedHistoryItem={selectedHistoryItem}
+            setSelectedHistoryItem={setSelectedHistoryItem}
+            chatMessages={chatMessages}
+            chatInput={chatInput}
+            setChatInput={setChatInput}
+            isChatLoading={isChatLoading}
+            handleChatSend={handleChatSend}
+            handleChatClear={handleChatClear}
+          />
 
-          {/* 3. MAIN PANEL + COPILOT */}
-          <div className="flex-1 bg-card relative overflow-hidden flex">
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Tab-like indicator / breadcrumb for context */}
-              <div className="h-12 border-b border-border bg-muted/30 flex items-center px-6 justify-between">
-                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-widest">
-                  <span>MariaDB Local Pilot</span>
-                  <ArrowRight className="w-3 h-3" />
-                  <span className="text-foreground">{activeTab}</span>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-hidden relative flex flex-col">
-                {activeTab === "neural" ? (
-                  <div className="flex-1 overflow-y-auto">
-                    <NeuralDashboard
-                      analysis={analysis}
-                      onBack={() => setActiveTab("queries")}
-                      onNavigate={(tab) => {
-                        setActiveTab(tab);
-                      }}
-                      isPresentationMode={isFullscreen}
-                      onTogglePresentation={togglePresentation}
-                    />
-                  </div>
-                ) : activeTab === "shop" ? (
-                  <ShopDemo />
-                ) : activeTab === "mcp" ? (
-                  <UnifiedCopilot
-                    chatMessages={chatMessages}
-                    chatInput={chatInput}
-                    setChatInput={setChatInput}
-                    isChatLoading={isChatLoading}
-                    onChatSend={handleChatSend}
-                    onChatClear={handleChatClear}
-                  />
-                ) : activeTab === "predictor" ? (
-                  <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="p-6 border-b border-border bg-card/50">
-                      <QueryPredictorInput
-                        initialQuery={selectedQuery?.sql_text}
-                        onPredict={setPredictorResult}
-                        isLoading={isPredicting}
-                        setIsLoading={setIsPredicting}
-                      />
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                      <PredictorResultPanel
-                        result={predictorResult}
-                        isLoading={isPredicting}
-                      />
-                    </div>
-                  </div>
-                ) : activeTab === "simulator" ? (
-                  <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="p-6 border-b border-border bg-card/50">
-                      <IndexSimulatorInput
-                        initialQuery={selectedQuery?.sql_text}
-                        onSimulate={setSimulatorResult}
-                        isLoading={isSimulating}
-                        setIsLoading={setIsSimulating}
-                      />
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                      <IndexSimulatorResultPanel
-                        result={simulatorResult}
-                        isLoading={isSimulating}
-                      />
-                    </div>
-                  </div>
-                ) : activeTab === "rewriter" ? (
-                  <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="p-6 border-b border-border bg-card/50">
-                      <QueryRewriterInput
-                        initialQuery={selectedQuery?.sql_text}
-                        onRewrite={setRewriterResult}
-                        isLoading={isRewriting}
-                        setIsLoading={setIsRewriting}
-                      />
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                      <RewriterResultPanel
-                        result={rewriterResult}
-                        isLoading={isRewriting}
-                      />
-                    </div>
-                  </div>
-                ) : activeTab === "sandbox" ? (
-                  <div className="flex-1 overflow-y-auto p-6">
-                    <SmartSandbox initialQuery={selectedQuery?.sql_text} />
-                  </div>
-                ) : activeTab === "unified" ? (
-                  <UnifiedQueryAnalyzerClean
-                    analysisHistory={unifiedHistory}
-                    setAnalysisHistory={setUnifiedHistory}
-                    selectedHistoryItem={selectedHistoryItem}
-                    analysis={analysis}
-                    onLoadFromHistory={(item) => {
-                      setSelectedHistoryItem(item)
-                    }}
-                  />
-                ) : activeTab === "planstability" ? (
-                  <div className="flex-1 overflow-y-auto">
-                    <PlanStabilityDashboard />
-                  </div>
-                ) : activeTab === "branching" ? (
-                  <div className="flex-1 overflow-y-auto">
-                    <BranchingDashboard />
-                  </div>
-                ) : activeTab === "diagnostic" ? (
-                  <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-muted-foreground gap-4">
-                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center border border-border">
-                      <Activity className="w-8 h-8 text-primary" />
-                    </div>
-                    <div className="max-w-md">
-                      <h3 className="text-xl font-bold text-foreground uppercase tracking-widest">Live Infrastructure Status</h3>
-                      <p className="mt-2 text-sm">Deep diagnostic of the MariaDB / RAG infrastructure running on the backend.</p>
-                      <div className="mt-8 grid grid-cols-2 gap-4 text-left">
-                        <div className="p-3 rounded-lg bg-muted/50 border border-border">
-                          <p className="text-[10px] text-muted-foreground font-bold uppercase">Backend</p>
-                          <p className="text-xs text-foreground">FastAPI / Python 3.13</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-muted/50 border border-border">
-                          <p className="text-[10px] text-muted-foreground font-bold uppercase">LLM Engine</p>
-                          <p className="text-xs text-foreground">MariaDB SkyAI Copilot</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* MCP PROOF TERMINAL */}
-                    <div className="w-full max-w-2xl h-[300px] mt-8">
-                      <MCPProof />
-                    </div>
-                  </div>
-                ) : (
-                  <QueryDetail
-                    suggestion={selectedSuggestion}
-                    query={selectedQuery}
-                    isLoading={isLoadingSuggestion}
-                  />
-                )}
-              </div>
-
-              {/* Persistent Copilot Panel */}
-              {isCopilotOpen && (
-                <div className="w-[400px] border-l border-border flex flex-col bg-muted/30 shrink-0">
-                  <div className="h-12 border-b border-border bg-card/50 flex items-center px-4 justify-between">
-                    <div className="flex items-center gap-2">
-                      <Brain className="w-4 h-4 text-primary" />
-                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">AI Copilot</span>
-                    </div>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {chatMessages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                      >
-                        <div
-                          className={`max-w-[85%] rounded-lg px-3 py-2 ${msg.role === "user"
-                            ? "bg-primary text-white text-sm"
-                            : "bg-card text-foreground border border-border text-sm"
-                            }`}
-                        >
-                          {msg.role === "assistant" && (
-                            <div className="flex items-center gap-1.5 mb-1.5 text-[10px] text-muted-foreground">
-                              <Brain className="w-3 h-3" />
-                              <span>AI Copilot</span>
-                            </div>
-                          )}
-                          <p className="text-xs whitespace-pre-wrap leading-relaxed">{msg.text}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {isChatLoading && (
-                      <div className="flex justify-start">
-                        <div className="bg-card border border-border rounded-lg px-3 py-2">
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                            <span>Thinking...</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="border-t border-border bg-card/50 p-3">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault()
-                            handleChatSend()
-                          }
-                        }}
-                        placeholder="Ask the AI Copilot..."
-                        disabled={isChatLoading}
-                        className="flex-1 px-3 py-2 bg-card border border-border rounded-md text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-                      />
-                      <button
-                        onClick={() => handleChatSend()}
-                        disabled={isChatLoading || !chatInput.trim()}
-                        className="px-3 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Extracted Copilot Sidebar */}
+          {isCopilotOpen && (
+            <CopilotSidebar
+              chatMessages={chatMessages}
+              chatInput={chatInput}
+              setChatInput={setChatInput}
+              isChatLoading={isChatLoading}
+              handleChatSend={handleChatSend}
+            />
+          )}
         </main>
       )}
     </div>

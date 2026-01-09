@@ -9,6 +9,7 @@ import logging
 from fastapi import APIRouter
 from database import get_db_connection
 from models import DeploymentRequest, DeploymentResponse
+from error_factory import ErrorFactory
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -54,13 +55,16 @@ async def deploy_to_production(request: DeploymentRequest):
         )
 
     except Exception as e:
-        logger.error(f"Deployment failed: {e}")
-        # Even if real failure, we might want to fail gracefully in demo
-        # But for "real deployment" request, we should probably report the error
+        db_error = ErrorFactory.database_error(
+            "Production Deployment",
+            f"Failed to deploy query to database {request.database}",
+            original_error=e
+        )
+        logger.error(db_error)
         return DeploymentResponse(
             success=False,
             message="Deployment failed",
-            error=str(e),
+            error=str(db_error),
             deployment_id=deployment_id
         )
         

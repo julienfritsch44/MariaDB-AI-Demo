@@ -10,6 +10,7 @@ from database import get_db_connection
 import deps
 from services.skysql_observability import observability_service
 from rag.vector_store import VectorStore
+from error_factory import ErrorFactory
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -299,7 +300,12 @@ async def get_neural_dashboard_metrics():
         }
         
     except Exception as e:
-        logger.error(f"Error fetching neural dashboard metrics: {e}")
+        service_error = ErrorFactory.service_error(
+            "Neural Dashboard",
+            "Failed to fetch neural dashboard metrics",
+            original_error=e
+        )
+        logger.error(service_error)
         # Return minimal values indicating error state (not fake data)
         return {
             "financial_impact": 0.0,
@@ -309,5 +315,6 @@ async def get_neural_dashboard_metrics():
             "query_count": 0,
             "high_risk_count": 0,
             "avg_query_time": 0.0,
-            "status": "error"
+            "status": "error",
+            "message": str(service_error)
         }

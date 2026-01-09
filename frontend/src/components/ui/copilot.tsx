@@ -72,7 +72,7 @@ export function CopilotChat({ messages, isLoading, onClear, className }: Copilot
                                             ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-2 ml-1" {...props} />,
                                             ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-2 ml-1" {...props} />,
                                             li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                                            code: ({ node, className, children, ...props }: any) => {
+                                            code: ({ node, className, children, ...props }: { node?: any, className?: string, children?: React.ReactNode }) => {
                                                 const match = /language-(\w+)/.exec(className || '')
                                                 return !match ? (
                                                     <code className="bg-black/20 px-1 py-0.5 rounded font-mono" {...props}>

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 import deps
 from schemas.mcp import MCPExecuteRequest
+from error_factory import ErrorFactory
 
 router = APIRouter()
 
@@ -16,7 +17,12 @@ async def execute_mcp_tool(request: MCPExecuteRequest):
     """Execute an MCP tool"""
     if deps.mcp_service:
         return deps.mcp_service.execute_tool(request.tool, request.arguments)
-    return {"error": "MCP Service not available"}
+    
+    service_error = ErrorFactory.service_error(
+        "MCP Service",
+        "MCP Service not available or not initialized"
+    )
+    return {"error": str(service_error)}
 
 @router.get("/history")
 async def get_mcp_history():

@@ -4,7 +4,7 @@ from scorer.impact_scorer import ImpactScorer
 from rag.embedding_service import EmbeddingService
 from rag.vector_store import VectorStore
 from rag.suggestion_service import SuggestionService
-from mcp_service import get_mcp_service, MCPService
+from mcp_service import MCPService
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,9 +12,10 @@ load_dotenv()
 import logging
 logger = logging.getLogger(__name__)
 
-from services.prediction import PredictionService
 from services.index import IndexSimulationService
 from services.rewriter import QueryRewriterService
+from services.prediction import PredictionService
+from error_factory import ErrorFactory, ConfigurationError
 
 # Global Instances
 parser = SlowQueryParser()
@@ -53,7 +54,7 @@ def init_rag_services():
         # Services
         embedding_service = EmbeddingService()
         suggestion_service = SuggestionService()
-        mcp_service = get_mcp_service(vector_store, embedding_service)
+        mcp_service = MCPService(vector_store, embedding_service)
         
         # Initialize Business Services with RAG dependencies
         prediction_service = PredictionService(embedding_service, vector_store, False) # Real mode
@@ -63,7 +64,12 @@ def init_rag_services():
         logger.info(f"RAG Services initialized successfully.")
         
     except Exception as e:
-        logger.error(f"FATAL: RAG Services init failed: {e}")
+        # Use ErrorFactory for configuration/initialization errors
+        config_error = ErrorFactory.configuration_error(
+            "RAG Services initialization failed",
+            original_error=e
+        )
+        logger.error(f"FATAL: {config_error}")
         # Not setting rag_enabled = True here, let the system fail if RAG is required
         rag_enabled = False
-        raise e
+        raise config_error
