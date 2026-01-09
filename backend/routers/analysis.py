@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 import os
-import logging
 import time
 import requests
 import math
@@ -14,33 +13,20 @@ from services.cache import document_count_cache
 
 router = APIRouter()
 
-logger = logging.getLogger(__name__)
-
 # Helper Functions (Internal)
 def parse_slow_log_row(row: dict, id: int) -> SlowQuery:
-    # ... (keep existing implementation) ...
     """Parse a row from mysql.slow_log into a SlowQuery object"""
     sql_text = row.get('sql_text', '')
     if isinstance(sql_text, bytes):
         sql_text = sql_text.decode('utf-8', errors='ignore')
     
-    raw_query_time = row.get('query_time', 0)
-    if hasattr(raw_query_time, 'total_seconds'):
-        query_time = raw_query_time.total_seconds()
-    else:
-        try:
-            query_time = float(raw_query_time)
-        except (ValueError, TypeError):
-            query_time = 0.0
-
-    raw_lock_time = row.get('lock_time', 0)
-    if hasattr(raw_lock_time, 'total_seconds'):
-        lock_time = raw_lock_time.total_seconds()
-    else:
-        try:
-            lock_time = float(raw_lock_time)
-        except (ValueError, TypeError):
-            lock_time = 0.0
+    query_time = float(row.get('query_time', 0))
+    if hasattr(query_time, 'total_seconds'):
+        query_time = query_time.total_seconds()
+    
+    lock_time = float(row.get('lock_time', 0))
+    if hasattr(lock_time, 'total_seconds'):
+        lock_time = lock_time.total_seconds()
     
     rows_sent = int(row.get('rows_sent', 0))
     rows_examined = int(row.get('rows_examined', 0))
@@ -61,9 +47,7 @@ def parse_slow_log_row(row: dict, id: int) -> SlowQuery:
         estimated_cost_usd=estimated_cost,
         start_time=str(row.get('start_time', '')),
         user_host=str(row.get('user_host', '')),
-        db=str(row.get('db', '')),
-        explain=row.get('explain'),
-        query_plan=row.get('query_plan')
+        db=str(row.get('db', ''))
     )
 
 def calculate_global_score(queries: List[SlowQuery]) -> int:
@@ -74,31 +58,6 @@ def calculate_global_score(queries: List[SlowQuery]) -> int:
     return round(avg_score)
 
 
-
-def fetch_slow_query_logs(limit: int) -> List[dict]:
-    """Sync function to fetch logs from DB (blocking)"""
-    rows = []
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        
-        cursor.execute("SHOW GLOBAL VARIABLES LIKE 'slow_query_log'")
-        result = cursor.fetchone()
-        
-        # Check for 'Value' or 'value' (MariaDB connector vs others)
-        log_enabled = False
-        if result:
-            log_enabled = str(result.get('Value') or result.get('value', 'OFF')).upper() == 'ON'
-
-        if log_enabled:
-            cursor.execute(f"SELECT * FROM mysql.slow_log ORDER BY start_time DESC LIMIT {limit}")
-            rows = cursor.fetchall()
-            logger.info(f"[/analyze] Fetched {len(rows)} rows from mysql.slow_log")
-        
-        conn.close()
-    except Exception as e:
-        logger.error(f"[/analyze] mysql.slow_log access failed: {e}")
-    return rows
 
 @router.get("/analyze", response_model=QueryAnalysis)
 async def analyze_slow_queries(limit: int = 10):
@@ -124,14 +83,26 @@ async def analyze_slow_queries(limit: int = 10):
     
     # === Strategy 2: Direct database access (mysql.slow_log) ===
     if not rows:
-        logger.info("No logs from API, trying direct DB access...")
-        from starlette.concurrency import run_in_threadpool
         try:
-            rows = await run_in_threadpool(fetch_slow_query_logs, limit)
-        except Exception as e:
-            logger.error(f"DB Fetch failed: {e}")
-            rows = []
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            
+            cursor.execute("SHOW GLOBAL VARIABLES LIKE 'slow_query_log'")
+            result = cursor.fetchone()
+            
+            # Check for 'Value' or 'value' (MariaDB connector vs others)
+            log_enabled = False
+            if result:
+                log_enabled = str(result.get('Value') or result.get('value', 'OFF')).upper() == 'ON'
 
+            if log_enabled:
+                logger.info("[/analyze] Trying mysql.slow_log...")
+                cursor.execute(f"SELECT * FROM mysql.slow_log ORDER BY start_time DESC LIMIT {limit}")
+                rows = cursor.fetchall()
+            
+            conn.close()
+        except Exception as e:
+            logger.warning(f"[/analyze] mysql.slow_log access failed: {e}")
     
     # Process records into SlowQuery objects
     processed_queries = []

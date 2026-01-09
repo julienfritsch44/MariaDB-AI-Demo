@@ -1,6 +1,4 @@
-"""
-Resource Groups Throttling Router
-Assignment automatique des requêtes à des Resource Groups basé sur le Risk Score
+Automatic assignment of queries to Resource Groups based on Risk Score
 """
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -33,11 +31,11 @@ class ResourceGroupResponse(BaseModel):
     available_groups: List[Dict[str, Any]]
     recommendations: List[str]
 
-# Configuration des Resource Groups
+# Resource Groups Configuration
 RESOURCE_GROUPS_CONFIG = {
     "critical_transactions": {
         "description": "High-priority OLTP transactions",
-        "vcpu": "0-7",  # Tous les cores
+        "vcpu": "0-7",  # All cores
         "thread_priority": 0,  # Highest priority
         "risk_threshold": (0, 30),  # Low risk
         "use_case": "Payment processing, user authentication"
@@ -66,7 +64,7 @@ RESOURCE_GROUPS_CONFIG = {
 }
 
 def get_db_connection():
-    """Connexion à MariaDB avec fallback mock"""
+    """MariaDB connection with mock fallback"""
     try:
         return mariadb.connect(
             host=os.getenv("SKYSQL_HOST"),
@@ -82,9 +80,9 @@ def get_db_connection():
 
 def assign_resource_group(sql: str, risk_score: int) -> ResourceGroupAssignment:
     """
-    Assigne automatiquement un Resource Group basé sur le risk score
+    Automatically assign a Resource Group based on risk score
     """
-    # Déterminer le groupe approprié
+    # Determine the appropriate group
     for group_name, config in RESOURCE_GROUPS_CONFIG.items():
         min_risk, max_risk = config["risk_threshold"]
         if min_risk <= risk_score <= max_risk:
@@ -110,16 +108,16 @@ def assign_resource_group(sql: str, risk_score: int) -> ResourceGroupAssignment:
 
 def create_resource_groups_if_needed(conn) -> bool:
     """
-    Crée les Resource Groups s'ils n'existent pas
+    Create Resource Groups if they don't exist
     """
     try:
         cursor = conn.cursor()
         
         for group_name, config in RESOURCE_GROUPS_CONFIG.items():
-            # Vérifier si le groupe existe
+            # Check if group exists
             cursor.execute(f"SELECT * FROM information_schema.resource_groups WHERE name = '{group_name}'")
             if cursor.fetchone() is None:
-                # Créer le groupe
+                # Create group
                 create_sql = f"""
                 CREATE RESOURCE GROUP {group_name}
                 TYPE = USER
@@ -139,7 +137,7 @@ def create_resource_groups_if_needed(conn) -> bool:
 
 def apply_resource_group(conn, group_name: str) -> bool:
     """
-    Applique un Resource Group à la connexion courante
+    Apply a Resource Group to the current connection
     """
     try:
         cursor = conn.cursor()
@@ -152,7 +150,7 @@ def apply_resource_group(conn, group_name: str) -> bool:
 
 def generate_recommendations(assignment: ResourceGroupAssignment) -> List[str]:
     """
-    Génère des recommandations basées sur l'assignment
+    Generate recommendations based on the assignment
     """
     recommendations = []
     
@@ -185,10 +183,10 @@ def generate_recommendations(assignment: ResourceGroupAssignment) -> List[str]:
 @router.post("/assign", response_model=ResourceGroupResponse)
 async def assign_resource_group_endpoint(request: ResourceGroupRequest):
     """
-    Assigne automatiquement un Resource Group basé sur le risk score
+    Automatically assign a Resource Group based on risk score
     """
     try:
-        # Si pas de risk score fourni, estimer basé sur la requête
+        # If no risk score provided, estimate based on query patterns
         risk_score = request.risk_score
         if risk_score is None:
             # Estimation simple basée sur des patterns
@@ -202,19 +200,19 @@ async def assign_resource_group_endpoint(request: ResourceGroupRequest):
             else:
                 risk_score = 50  # Default
         
-        # Assigner le groupe
+        # Assign the group
         assignment = assign_resource_group(request.sql, risk_score)
         
-        # Tenter de se connecter pour vérifier/créer les groupes
+        # Attempt to connect to verify/create groups
         conn = get_db_connection()
         mode = "mock"
         
         if conn and request.auto_assign:
             try:
-                # Créer les groupes si nécessaire
+                # Create groups if needed
                 create_resource_groups_if_needed(conn)
                 
-                # Appliquer le groupe (pour la démo)
+                # Apply group (for demo purposes)
                 if apply_resource_group(conn, assignment.recommended_group):
                     mode = "live"
                 
@@ -223,7 +221,7 @@ async def assign_resource_group_endpoint(request: ResourceGroupRequest):
                 print(f"[Resource Groups] Live mode failed: {e}")
                 mode = "mock"
         
-        # Préparer la liste des groupes disponibles
+        # Prepare the list of available groups
         available_groups = [
             {
                 "name": name,
@@ -251,7 +249,7 @@ async def assign_resource_group_endpoint(request: ResourceGroupRequest):
 @router.get("/list")
 async def list_resource_groups():
     """
-    Liste tous les Resource Groups disponibles
+    List all available Resource Groups
     """
     try:
         conn = get_db_connection()
@@ -282,7 +280,7 @@ async def list_resource_groups():
             except Exception as e:
                 print(f"[Resource Groups] Query failed: {e}")
         
-        # Fallback: retourner la configuration
+        # Fallback: return configuration
         return {
             "success": True,
             "mode": "mock",
@@ -297,7 +295,7 @@ async def list_resource_groups():
 @router.get("/health")
 async def resource_groups_health():
     """
-    Vérifie si les Resource Groups sont supportés
+    Check if Resource Groups are supported
     """
     try:
         conn = get_db_connection()
@@ -311,11 +309,11 @@ async def resource_groups_health():
         
         cursor = conn.cursor()
         
-        # Vérifier la version MariaDB (Resource Groups depuis 10.5)
+        # Check MariaDB version (Resource Groups since 10.5)
         cursor.execute("SELECT VERSION()")
         version = cursor.fetchone()[0]
         
-        # Vérifier si la table resource_groups existe
+        # Check if resource_groups table exists
         cursor.execute("SHOW TABLES FROM information_schema LIKE 'resource_groups'")
         has_table = cursor.fetchone() is not None
         

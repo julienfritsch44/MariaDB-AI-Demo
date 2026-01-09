@@ -137,7 +137,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                 try {
                     return JSON.parse(saved)
                 } catch {
-                    // Si erreur de parsing, utiliser valeurs par défaut
+                    // If parsing error, use default values
                 }
             }
         }
@@ -198,7 +198,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
             const data: WaitEventsResponse = await res.json()
             setWaitEvents(data)
 
-            // Auto-expand Wait Events si des locks sont détectés
+            // Auto-expand Wait Events if locks are detected
             if (data.summary.total_lock_waits > 0) {
                 setSectionsExpanded((prev: any) => ({ ...prev, waitEvents: true }))
             }
@@ -229,7 +229,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
     }
 
     const toggleSection = (section: keyof typeof sectionsExpanded) => {
-        // Auto-collapse autres sections et scroll vers celle qui s'ouvre
+        // Auto-collapse other sections and scroll to the one opening
         setSectionsExpanded((prev: any) => {
             const newState = {
                 cost: false,
@@ -239,7 +239,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
                 [section]: !prev[section]
             }
 
-            // Auto-scroll vers la section après un court délai
+            // Auto-scroll to the section after a short delay
             if (!prev[section]) {
                 setTimeout(() => {
                     const element = document.getElementById(`section-${String(section)}`)
@@ -357,7 +357,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
             const data: SandboxResponse = await res.json()
             setSandboxResult(data)
 
-            // Mettre à jour l'estimation du coût avec les métriques réelles du bac à sable
+            // Update cost estimation with real metrics from the sandbox
             if (data.success && data.result) {
                 await fetchCostEstimate(query, false, {
                     query_time: data.result.execution_time_ms / 1000,
@@ -407,7 +407,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
             const data: RewriteResponse = await res.json()
             setHealingResult(data)
 
-            // Calculer le coût de la requête optimisée
+            // Calculate the cost of the optimized query
             await fetchCostEstimate(data.rewritten_sql, true)
 
             // Collapse Sandbox, expand Healing
@@ -454,7 +454,7 @@ export function UnifiedQueryAnalyzerClean({ analysisHistory, setAnalysisHistory,
             const data: SandboxResponse = await res.json()
             setOptimizedSandboxResult(data)
 
-            // Mettre à jour l'estimation du coût optimisé avec les métriques réelles
+            // Update optimized cost estimation with real metrics
             if (data.success && data.result) {
                 await fetchCostEstimate(healingResult.rewritten_sql, true, {
                     query_time: data.result.execution_time_ms / 1000,

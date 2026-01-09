@@ -1,6 +1,6 @@
 """
 Query Cost Attribution Router
-Calcule le coût financier des requêtes basé sur les tarifs cloud (AWS/Azure)
+Calculates query financial cost based on cloud pricing (AWS/Azure)
 """
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -9,7 +9,7 @@ import re
 
 router = APIRouter(prefix="/cost", tags=["cost"])
 
-# Tarifs Cloud (moyennes 2024)
+# Cloud Pricing (2024 averages)
 CLOUD_PRICING = {
     "aws_rds_mariadb": {
         "io_per_million": 0.20,  # $0.20 per million I/O requests
@@ -22,7 +22,7 @@ CLOUD_PRICING = {
         "storage_gb_month": 0.12
     },
     "mariadb_skysql": {
-        "io_per_million": 0.15,  # Estimation (pas de tarif public détaillé)
+        "io_per_million": 0.15,  # Estimated (no detailed public pricing)
         "cpu_per_hour": 0.08,
         "storage_gb_month": 0.10
     }
@@ -40,7 +40,7 @@ class CostEstimateResponse(BaseModel):
     sql: str
     cloud_provider: str
     
-    # Coûts unitaires
+    # Unit costs
     io_cost_per_execution: float
     cpu_cost_per_execution: float
     total_cost_per_execution: float
@@ -50,7 +50,7 @@ class CostEstimateResponse(BaseModel):
     monthly_cost: float
     annual_cost: float
     
-    # Métriques
+    # Metrics
     estimated_io_requests: int
     execution_frequency: int
     
@@ -59,7 +59,7 @@ class CostEstimateResponse(BaseModel):
 
 def estimate_io_requests(sql: str, rows_examined: Optional[int] = None) -> int:
     """
-    Estime le nombre de requêtes I/O basé sur la requête SQL
+    Estimates I/O requests based on the SQL query
     """
     # If we have actual metrics from sandbox, use those primarily
     if rows_examined is not None:
@@ -95,18 +95,18 @@ def estimate_io_requests(sql: str, rows_examined: Optional[int] = None) -> int:
 
 def estimate_cpu_time(query_time: Optional[float] = None) -> float:
     """
-    Estime le temps CPU en secondes
+    Estimates CPU time in seconds
     """
     if query_time:
         return query_time
     
-    # Estimation par défaut: 0.1 seconde
+    # Default estimation: 0.1 seconds
     return 0.1
 
 @router.post("/estimate", response_model=CostEstimateResponse)
 async def estimate_query_cost(request: CostEstimateRequest):
     """
-    Calcule le coût estimé d'une requête SQL
+    Calculates estimated SQL query cost
     """
     try:
         # Validation du provider
@@ -118,19 +118,19 @@ async def estimate_query_cost(request: CostEstimateRequest):
         
         pricing = CLOUD_PRICING[request.cloud_provider]
         
-        # Estimation des I/O requests
+        # I/O requests estimation
         io_requests = estimate_io_requests(request.sql, request.rows_examined)
         
-        # Calcul du coût I/O
+        # I/O cost calculation
         io_cost = (io_requests / 1_000_000) * pricing["io_per_million"]
         
-        # Estimation du temps CPU
+        # CPU time estimation
         cpu_seconds = estimate_cpu_time(request.query_time)
         
-        # Calcul du coût CPU (converti en heures)
+        # CPU cost calculation (converted to hours)
         cpu_cost = (cpu_seconds / 3600) * pricing["cpu_per_hour"]
         
-        # Coût total par exécution
+        # Total cost per execution
         total_per_execution = io_cost + cpu_cost
         
         # Projections
@@ -171,11 +171,9 @@ async def compare_query_costs(
     cloud_provider: str = "mariadb_skysql",
     execution_frequency_per_day: int = 1
 ):
-    """
-    Compare les coûts entre une requête originale et optimisée
-    """
+    """Compiles costs between original and optimized queries"""
     try:
-        # Estimation coût original
+        # Original cost estimation
         original_request = CostEstimateRequest(
             sql=original_sql,
             rows_examined=original_metrics.get("rows_examined") if original_metrics else None,
@@ -185,7 +183,7 @@ async def compare_query_costs(
         )
         original_cost = await estimate_query_cost(original_request)
         
-        # Estimation coût optimisé
+        # Optimized cost estimation
         optimized_request = CostEstimateRequest(
             sql=optimized_sql,
             rows_examined=optimized_metrics.get("rows_examined") if optimized_metrics else None,
@@ -195,7 +193,7 @@ async def compare_query_costs(
         )
         optimized_cost = await estimate_query_cost(optimized_request)
         
-        # Calcul des économies
+        # Savings calculation
         monthly_savings = original_cost.monthly_cost - optimized_cost.monthly_cost
         annual_savings = original_cost.annual_cost - optimized_cost.annual_cost
         savings_percentage = ((original_cost.monthly_cost - optimized_cost.monthly_cost) / original_cost.monthly_cost * 100) if original_cost.monthly_cost > 0 else 0
@@ -216,9 +214,7 @@ async def compare_query_costs(
 
 @router.get("/pricing")
 async def get_pricing_info():
-    """
-    Retourne les tarifs cloud disponibles
-    """
+    """Returns available cloud pricing information"""
     return {
         "providers": CLOUD_PRICING,
         "note": "Pricing based on 2024 public cloud rates. Actual costs may vary.",

@@ -1,6 +1,4 @@
-"""
-Intelligent Archiving Router
-Archivage prédictif basé sur ML pour optimiser les coûts de stockage
+ML-based predictive archiving to optimize storage costs
 """
 
 from fastapi import APIRouter, HTTPException
@@ -35,7 +33,7 @@ class ArchivingExecuteRequest(BaseModel):
 
 
 class StorageCostCalculator:
-    """Calculateur de coûts de stockage"""
+    """Storage cost calculator"""
     
     PRICING = {
         'mariadb_skysql_ssd': {
@@ -58,13 +56,13 @@ class StorageCostCalculator:
     
     @classmethod
     def calculate_monthly_cost(cls, size_gb: float, storage_type: str) -> float:
-        """Calcule le coût mensuel de stockage"""
+        """Calculates monthly storage cost"""
         pricing = cls.PRICING.get(storage_type, cls.PRICING['mariadb_skysql_ssd'])
         return size_gb * pricing['cost_per_gb_month']
     
     @classmethod
     def calculate_savings(cls, size_gb: float, from_storage: str, to_storage: str) -> Dict[str, float]:
-        """Calcule les économies potentielles"""
+        """Calculates potential savings"""
         current_cost = cls.calculate_monthly_cost(size_gb, from_storage)
         archive_cost = cls.calculate_monthly_cost(size_gb, to_storage)
         
@@ -81,11 +79,11 @@ class StorageCostCalculator:
 
 
 class AccessPatternAnalyzer:
-    """Analyseur de patterns d'accès"""
+    """Access pattern analyzer"""
     
     @staticmethod
     def analyze_table_access(conn, database: str, table: str, days: int = 30) -> Dict[str, Any]:
-        """Analyse les patterns d'accès d'une table"""
+        """Analyzes access patterns of a table"""
         cursor = conn.cursor(dictionary=True)
         
         try:
@@ -150,7 +148,7 @@ class AccessPatternAnalyzer:
 
 
 class ArchivingPredictor:
-    """Prédicteur ML pour l'archivage (version simplifiée sans scikit-learn)"""
+    """ML predictor for archiving (simplified version without scikit-learn)"""
     
     @staticmethod
     def predict_archiving_score(
@@ -159,9 +157,8 @@ class ArchivingPredictor:
         age_days: int,
         growth_rate: float
     ) -> Dict[str, Any]:
-        """
-        Prédit le score d'archivage (0-100)
-        Plus le score est élevé, plus la table est candidate à l'archivage
+        Predicts archiving score (0-100)
+        A higher score indicates a stronger archiving candidate
         """
         score = 0
         reasons = []
@@ -230,7 +227,7 @@ class ArchivingPredictor:
 @router.post("/analyze")
 async def analyze_archiving_candidates(request: ArchivingAnalyzeRequest):
     """
-    Analyse les tables candidates à l'archivage
+    Analyze candidate tables for archiving
     """
     try:
         conn = get_db_connection()
@@ -359,7 +356,7 @@ async def get_archiving_candidates(
     limit: int = 10
 ):
     """
-    Récupère la liste des tables candidates à l'archivage
+    Retrieve a list of candidate tables for archiving
     """
     try:
         result = await analyze_archiving_candidates(
@@ -386,7 +383,7 @@ async def get_archiving_candidates(
 @router.post("/simulate")
 async def simulate_archiving(request: ArchivingSimulateRequest):
     """
-    Simule l'archivage d'une table et calcule les économies
+    Simulate archiving a table and calculate savings
     """
     try:
         conn = get_db_connection()
@@ -490,7 +487,7 @@ async def simulate_archiving(request: ArchivingSimulateRequest):
 @router.post("/execute")
 async def execute_archiving(request: ArchivingExecuteRequest):
     """
-    Exécute l'archivage d'une table (async)
+    Execute table archiving (async)
     """
     try:
         if request.dry_run:

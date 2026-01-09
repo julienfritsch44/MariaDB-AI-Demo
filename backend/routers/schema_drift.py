@@ -1,6 +1,4 @@
-"""
-Schema Drift Detection Router
-Détecte les dérives de schéma entre Git (source de vérité) et Production
+Detect schema drifts between Git (source of truth) and Production
 """
 
 from fastapi import APIRouter, HTTPException
@@ -30,11 +28,11 @@ class DriftApplyFixRequest(BaseModel):
 
 
 class SchemaParser:
-    """Parser de schéma DDL"""
+    """DDL schema parser"""
     
     @staticmethod
     def parse_create_table(ddl: str) -> Dict[str, Any]:
-        """Parse un CREATE TABLE statement"""
+        """Parses a CREATE TABLE statement"""
         schema = {
             'columns': {},
             'indexes': {},
@@ -84,13 +82,13 @@ class SchemaParser:
     
     @staticmethod
     def _extract_default(line: str) -> Optional[str]:
-        """Extrait la valeur DEFAULT d'une définition de colonne"""
+        """Extracts the DEFAULT value from a column definition"""
         match = re.search(r'DEFAULT\s+([^\s,]+)', line, re.IGNORECASE)
         return match.group(1).strip("'\"") if match else None
     
     @staticmethod
     def get_production_schema(conn, database: str, table: str) -> Dict[str, Any]:
-        """Récupère le schéma d'une table depuis la production"""
+        """Retrieves a table schema from production"""
         cursor = conn.cursor(dictionary=True)
         
         cursor.execute(f"SHOW CREATE TABLE {database}.{table}")
@@ -109,11 +107,11 @@ class SchemaParser:
 
 
 class DriftDetector:
-    """Détecteur de dérive de schéma"""
+    """Schema drift detector"""
     
     @staticmethod
     def compare_schemas(git_schema: Dict, prod_schema: Dict) -> Dict[str, Any]:
-        """Compare deux schémas et retourne les différences"""
+        """Compares two schemas and returns the differences"""
         drift = {
             'has_drift': False,
             'missing_columns': [],
@@ -181,11 +179,11 @@ class DriftDetector:
 
 
 class DriftFixGenerator:
-    """Générateur de scripts de correction de dérive"""
+    """Shift drift fix script generator"""
     
     @staticmethod
     def generate_fix_script(table: str, drift: Dict[str, Any], git_schema: Dict, prod_schema: Dict) -> List[str]:
-        """Génère les commandes ALTER TABLE pour corriger la dérive"""
+        """Generates ALTER TABLE commands to fix drift"""
         statements = []
         
         for col in drift.get('missing_columns', []):
@@ -234,7 +232,7 @@ class DriftFixGenerator:
 @router.post("/detect")
 async def detect_drift(request: DriftDetectRequest):
     """
-    Détecte les dérives de schéma entre Git et Production
+    Detect schema drifts between Git and Production
     """
     try:
         conn = get_db_connection()
@@ -313,7 +311,7 @@ async def detect_drift(request: DriftDetectRequest):
 @router.get("/report")
 async def get_drift_report(database: str = "shop_demo"):
     """
-    Récupère un rapport détaillé de dérive
+    Retrieve a detailed drift report
     """
     try:
         detect_result = await detect_drift(DriftDetectRequest(database=database))
@@ -394,7 +392,7 @@ async def get_drift_report(database: str = "shop_demo"):
 @router.post("/generate-fix")
 async def generate_fix_script(request: DriftGenerateFixRequest):
     """
-    Génère un script SQL pour corriger la dérive
+    Generate a SQL script to fix drift
     """
     try:
         conn = get_db_connection()
@@ -438,7 +436,7 @@ async def generate_fix_script(request: DriftGenerateFixRequest):
 @router.post("/apply-fix")
 async def apply_fix_script(request: DriftApplyFixRequest):
     """
-    Applique le script de correction (avec dry-run par défaut)
+    Apply the fix script (with dry-run by default)
     """
     try:
         if request.dry_run:

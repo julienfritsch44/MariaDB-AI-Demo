@@ -1,6 +1,4 @@
-"""
-Plan Stability Baseline Router
-Détecte les plan flips et force les plans optimaux via hints
+Detect plan flips and force optimal plans using hints
 """
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -41,7 +39,7 @@ class PlanBaseline(BaseModel):
 
 
 def generate_fingerprint(sql: str) -> str:
-    """Génère un fingerprint unique pour une requête"""
+    """Generates a unique fingerprint for a query"""
     import hashlib
     normalized = sql.strip().lower()
     normalized = ' '.join(normalized.split())
@@ -49,7 +47,7 @@ def generate_fingerprint(sql: str) -> str:
 
 
 def parse_explain_json(explain_result: List[Dict]) -> Dict[str, Any]:
-    """Parse le résultat EXPLAIN FORMAT=JSON"""
+    """Parses EXPLAIN FORMAT=JSON results"""
     if not explain_result or not explain_result[0]:
         return {}
     
@@ -61,8 +59,8 @@ def parse_explain_json(explain_result: List[Dict]) -> Dict[str, Any]:
 
 def calculate_plan_distance(plan1: Dict, plan2: Dict) -> float:
     """
-    Calcule la distance entre 2 plans d'exécution
-    0.0 = identiques, 1.0 = complètement différents
+    Calculates the distance between two execution plans
+    0.0 = identical, 1.0 = completely different
     """
     if not plan1 or not plan2:
         return 1.0
@@ -89,14 +87,14 @@ def calculate_plan_distance(plan1: Dict, plan2: Dict) -> float:
 
 
 def extract_index_from_plan(plan: Dict) -> Optional[str]:
-    """Extrait le nom de l'index utilisé dans le plan"""
+    """Extracts the index name used in the plan"""
     query_block = plan.get('query_block', {})
     table = query_block.get('table', {})
     return table.get('key')
 
 
 def generate_hint(sql: str, index_name: str, hint_type: str = "USE_INDEX") -> str:
-    """Génère une requête avec hint pour forcer un plan"""
+    """Generates a query with a hint to force a plan"""
     sql_upper = sql.upper()
     
     if 'FROM' not in sql_upper:
@@ -123,7 +121,7 @@ def generate_hint(sql: str, index_name: str, hint_type: str = "USE_INDEX") -> st
 @router.post("/create")
 async def create_baseline(request: BaselineCreateRequest):
     """
-    Crée une baseline de plan d'exécution pour une requête
+    Create an execution plan baseline for a query
     """
     try:
         conn = get_db_connection()
@@ -204,7 +202,7 @@ async def create_baseline(request: BaselineCreateRequest):
 @router.post("/compare")
 async def compare_with_baseline(request: BaselineCompareRequest):
     """
-    Compare le plan actuel avec la baseline et détecte les plan flips
+    Compare current plan with baseline and detect plan flips
     """
     try:
         conn = get_db_connection()
@@ -307,7 +305,7 @@ async def compare_with_baseline(request: BaselineCompareRequest):
 @router.get("/list")
 async def list_baselines(limit: int = 50):
     """
-    Liste toutes les baselines actives
+    List all active baselines
     """
     try:
         conn = get_db_connection()
@@ -358,7 +356,7 @@ async def list_baselines(limit: int = 50):
 @router.post("/force")
 async def force_baseline_plan(request: BaselineForceRequest):
     """
-    Force l'utilisation du plan baseline via hints
+    Force the use of a baseline plan using hints
     """
     try:
         conn = get_db_connection()
@@ -426,7 +424,7 @@ async def force_baseline_plan(request: BaselineForceRequest):
 @router.delete("/{fingerprint}")
 async def delete_baseline(fingerprint: str):
     """
-    Supprime une baseline
+    Delete a baseline
     """
     try:
         conn = get_db_connection()

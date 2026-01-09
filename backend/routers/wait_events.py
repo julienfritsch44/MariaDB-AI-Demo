@@ -1,6 +1,5 @@
 """
-Wait Events Profiling Router
-Analyse les verrous InnoDB et wait events via Performance Schema
+Analyze InnoDB locks and wait events using Performance Schema
 """
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -43,7 +42,7 @@ class WaitEventsResponse(BaseModel):
     recommendations: List[str]
 
 def get_db_connection():
-    """Connexion à MariaDB avec fallback mock"""
+    """MariaDB connection with mock fallback"""
     try:
         return mariadb.connect(
             host=os.getenv("SKYSQL_HOST"),
@@ -58,10 +57,10 @@ def get_db_connection():
         return None
 
 def analyze_wait_events_live(conn) -> Dict[str, Any]:
-    """Analyse des wait events via Performance Schema"""
+    """Analysis of wait events using Performance Schema"""
     cursor = conn.cursor(dictionary=True)
     
-    # 1. Top Wait Events globaux
+    # 1. Top Global Wait Events
     cursor.execute("""
         SELECT 
             event_name,
@@ -90,7 +89,7 @@ def analyze_wait_events_live(conn) -> Dict[str, Any]:
         for e in wait_events_raw
     ]
     
-    # 2. Lock Waits actifs (InnoDB)
+    # 2. Active Lock Waits (InnoDB)
     cursor.execute("""
         SELECT 
             r.trx_id AS blocking_trx,
@@ -120,7 +119,7 @@ def analyze_wait_events_live(conn) -> Dict[str, Any]:
         for lw in lock_waits_raw
     ]
     
-    # 3. Statistiques globales
+    # 3. Global Statistics
     cursor.execute("""
         SELECT 
             COUNT(*) as total_threads,
@@ -145,7 +144,7 @@ def analyze_wait_events_live(conn) -> Dict[str, Any]:
     }
 
 def generate_mock_wait_events() -> Dict[str, Any]:
-    """Génère des wait events mock pour la démo"""
+    """Generate mock wait events for the demo"""
     wait_events = [
         WaitEventDetail(
             event_name="wait/io/file/innodb/innodb_data_file",
@@ -202,10 +201,10 @@ def generate_mock_wait_events() -> Dict[str, Any]:
     }
 
 def generate_recommendations(data: Dict[str, Any]) -> List[str]:
-    """Génère des recommandations basées sur les wait events"""
+    """Generate recommendations based on wait events"""
     recommendations = []
     
-    # Analyse des wait events
+    # Wait events analysis
     for event in data["wait_events"][:3]:
         if "innodb_data_file" in event.event_name:
             if event.percentage > 40:
@@ -228,7 +227,7 @@ def generate_recommendations(data: Dict[str, Any]) -> List[str]:
                     "2) Reducing concurrent connections, 3) Optimizing hot queries"
                 )
     
-    # Analyse des lock waits
+    # Lock waits analysis
     if len(data["lock_waits"]) > 0:
         recommendations.append(
             f"Active lock waits detected ({len(data['lock_waits'])} threads blocked). "
@@ -244,7 +243,7 @@ def generate_recommendations(data: Dict[str, Any]) -> List[str]:
 @router.post("/analyze", response_model=WaitEventsResponse)
 async def analyze_wait_events(request: WaitEventsRequest):
     """
-    Analyse les wait events et lock waits
+    Analyze wait events and lock waits
     """
     try:
         conn = get_db_connection()
@@ -281,7 +280,7 @@ async def analyze_wait_events(request: WaitEventsRequest):
 @router.get("/health")
 async def wait_events_health():
     """
-    Vérifie si Performance Schema est activé
+    Check if Performance Schema is enabled
     """
     try:
         conn = get_db_connection()

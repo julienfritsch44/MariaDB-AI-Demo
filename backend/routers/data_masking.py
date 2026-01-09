@@ -1,6 +1,6 @@
 """
 Dynamic Data Masking Router
-Masquage automatique des PII (emails, cartes bancaires, etc.) selon rôle
+Automatic PII masking (emails, credit cards, etc.) based on role
 """
 
 from fastapi import APIRouter, HTTPException
@@ -36,7 +36,7 @@ class MaskingConfigureRequest(BaseModel):
 
 
 class PIIDetector:
-    """Détecteur de colonnes contenant des PII"""
+    """PII column detector"""
     
     PII_PATTERNS = {
         'email': {
@@ -73,7 +73,7 @@ class PIIDetector:
     
     @classmethod
     def detect_pii_column(cls, column_name: str, sample_values: List[str]) -> Optional[Dict]:
-        """Détecte si une colonne contient des PII"""
+        """Detects if a column contains PII"""
         column_lower = column_name.lower()
         
         for pii_type, config in cls.PII_PATTERNS.items():
@@ -95,11 +95,11 @@ class PIIDetector:
 
 
 class DataMasker:
-    """Applique les stratégies de masquage"""
+    """Applies masking strategies"""
     
     @staticmethod
     def mask_email(email: str, level: str = "partial") -> str:
-        """Masque un email: john.doe@example.com → j***@e***.com"""
+        """Masks an email: john.doe@example.com -> j***@e***.com"""
         if not email or '@' not in email:
             return email
         
@@ -116,7 +116,7 @@ class DataMasker:
     
     @staticmethod
     def mask_phone(phone: str, level: str = "partial") -> str:
-        """Masque un téléphone: +33 6 12 34 56 78 → +33 6 ** ** ** 78"""
+        """Masks a phone number: +33 6 12 34 56 78 -> +33 6 ** ** ** 78"""
         if not phone:
             return phone
         
@@ -131,7 +131,7 @@ class DataMasker:
     
     @staticmethod
     def mask_credit_card(card: str, level: str = "partial") -> str:
-        """Masque une carte: 4532-1234-5678-9010 → ****-****-****-9010"""
+        """Masks a card number: 4532-1234-5678-9010 -> ****-****-****-9010"""
         if not card:
             return card
         
@@ -151,7 +151,7 @@ class DataMasker:
     
     @staticmethod
     def mask_ssn(ssn: str, level: str = "partial") -> str:
-        """Masque un SSN: 123-45-6789 → ***-**-6789"""
+        """Masks an SSN: 123-45-6789 -> ***-**-6789"""
         if not ssn:
             return ssn
         
@@ -166,7 +166,7 @@ class DataMasker:
     
     @staticmethod
     def mask_iban(iban: str, level: str = "partial") -> str:
-        """Masque un IBAN: FR7612345678901234567890123 → FR76************0123"""
+        """Masks an IBAN: FR7612345678901234567890123 -> FR76************0123"""
         if not iban or len(iban) < 8:
             return "****"
         
@@ -177,7 +177,7 @@ class DataMasker:
     
     @staticmethod
     def mask_address(address: str, level: str = "partial") -> str:
-        """Masque une adresse: 123 Main Street → *** Main Street"""
+        """Masks an address: 123 Main Street → *** Main Street"""
         if not address:
             return address
         
@@ -191,7 +191,7 @@ class DataMasker:
     
     @classmethod
     def apply_masking(cls, value: Any, pii_type: str, level: str = "partial") -> Any:
-        """Applique le masquage selon le type de PII"""
+        """Applies masking based on PII type"""
         if value is None:
             return None
         
@@ -216,7 +216,7 @@ class DataMasker:
 @router.post("/analyze")
 async def analyze_pii_columns(request: MaskingAnalyzeRequest):
     """
-    Analyse les colonnes d'une base de données pour détecter les PII
+    Analyzes database columns to detect PII
     """
     try:
         conn = get_db_connection()
@@ -297,7 +297,7 @@ async def analyze_pii_columns(request: MaskingAnalyzeRequest):
 @router.post("/apply")
 async def apply_masking(request: MaskingApplyRequest):
     """
-    Applique le masquage sur un résultat de requête
+    Applies masking to a query result
     """
     try:
         if not request.query_result or 'columns' not in request.query_result:
@@ -363,7 +363,7 @@ async def apply_masking(request: MaskingApplyRequest):
 @router.get("/rules")
 async def get_masking_rules(role: str = "dba"):
     """
-    Récupère les règles de masquage actives pour un rôle
+    Retrieves active masking rules for a role
     """
     try:
         default_rules = {
@@ -415,7 +415,7 @@ async def get_masking_rules(role: str = "dba"):
 @router.post("/configure")
 async def configure_masking_rules(request: MaskingConfigureRequest):
     """
-    Configure les règles de masquage pour un rôle
+    Configures masking rules for a role
     """
     try:
         return {
